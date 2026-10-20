@@ -730,18 +730,29 @@ function layMap(vis) {
   const all = new Set([...items.values()].flat()), edges = visEdges(all).filter(lineOn);
   const pos = new Map(), frames = [], IW = CW, IH = CH, G = 10, P = 14, HD = 34;
   const rows = ['screen', 'behind', 'engines', 'sources'].map(t => MODEL.l1.filter(l => l.tier === t && items.has(l.id)));
-  let y = 0; const regs = [];
+  let y = 0; const regs = [], SP = 10, SH = 34;
+  // inside a region: its own parts first, then every part opened in it as a framed group (▾ name), one step in per level
+  const plan = l => { const its = items.get(l.id), top = [], subs = new Map();
+    its.forEach(id => { const par = N.get(id).parent; if (!par || par === l.id) top.push(id); else (subs.get(par) || subs.set(par, []).get(par)).push(id); });
+    const n = its.length, cols = Math.max(1, Math.min(3, Math.ceil(Math.sqrt(n * 1.2)))), gs = [...subs].sort((a, b) => a[0].localeCompare(b[0]));
+    const maxInd = gs.reduce((m, [par]) => Math.max(m, (par.split('.').length - 2) * IND), 0);
+    const gw = cols * IW + (cols - 1) * G, w = gw + 2 * SP + maxInd + 2 * P;
+    let h = HD; if (top.length) h += Math.ceil(top.length / cols) * (IH + G);
+    gs.forEach(([, ids]) => { h += SH + Math.ceil(ids.length / cols) * (IH + G) + SP; });
+    return { l, n, cols, top, gs, w, h: h + P - G + 4 }; };
   const TW = 1500;   // regions of one floor wrap into lines about this wide, so the map stays compact
   rows.forEach(ls => { if (!ls.length) return;
-    const rs = ls.map(l => { const n = items.get(l.id).length, cols = Math.max(1, Math.min(3, Math.ceil(Math.sqrt(n * 1.2)))), rr = Math.ceil(n / cols);
-      return { l, n, cols, w: cols * IW + (cols - 1) * G + 2 * P, h: HD + rr * IH + (rr - 1) * G + P }; });
+    const rs = ls.map(plan);
     const lines = [[]]; let lw = 0; rs.forEach(r => { if (lw && lw + 40 + r.w > TW) { lines.push([]); lw = 0; } lines[lines.length - 1].push(r); lw += (lw ? 40 : 0) + r.w; });
     lines.forEach(ln => { const tw = ln.reduce((s, r) => s + r.w, 0) + (ln.length - 1) * 40; let x = -tw / 2, rh = 0;
       ln.forEach(r => { r.x = x; r.y = y; x += r.w + 40; rh = Math.max(rh, r.h); regs.push(r); }); y += rh + 40; });
     y += 40; });
+  const grid = (ids, x0, y0, cols) => ids.forEach((id, i) => { const c = i % cols, rr = Math.floor(i / cols); pos.set(id, { x: x0 + c * (IW + G) + IW / 2, y: y0 + rr * (IH + G) + IH / 2, w: IW / 2, h: IH / 2 }); });
   regs.forEach(r => { frames.push({ id: r.l.id, x: r.x, y: r.y, w: r.w, h: r.h, region: true });
-    items.get(r.l.id).forEach((id, i) => { const c = i % r.cols, rr = Math.floor(i / r.cols);
-      pos.set(id, { x: r.x + P + c * (IW + G) + IW / 2, y: r.y + HD + rr * (IH + G) + IH / 2, w: IW / 2, h: IH / 2 }); }); });
+    let yy = r.y + HD; if (r.top.length) { grid(r.top, r.x + P, yy, r.cols); yy += Math.ceil(r.top.length / r.cols) * (IH + G); }
+    r.gs.forEach(([par, ids]) => { const ind = (par.split('.').length - 2) * IND, fx = r.x + P + ind, fh = SH + Math.ceil(ids.length / r.cols) * (IH + G) - G + SP;
+      frames.push({ id: par, x: fx, y: yy, w: r.w - 2 * P - ind, h: fh, n: ids.length });
+      grid(ids, fx + SP + 8, yy + SH, r.cols); yy += fh + SP; }); });
   // between regions: one ribbon per pair of main parts (their parts' connections added up)
   const rib = new Map(); edges.forEach(e => { const a = N.get(e.a).l1, b = N.get(e.b).l1; if (a === b) return; const k = a < b ? a + '|' + b : b + '|' + a; const o = rib.get(k) || rib.set(k, { a: a < b ? a : b, b: a < b ? b : a, n: 0, kinds: new Set() }).get(k); o.n += e.n; o.kinds.add(e.kind); });
   return { pos, edges, frames, heads: [], ribbons: [...rib.values()], kind: 'map' };
@@ -847,7 +858,7 @@ function frame2d(now) {
     if (sel) { const [u, v] = dep(e), up = (u === sel && r.up.has(v)) || (r.up.has(u) && r.up.has(v) && r.up.get(v) > r.up.get(u)), dn = (v === sel && r.down.has(u)) || (r.down.has(u) && r.down.has(v) && r.down.get(u) > r.down.get(v));
       if (up) { col = css('--up'); al = 0.95; hot = true; } else if (dn) { col = css('--down'); al = 0.95; hot = true; } else al = 0.06; }
     else if (HV.size) { if (HV.has(e.a) && HV.has(e.b)) { al = 0.85; hot = true; } else al = 0.06; }
-    if (S.lsel && !hot) continue;
+    if ((S.lsel || lay.kind === 'map') && !hot) continue;   // (Map: ribbons until a part is selected, then only its own lines)
     if (flow && a.c === b.c && !hot) { same.set(e.a, (same.get(e.a) || 0) + 1); same.set(e.b, (same.get(e.b) || 0) + 1); continue; }   // (within one column: only for the selected part)
     if (flow && !hot && (a.g || b.g)) {   // (from or to an opened group: one ribbon per partner)
       const ka = a.g || e.a, kb = b.g || e.b; if (ka === kb) continue; const k = ka + '>' + kb + '>' + e.kind;
