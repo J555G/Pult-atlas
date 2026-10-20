@@ -1,0 +1,43 @@
+# Pult Atlas: rebuilt whenever Pult (J555G/lesepult) has a new commit – checked every 30 minutes – and whenever this
+# repository changes. Pult is public, so no token is needed. The rebuilt web app is committed to the root (GitHub Pages).
+name: Build the atlas
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+concurrency:
+  group: atlas
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Has Pult changed?
+        id: chk
+        run: |
+          head=$(git ls-remote https://github.com/J555G/lesepult refs/heads/main | cut -f1)
+          echo "Pult at $head, built from $(cat .pult-head 2>/dev/null || echo nothing)"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(cat .pult-head 2>/dev/null)" = "$head" ]; then echo "skip=1" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.chk.outputs.skip != '1'
+        uses: actions/checkout@v4
+        with:
+          repository: J555G/lesepult
+          path: pult
+          fetch-depth: 0
+      - if: steps.chk.outputs.skip != '1'
+        name: Build
+        run: sh tools/build.sh pult --site
+      - if: steps.chk.outputs.skip != '1'
+        name: Commit the rebuilt atlas
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A index.html model.json history.json sw.js manifest.webmanifest d3.min.js LICENSE-d3.txt icon-*.png fonts fonts.css .pult-head
+          if git diff --cached --quiet; then echo "atlas unchanged"; exit 0; fi
+          git commit -m "Atlas rebuilt for Pult $(cut -c1-7 .pult-head) [skip ci]"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && exit 0; sleep 5; done; exit 1
