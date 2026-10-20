@@ -335,7 +335,7 @@ function draw3d(vis, edges, refit) {
 function stop3d() { cancelAnimationFrame(T3.raf); T3.raf = 0; }
 function run3d() { if (!T3.raf) T3.raf = requestAnimationFrame(frame3d); }
 function tick3d() {   // the forces: parts push each other apart, strings pull connected parts together, each main part keeps to its region
-  const ns = [...T3.nodes.values()], a = T3.alpha, n = ns.length;
+  const ns = [...T3.nodes.values()], a = T3.alpha, n = ns.length, pin = S.sel && T3.nodes.has(S.sel) && T3.drag?.id !== S.sel ? S.sel : null;
   for (let i = 0; i < n; i++) { const p = ns[i];
     for (let j = i + 1; j < n; j++) { const q = ns[j]; let dx = p.x - q.x, dy = p.y - q.y, dz = p.z - q.z; const r2 = dx * dx + dy * dy + dz * dz + 400, r = Math.sqrt(r2), f = 9e5 * S.spread * S.spread * a / r2 / r;
       p.vx += dx * f; p.vy += dy * f; p.vz += dz * f; q.vx -= dx * f; q.vy -= dy * f; q.vz -= dz * f; } }
@@ -350,14 +350,16 @@ function tick3d() {   // the forces: parts push each other apart, strings pull c
     if (g && g.n > 1) { const kc = 0.008 * a; p.vx += (g.x / g.n - p.x) * kc; p.vy += (g.y / g.n - p.y) * kc * (S.arr === 'layers' ? 0 : 1); p.vz += (g.z / g.n - p.z) * kc; }
     if (S.flat) p.vz += -p.z * 0.12;
     if (T3.drag?.id === p.id) { p.vx = p.vy = p.vz = 0; continue; }
+    if (p.id === pin) { p.vx = p.vy = p.vz = 0; if (S.flat) p.z -= p.z * 0.12; continue; }   // the selected part stays where it is until moved by hand
     p.vx *= 0.8; p.vy *= 0.8; p.vz *= 0.8; p.x += p.vx; p.y += p.vy; p.z += p.vz; }
   // cards side by side never lie on top of each other: overlapping ones (about the same depth) are pushed apart
   for (let i = 0; i < n; i++) { const p = ns[i];
     for (let j = i + 1; j < n; j++) { const q = ns[j]; if (!S.flat && Math.abs(p.z - q.z) > 140) continue;
       const dx = q.x - p.x, dy = q.y - p.y, ox = BW * 1.12 - Math.abs(dx), oy = BH * 1.6 - Math.abs(dy); if (ox <= 0 || oy <= 0) continue;
-      if (ox / BW < oy / BH && !(S.arr === 'layers' && false)) { const m = (dx < 0 ? -1 : 1) * ox * 0.25; p.x -= m; q.x += m; } else { const m = (dy < 0 ? -1 : 1) * oy * 0.25; p.y -= m; q.y += m; } } }
+      const wp = p.id === pin ? 0 : q.id === pin ? 2 : 1, wq = 2 - wp;   // (the selected part does not give way)
+      if (ox / BW < oy / BH) { const m = (dx < 0 ? -1 : 1) * ox * 0.25; p.x -= m * wp; q.x += m * wq; } else { const m = (dy < 0 ? -1 : 1) * oy * 0.25; p.y -= m * wp; q.y += m * wq; } } }
   // an opened (or closed) part stays where it was: its group is kept centred on that spot while the drawing settles
-  for (const h of T3.holds || []) { const gs = h.ids.map(i => T3.nodes.get(i)).filter(Boolean); if (!gs.length || gs.some(g => T3.drag?.id === g.id)) continue;
+  for (const h of T3.holds || []) { const gs = h.ids.map(i => T3.nodes.get(i)).filter(Boolean); if (!gs.length || gs.some(g => T3.drag?.id === g.id || g.id === pin)) continue;
     const d = [0, 1, 2].map(i => h.at[i] - gs.reduce((t, g) => t + [g.x, g.y, g.z][i], 0) / gs.length);
     for (const g of gs) { g.x += d[0]; g.y += d[1]; g.z += d[2]; } }
   T3.alpha = Math.max(0, a * 0.985 - 0.0005);
@@ -377,7 +379,7 @@ function frame3d(now) {
   const dpr = devicePixelRatio || 1, W = cv3.clientWidth, H = cv3.clientHeight; if (!W || !H) return;
   if (cv3.width !== Math.round(W * dpr) || cv3.height !== Math.round(H * dpr)) { cv3.width = Math.round(W * dpr); cv3.height = Math.round(H * dpr); }
   if (T3.alpha > 0.002) tick3d();
-  if (T3.fitNext) { T3.fitNext = false; fit3d(null, true); }
+  if (T3.fitNext) { T3.fitNext = false; if (!(S.sel && T3.nodes.has(S.sel))) fit3d(null, true); }   // (with a part selected the view stays put: the part keeps its place on screen)
   const c = T3.cam;
   if (T3.camTo) { const t = T3.camTo; let done = true; for (const k of ['tx', 'ty', 'tz', 'dist', 'yaw', 'pitch', 'roll']) { if (t[k] == null) continue; c[k] = (c[k] || 0) + (t[k] - (c[k] || 0)) * 0.12; if (Math.abs(t[k] - c[k]) > (k.length > 2 && k !== 'dist' ? 0.002 : 1)) done = false; } if (done) T3.camTo = null; }
   const f = H * 0.95, B = camBasis(), x = c3; x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, W, H);
@@ -575,7 +577,8 @@ function seg(sel, key, cb) {
 seg('#segArr', 'arr', () => { T3.alpha = 1; T3.fitNext = true; }); seg('#segMetric', 'metric'); seg('#segFocus', 'focus', () => { if (S.focus !== 'all' && !S.sel) note2('Select a part first'); T3.fitNext = true; });
 function setFlat(on) {
   S.flat = on; keep(); $('#flatBtn').setAttribute('aria-pressed', on); T3.alpha = Math.max(T3.alpha, 0.8);
-  T3.camTo = on ? { yaw: 0, pitch: 0, roll: 0 } : { yaw: 0.5, pitch: -0.25 }; T3.fitNext = true; draw();
+  T3.camTo = on ? { yaw: 0, pitch: 0, roll: 0 } : { yaw: 0.5, pitch: -0.25 }; const sp = S.sel && T3.nodes.get(S.sel); if (sp) Object.assign(T3.camTo, { tx: sp.x, ty: sp.y, tz: S.flat ? 0 : sp.z });   // (turning the view: about the selected part)
+  T3.fitNext = true; draw();
 }
 $('#back').onclick = () => navGo(-1); $('#fwd').onclick = () => navGo(1);
 $('#home').onclick = () => { select(null); T3.camTo = S.flat ? { yaw: 0, pitch: 0, roll: 0 } : { yaw: 0.5, pitch: -0.25, roll: 0 }; T3.fitNext = true; run3d(); };
