@@ -12,7 +12,17 @@
   bars per card; filter to what a part relies on / what relies on it / both, with whole chains; spacing slider; twirl with
   two fingers; back and forward through the parts looked at; full screen keeps the top bar; installable web app.
 
+## Decided 21 Oct
+- The offline-helper fix stays (the owner first asked to undo it, then chose to keep it once the consequence was laid out).
+- The drawing fills the screen between a slim top bar and a slim version bar (the bars carry the safe areas); the
+  full-screen button is gone.
+- Filters as button rows that wrap, never drop-down menus.
+- Cards far away show only their name in large letters with a bar of their colour; nearer (wider than 70–105 px on
+  screen, crossfading) the full card. One tap slides the panel in over the drawing (bottom sheet on phones); ✕, Escape
+  or a tap on the empty drawing closes it. The legend that used to fill the empty panel opens from ⓘ in the top bar.
+
 ## Open
+- On phones the top bar wraps to three rows – ask whether to shorten labels or move something.
 - Safari (owner's iPad): the page did not load (before the fixes of 20 Oct: offline-helper page requests, no
   structuredClone/roundRect, errors shown in the hint line). Those fixes broke `sw.js` – the line's code sat after a `//`
   comment, so the helper returned nothing and the page failed after the first visit on every browser; fixed 20 Oct

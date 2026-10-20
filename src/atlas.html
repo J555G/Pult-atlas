@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gentium+Book+Plus:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: one working surface – a bar of controls, the drawing, a side panel (bottom sheet on phones), the version slider. */
+/* Layout: the drawing fills the screen between a slim bar of controls and a slim version bar; a part's panel slides in over it. */
 :root {
   --bg: #f3f4f1; --surface: #ffffff; --ink: #1d232b; --mut: #5f6873; --line: #c9cec9; --soft: #e6e9e4;
   --acc: #1f5f8b;          /* the app's own blue, for selection */
@@ -22,19 +22,20 @@
   --acc: #6aa9d8; --up: #6aa9ec; --down: #f08a4b; --flow: #b394e0;
   --h0: #39414a; --h1: #2f6b5f; --h2: #7d7034; --h3: #96662a; --h4: #a3502c; --h5: #a83a32; color-scheme: dark }
 html, body { height: 100%; }
+body { height: 100dvh; }   /* Safari: exactly the visible screen, not the area behind its toolbars */
 [hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font: 14px/1.4 var(--ui); display: flex; flex-direction: column; overflow: hidden; }
-header { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding-block: 5px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--line); background: var(--surface); }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding-top: max(3px, env(safe-area-inset-top, 0px)); padding-bottom: 3px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--line); background: var(--surface); }
 h1 { font: 700 17px/1.1 var(--display); flex: none; margin: 0; letter-spacing: .01em; white-space: nowrap; }
 h1 small { font: 400 12px var(--ui); color: var(--mut); margin-left: 6px; }
 .grp { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .lab { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--mut); }
 .seg { flex: none; display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
-.seg button { border: 0; background: transparent; color: var(--ink); padding: 3px 8px; font: 600 12.5px var(--ui); cursor: pointer; white-space: nowrap; }
+.seg button { border: 0; background: transparent; color: var(--ink); padding: 2px 7px; font: 600 12.5px var(--ui); cursor: pointer; white-space: nowrap; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
 button.plain[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
-button.plain { flex: none; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 7px; padding: 3px 9px; font: 600 12.5px var(--ui); cursor: pointer; white-space: nowrap; }
+button.plain { flex: none; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 7px; padding: 2px 8px; font: 600 12.5px var(--ui); cursor: pointer; white-space: nowrap; }
 .rng { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--mut); }
 .rng input { width: 110px; accent-color: var(--acc); }
 .menu { position: fixed; z-index: 30; right: max(16px, env(safe-area-inset-right, 0px)); background: var(--surface); border: 1px solid var(--line); border-radius: 9px; box-shadow: 0 10px 28px rgba(0,0,0,.2); padding: 10px 12px; display: grid; gap: 8px; }
@@ -42,13 +43,12 @@ button.plain { flex: none; border: 1px solid var(--line); background: transparen
 button:focus-visible, input:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
 .chk { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; user-select: none; }
 .search { position: relative; flex: 1 1 150px; min-width: 90px; max-width: 280px; }
-select.sm { display: none; flex: 0 1 auto; min-width: 64px; max-width: 120px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--ink); font: 600 12.5px var(--ui); padding: 3px 4px; }
 header .seg.nb { display: inline-flex !important; }
 .seg.nb button { font-size: 17px; padding: 1px 10px; }
 .seg.nb button:disabled { color: var(--line); cursor: default; }
-@media (max-width: 1440px) { header .seg { display: none; } select.sm { display: block; } h1 { display: none; } .rng input { width: 80px; } }
+@media (max-width: 1440px) { h1 { display: none; } .rng input { width: 80px; } .rng span, #optBtn .t { display: none; } .search { flex-basis: 130px; max-width: 160px; } }
 @media (max-width: 560px) { .rng span { display: none; } .rng input { width: 56px; } #optBtn .t { display: none; } header { gap: 5px 6px; } }
-#fsBtn .t { display: none; }
+
 .search input { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 7px; padding: 3px 9px; background: var(--bg); color: var(--ink); font: 14px var(--ui); }
 .results { position: fixed; width: 300px; z-index: 20; top: 100%; left: 0; right: 0; margin-top: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.18); max-height: 50vh; overflow: auto; }
 .results button { display: block; width: 100%; text-align: left; border: 0; background: transparent; color: var(--ink); padding: 7px 10px; cursor: pointer; font: 14px var(--ui); }
@@ -58,8 +58,10 @@ main { flex: 1; display: flex; min-height: 0; position: relative; }
 #stage { flex: 1; min-width: 0; position: relative; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 #cv3 { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 #cv3:active { cursor: grabbing; }
-#panel { width: 380px; max-width: 42vw; border-left: 1px solid var(--line); background: var(--surface); overflow: auto; padding: 16px 18px; padding-right: max(18px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }
-#panel h2 { font: 700 22px/1.15 var(--display); margin: 0 0 4px; text-wrap: balance; }
+#panel { position: absolute; top: 0; right: 0; bottom: 0; z-index: 6; width: 380px; max-width: 88vw; border-left: 1px solid var(--line); background: var(--surface); overflow: auto; padding: 16px 18px; box-shadow: -10px 0 30px rgba(0,0,0,.18); transform: translateX(105%); visibility: hidden; transition: transform .22s ease, visibility 0s .22s; padding-right: max(18px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }
+#panel h2 { font: 700 22px/1.15 var(--display); margin: 0 0 4px; padding-right: 30px; text-wrap: balance; }
+body.open #panel { transform: none; visibility: visible; transition: transform .22s ease; }
+#pclose { position: sticky; top: 0; float: right; margin: -6px -6px 0 0; z-index: 1; background: var(--surface); }
 #panel h3 { font: 600 11px var(--ui); text-transform: uppercase; letter-spacing: .07em; color: var(--mut); margin: 18px 0 6px; }
 #panel p { margin: 6px 0; max-width: 65ch; }
 .crumbs { font-size: 12px; color: var(--mut); }
@@ -81,7 +83,7 @@ main { flex: 1; display: flex; min-height: 0; position: relative; }
 .legend span.sw { display: inline-block; width: 22px; height: 3px; vertical-align: middle; margin-right: 6px; }
 .heat { display: flex; gap: 2px; align-items: center; }
 .heat i { width: 18px; height: 10px; border-radius: 2px; }
-footer { border-top: 1px solid var(--line); background: var(--surface); padding-block: 3px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 10px; align-items: center; }
+footer { border-top: 1px solid var(--line); background: var(--surface); padding-top: 2px; padding-bottom: max(2px, env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 10px; align-items: center; }
 footer #play { padding: 1px 8px; }
 .track { position: relative; flex: 1 1 45%; min-width: 120px; height: 22px; }
 .track input { position: absolute; inset: 0; width: 100%; margin: 0; background: transparent; }
@@ -109,16 +111,9 @@ footer input[type=range] { accent-color: var(--acc); }
 .hint { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: var(--mut); background: color-mix(in srgb, var(--bg) 85%, transparent); padding: 4px 8px; border-radius: 6px; pointer-events: none; }
 .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; font-size: 12.5px; max-width: 280px; box-shadow: 0 6px 18px rgba(0,0,0,.15); z-index: 5; }
 @media (max-width: 760px) {
-  main { flex-direction: column; }
-  #panel { width: auto; max-width: none; height: 34%; border-left: 0; border-top: 1px solid var(--line); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  #panel { top: auto; left: 0; width: auto; max-width: none; height: 48%; border-left: 0; border-top: 1px solid var(--line); border-radius: 12px 12px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.18); transform: translateY(105%); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
   h1 small { display: none; }
 }
-/* full screen: only the drawing; the panel of a selected part floats over its lower edge */
-body.full footer { display: none; }
-body.full #panel { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px)); width: auto; max-width: 560px; height: auto; max-height: 38%; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.22); z-index: 6; }
-body.full.nosel #panel { display: none; }
-body.full .hint { display: none; }
-.fsx { position: absolute; z-index: 7; top: max(10px, env(safe-area-inset-top, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); background: var(--surface); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 
@@ -130,12 +125,9 @@ body.full .hint { display: none; }
   <button class="plain" id="flatBtn" aria-pressed="false" title="Flatten the view onto a plane">Flat</button>
   <div class="seg" id="segMetric" title="Colour by"><button data-v="part" aria-pressed="true">Part</button><button data-v="mem" aria-pressed="false" title="Memory">Mem</button><button data-v="store" aria-pressed="false" title="Storage">Store</button><button data-v="cpu" aria-pressed="false">CPU</button><button data-v="gpu" aria-pressed="false">GPU</button></div>
   <div class="seg" id="segFocus" title="With a part selected, show only…"><button data-v="all" aria-pressed="true">All</button><button data-v="up" aria-pressed="false" title="only what the selected part relies on">Relies on</button><button data-v="down" aria-pressed="false" title="only what relies on the selected part">Relied on by</button><button data-v="both" aria-pressed="false" title="only the selected part's connections">Both</button></div>
-  <select class="sm" id="selArr" aria-label="Arrangement"><option value="web">Web</option><option value="layers">Layers</option></select>
-  <select class="sm" id="selMetric" aria-label="Colour by"><option value="part">Part</option><option value="mem">Memory</option><option value="store">Storage</option><option value="cpu">CPU</option><option value="gpu">GPU</option></select>
-  <select class="sm" id="selFocus" aria-label="Show"><option value="all">All</option><option value="up">Relies on</option><option value="down">Relied on by</option><option value="both">Both</option></select>
   <label class="rng" title="How far apart the parts are"><span>Spacing</span> <input type="range" id="spread" min="0.4" max="3" step="0.05" value="1" aria-label="Spacing"></label>
   <button class="plain" id="optBtn" aria-expanded="false" title="Options"><span class="t">Options </span>▾</button>
-  <button class="plain" id="fsBtn" title="Full screen">⛶<span class="t"> Full screen</span></button>
+  <button class="plain" id="infoBtn" title="How to read the drawing" aria-label="How to read the drawing">ⓘ</button>
 </header>
 <div class="menu" id="opts" hidden>
   <label class="chk"><input type="checkbox" id="ind" checked> Load indicators</label>
@@ -146,7 +138,7 @@ body.full .hint { display: none; }
 </div>
 <main>
   <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><div class="hint" id="hint">Drag to turn (flat: to move) · pinch or scroll to zoom · twirl with two fingers · drag a part to pull it · double-tap to open it</div><div class="tip" id="tip" hidden></div></div>
-  <aside id="panel"></aside>
+  <aside id="panel" aria-label="About the part"><button class="plain" id="pclose" aria-label="Close">✕</button><div id="pbody"></div></aside>
 </main>
 <footer>
   <button class="plain" id="play" aria-label="Play through the versions">▶</button>
@@ -160,7 +152,7 @@ addEventListener('error', e => { const h = document.getElementById('hint'); if (
 addEventListener('unhandledrejection', e => { const h = document.getElementById('hint'); if (h) { h.textContent = 'Error: ' + (e.reason?.message || e.reason); h.style.color = '#c2410c'; } });
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const METRICS = { mem: 'Memory', store: 'Storage', cpu: 'CPU', gpu: 'GPU' };
-const S = { arr: 'web', flat: false, metric: 'part', ind: true, offv: false, lbl: false, exp: new Set(), sel: null, ver: 0, depth: 1, focus: 'all', spread: 1, rot: 0 };
+const S = { info: false, arr: 'web', flat: false, metric: 'part', ind: true, offv: false, lbl: false, exp: new Set(), sel: null, ver: 0, depth: 1, focus: 'all', spread: 1, rot: 0 };
 try { const k = JSON.parse(localStorage.getItem('atlas') || '{}'); Object.assign(S, { spread: k.spread || 1, arr: k.arr === 'layers' ? 'layers' : 'web', flat: !!k.flat, metric: k.metric || 'part', ind: k.ind ?? true }); } catch (_) {}
 const keep = () => { try { localStorage.setItem('atlas', JSON.stringify({ arr: S.arr, flat: S.flat, metric: S.metric, ind: S.ind, spread: S.spread })); } catch (_) {} };
 let MODEL, HIST, N = new Map(), OWN = new Map(), V = null, CK = [];
@@ -235,6 +227,20 @@ function fill(id) {
   return css('--h' + rating(id, S.metric));
 }
 const BW = 168, BH = 50;
+const FAR0 = 70, FAR1 = 105;   // a card narrower on screen than FAR0 px shows only its name, large; wider than FAR1 px the whole card
+function farLabel(x, id, q, al, isSel, chg) {   // a distant part: its name in large letters, a bar of its colour beneath; returns its hit box
+  const fs = Math.round(15 + 6 * Math.min(1, BW * q.s / FAR1)), maxW = 200, words = N.get(id).name.split(' '), ln = [''];
+  x.font = `700 ${fs}px "Source Sans 3", sans-serif`;
+  for (const w of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + w : w; if (x.measureText(t).width > maxW && ln[ln.length - 1] && ln.length < 2) ln.push(w); else ln[ln.length - 1] = t; }
+  if (x.measureText(ln[ln.length - 1]).width > maxW) { let t = ln[ln.length - 1]; while (t.length > 3 && x.measureText(t + '…').width > maxW) t = t.slice(0, -1); ln[ln.length - 1] = t + '…'; }
+  const lh = fs * 1.08, top = q.y - (ln.length * lh) / 2, wd = Math.max(...ln.map(t => x.measureText(t).width));
+  x.save(); x.globalAlpha = al; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
+  x.lineWidth = 4; x.strokeStyle = css('--bg'); x.fillStyle = isSel ? css('--acc') : css('--ink');
+  ln.forEach((t, i) => { const y = top + lh * (i + 0.5); x.strokeText(t, q.x, y); x.fillText(t, q.x, y); });
+  const by = top + ln.length * lh + 2; x.fillStyle = fill(id); x.fillRect(q.x - wd / 2, by, wd, 4);
+  if (isSel || chg) { x.strokeStyle = isSel ? css('--acc') : css('--flow'); x.lineWidth = 1.5; x.setLineDash(chg && !isSel ? [4, 3] : []); x.strokeRect(q.x - wd / 2 - 0.5, by - 0.5, wd + 1, 5); x.setLineDash([]); }
+  x.restore(); return { id, x: q.x, y: q.y + 3, w: wd / 2 + 6, h: (ln.length * lh) / 2 + 8 };
+}
 function draw(refit) {
   V = V || computeVersion(S.ver);
   let vis = visible(), visSet = new Set(vis), edges = visEdges(visSet);
@@ -381,7 +387,9 @@ function frame3d(now) {
   const order = [...P.entries()].sort((a, b) => b[1].z - a[1].z); T3.drawn = [];
   for (const [id, q] of order) { const p = T3.nodes.get(id), cn = N.get(id);
     let al = fog(q.z); if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al *= 0.18; if (S.offv && netOf(id) === 'online') al *= 0.35;
-    x.save(); x.globalAlpha = al; x.translate(q.x, q.y); x.rotate(p.th); const k = q.s * p.sc; x.scale(k, k);
+    const k = q.s * p.sc, near = Math.max(0, Math.min(1, (BW * k - FAR0) / (FAR1 - FAR0)));   // 0: far – the name alone, 1: the card
+    if (near < 1) { const b = farLabel(x, id, q, al * (1 - near), id === sel, V.chg.has(id) && S.ver > 0); if (near === 0) { T3.drawn.push(b); continue; } }
+    x.save(); x.globalAlpha = al * near; x.translate(q.x, q.y); x.rotate(p.th); x.scale(k, k);
     x.beginPath(); rrect(x, -BW / 2, -BH / 2, BW, BH, 9); x.fillStyle = fill(id); x.fill();
     x.lineWidth = (id === sel ? 3 : V.chg.has(id) && S.ver > 0 ? 2 : 1) / k * Math.min(1, k * 1.5); x.strokeStyle = id === sel ? css('--acc') : V.chg.has(id) && S.ver > 0 ? css('--flow') : css('--line'); x.setLineDash(V.chg.has(id) && S.ver > 0 && id !== sel ? [4, 3] : []); x.stroke(); x.setLineDash([]);
     if (BW * k > 50) {   // the writing, once the card is big enough to read
@@ -434,7 +442,7 @@ cv3.addEventListener('pointermove', e => {
 const up3 = e => { T3.ptrs.delete(e.pointerId); if (T3.ptrs.size < 2) T3.pinch = null; const d = T3.drag; T3.drag = null; if (!d || d.moved) { run3d(); return; }
   const now = Date.now(), id = d.id;
   if (id && T3.lastTap?.id === id && now - T3.lastTap.t < 350) { T3.lastTap = null; toggle(id); return; }
-  T3.lastTap = { id, t: now }; select(id && S.sel !== id ? id : null); };
+  T3.lastTap = { id, t: now }; if (!id) S.info = false; select(id && S.sel !== id ? id : null); };
 cv3.addEventListener('pointerup', up3); cv3.addEventListener('pointercancel', e => { T3.ptrs.delete(e.pointerId); T3.drag = null; T3.pinch = null; });
 cv3.addEventListener('wheel', e => { e.preventDefault(); T3.cam.dist = Math.max(300, Math.min(20000, T3.cam.dist * Math.exp(e.deltaY * 0.0012))); T3.camTo = null; run3d(); }, { passive: false });
 cv3.addEventListener('pointerleave', () => { $('#tip').hidden = true; });
@@ -442,7 +450,8 @@ cv3.addEventListener('pointerleave', () => { $('#tip').hidden = true; });
 // ---------------------------------------------------------------- the panel
 function bars(v) { return `<div class="bar">${[1, 2, 3, 4, 5].map(i => `<i style="background:${i <= v ? css('--h' + v) : ''}"></i>`).join('')}</div>`; }
 function renderPanel() {
-  const P = $('#panel'); const id = S.sel; document.body.classList.toggle('nosel', !id);
+  const P = $('#pbody'); const id = S.sel; if (id) S.info = false; const open = !!id || S.info;
+  document.body.classList.toggle('open', open); $('#panel').inert = !open; $('#infoBtn').setAttribute('aria-pressed', !id && S.info);
   if (!id) {
     const vs = HIST[S.ver], kinds = MODEL.l1.filter(l => V.ex.has(l.id));
     P.innerHTML = `<h2>Pult, part by part</h2><p>Every part of the app, what it does, what it relies on and what it costs your device. Open a part to see what it is made of, down to its functions.</p>
@@ -528,9 +537,8 @@ $('#ver').oninput = e => setVer(+e.target.value, true);
 
 // ---------------------------------------------------------------- controls
 function seg(sel, key, cb) {
-  const dd = $(sel.replace('#seg', '#sel')), set = v => { S[key] = v; [...$(sel).children].forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v)); if (dd) dd.value = v; };
+  const set = v => { S[key] = v; [...$(sel).children].forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v)); };
   $(sel).onclick = e => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); keep(); cb?.(); draw(); };
-  if (dd) dd.onchange = () => { set(dd.value); keep(); cb?.(); draw(); };
   set(S[key]);
 }
 seg('#segArr', 'arr', () => { T3.alpha = 1; T3.fitNext = true; }); seg('#segMetric', 'metric'); seg('#segFocus', 'focus', () => { if (S.focus !== 'all' && !S.sel) note2('Select a part first'); T3.fitNext = true; });
@@ -549,14 +557,10 @@ if (S.flat) Object.assign(T3.cam, { yaw: 0, pitch: 0, roll: 0 });
 function note2(t) { const h = $('#hint'), o = h.textContent; h.textContent = t; setTimeout(() => { h.textContent = o; }, 1800); }
 $('#spread').value = S.spread;
 $('#spread').oninput = e => { S.spread = +e.target.value; keep(); T3.alpha = Math.max(T3.alpha, 0.6); run3d(); };
-function setFull(on) {
-  document.body.classList.toggle('full', on); $('#fsBtn').innerHTML = on ? '✕' : '⛶'; $('#fsBtn').title = on ? 'Leave full screen' : 'Full screen';
-  try { if (on && !document.fullscreenElement) document.documentElement.requestFullscreen?.()?.catch?.(() => {}); else if (!on && document.fullscreenElement) document.exitFullscreen?.(); } catch (_) {}
-  setTimeout(() => { draw(); T3.fitNext = true; run3d(); }, 120);
-}
-$('#fsBtn').onclick = () => setFull(!document.body.classList.contains('full'));
-document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('full')) setFull(false); });
-addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('full')) setFull(false); });
+function closePanel() { S.info = false; if (S.sel) select(null); else renderPanel(); }
+$('#pclose').onclick = closePanel;
+$('#infoBtn').onclick = () => { if (!S.sel && S.info) closePanel(); else { S.info = true; if (S.sel) select(null); else renderPanel(); } };
+addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('open') && !e.target.closest('input')) closePanel(); });
 $('#optBtn').onclick = () => { const m = $('#opts'), open = m.hidden; m.hidden = !open; $('#optBtn').setAttribute('aria-expanded', open); if (open) m.style.top = ($('header').getBoundingClientRect().bottom + 6) + 'px'; };
 document.addEventListener('pointerdown', e => { if (!$('#opts').hidden && !e.target.closest('#opts, #optBtn')) { $('#opts').hidden = true; $('#optBtn').setAttribute('aria-expanded', false); } });
 $('#ind').checked = S.ind; $('#ind').onchange = e => { S.ind = e.target.checked; keep(); draw(); };
@@ -581,5 +585,5 @@ addEventListener('resize', () => draw());
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => draw());
 
 load().then(() => { $('#ver').max = HIST.length - 1; $('#ver').value = S.ver; setVer(S.ver); })
-  .catch(e => { $('#panel').innerHTML = `<h2>Could not load</h2><p>${esc(e.message)}</p>`; });
+  .catch(e => { $('#pbody').innerHTML = `<h2>Could not load</h2><p>${esc(e.message)}</p>`; document.body.classList.add('open'); $('#panel').inert = false; });
 </script>
