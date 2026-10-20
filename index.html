@@ -212,7 +212,7 @@ footer input[type=range] { accent-color: var(--acc); }
 #divider:hover::after, #divider.drag::after { background: var(--acc); }
 .touch #divider { width: 28px; margin: 0 -14px; } .touch #divider::after { width: 8px; height: 64px; }
 @media (max-width: 760px) { #divider { width: auto; height: 16px; margin: -8px 0; cursor: row-resize; } #divider::after { width: 48px; height: 6px; } .touch #divider { width: auto; height: 28px; margin: -14px 0; } .touch #divider::after { width: 64px; height: 8px; } }
-body:not(.v-space) #segArr, body:not(.v-space) #flatBtn, body:not(.v-space) .rng { display: none; }
+#segArr, #flatBtn { display: none !important; } body:not(.v-space) #segSnap, body:not(.v-space) .rng { display: none; }
 .sizes { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 @media (max-width: 560px) { .touch .seg button, .touch button.plain, .touch header .seg button, .touch header button.plain { padding: 0 9px; } .touch .rng input { width: 64px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
@@ -227,11 +227,12 @@ body:not(.v-space) #segArr, body:not(.v-space) #flatBtn, body:not(.v-space) .rng
   <div class="search"><input id="q" type="search" placeholder="Find a part or function…" autocomplete="off" aria-label="Find a part"><div class="results" id="res" hidden></div></div>
   <div class="seg" id="segView" title="View"><button data-v="flow" aria-label="Flow: columns from sources to screen">Flow</button><button data-v="map" aria-label="Map: regions with their parts">Map</button><button data-v="focus" aria-label="Focus: one part and its neighbours">Focus</button><button data-v="space" aria-label="Space: cards on strings in 3D">Space</button></div>
   <div class="seg" id="segLines" title="Which lines to draw"><button data-l="ldata" title="data flows (dashed, violet)">Data</button><button data-l="lcode" title="code that calls other code (grey)">Code</button><button data-l="lsel" title="only the lines of the selected or lit parts"><span class="l">Selected only</span><span class="s">Sel.</span></button></div>
+  <div class="seg" id="segSnap" title="Turn the tower to"><button data-snap="front">Front</button><button data-snap="top">Top</button><button data-snap="corner">Corner</button></div>
   <div class="seg" id="segArr" title="Arrangement"><button data-v="web" aria-pressed="true">Web</button><button data-v="layers" aria-pressed="false" aria-label="Layers"><span class="l">Layers</span><span class="s">Lay</span></button></div>
   <button class="plain" id="flatBtn" aria-pressed="false" title="Flatten the view onto a plane">Flat</button>
   <div class="seg" id="segMetric" title="Colour by"><button data-v="part" aria-pressed="true">Part</button><button data-v="mem" aria-pressed="false" title="Memory">Mem</button><button data-v="store" aria-pressed="false" title="Storage" aria-label="Storage"><span class="l">Store</span><span class="s">Sto</span></button><button data-v="cpu" aria-pressed="false">CPU</button><button data-v="gpu" aria-pressed="false">GPU</button></div>
   <div class="seg" id="segFocus" title="With a part selected, show only…"><button data-v="all" aria-pressed="true">All</button><button data-v="up" aria-pressed="false" title="only what the selected part relies on" aria-label="Relies on"><span class="l">Relies on</span><span class="s">↑</span></button><button data-v="down" aria-pressed="false" title="only what relies on the selected part" aria-label="Relied on by"><span class="l">Relied on by</span><span class="s">↓</span></button><button data-v="both" aria-label="Both" aria-pressed="false" title="only the selected part's connections"><span class="l">Both</span><span class="s">↕</span></button></div>
-  <label class="rng" title="How far apart the parts are"><span>Spacing</span> <input type="range" id="spread" min="0.4" max="3" step="0.05" value="1" aria-label="Spacing"></label>
+  <label class="rng" title="The height between the floors"><span>Floors</span> <input type="range" id="spread" min="0.4" max="3" step="0.05" value="1" aria-label="Spacing"></label>
   <button class="plain" id="optBtn" aria-expanded="false" title="Options"><span class="t">Options </span>▾</button>
   <canvas id="mini" aria-label="Overview: the main parts by floor; tap one to go there"></canvas>
   <button class="plain" id="guideBtn" aria-pressed="false" title="Guided walks, start-up, traces, data, health, versions" aria-label="Explore"><span class="l">Explore</span><span class="s">✦</span></button>
@@ -364,10 +365,10 @@ function draw(refit) {
     if (S.focus !== 'down') r.up.forEach((_, x) => k.add(x)); if (S.focus !== 'up') r.down.forEach((_, x) => k.add(x));
     vis = vis.filter(x => k.has(x)); visSet = k; edges = edges.filter(e => k.has(e.a) && k.has(e.b)); }
   L = { vis, edges: edges.filter(lineOn) };
-  if (S.view === 'space') draw3d(vis, edges, refit); else lay2d();
+  if (S.view === 'space') TW3.lay = layTower(vis); else lay2d();
   run3d(); renderPanel();
 }
-function fit(id) { return S.view === 'space' ? fit3d(id) : fit2d(id); }
+function fit(id) { return S.view === 'space' ? fitTower(id) : fit2d(id); }
 function toggle(id) { if (!N.get(id).children.some(x => V.ex.has(x))) { select(id); return; } if (S.exp.has(id)) S.exp.delete(id); else S.exp.add(id); draw(); }
 // the way back and forward through the parts looked at (and nothing selected – the whole view – counts as a stop too)
 const NAV = { list: [null], pos: 0 };
@@ -432,7 +433,7 @@ function draw3d(vis, edges, refit) {
   run3d();
 }
 function stop3d() { cancelAnimationFrame(T3.raf); T3.raf = 0; }
-function run3d() { if (!T3.raf) T3.raf = requestAnimationFrame(S.view === 'space' ? frame3d : frame2d); }
+function run3d() { if (!T3.raf) T3.raf = requestAnimationFrame(S.view === 'space' ? frameTower : frame2d); }
 function tick3d() {   // the forces: parts push each other apart, strings pull connected parts together, each main part keeps to its region
   const ns = [...T3.nodes.values()], a = T3.alpha, n = ns.length, pin = S.sel && T3.nodes.has(S.sel) && T3.drag?.id !== S.sel ? S.sel : null;
   for (let i = 0; i < n; i++) { const p = ns[i];
@@ -574,7 +575,7 @@ cv3.addEventListener('pointermove', e => { if (S.view !== 'space') return move2(
   const d = T3.drag;
   if (!d) { const id = hit3d(e.offsetX, e.offsetY); if (id) tip(e, id); else $('#tip').hidden = true; return; }
   const dx = e.offsetX - d.x, dy = e.offsetY - d.y; d.x = e.offsetX; d.y = e.offsetY; if (Math.hypot(e.offsetX - d.x0, e.offsetY - d.y0) > 4) d.moved = true;
-  if (d.id) {   // pulling a part: it follows the finger, its strings pull the others
+  if (false) {   // (parts are never pulled: in the tower everything stays where it is placed)
     const p = T3.nodes.get(d.id), B = camBasis(), H = cv3.clientHeight, q = proj(B, p, cv3.clientWidth, H, H * 0.95); if (!q) return; const u = 1 / q.s;
     p.x += (B.right[0] * dx - B.up[0] * dy) * u; p.y += (B.right[1] * dx - B.up[1] * dy) * u; p.z += (B.right[2] * dx - B.up[2] * dy) * u; T3.alpha = Math.max(T3.alpha, 0.25);
   } else if (e.shiftKey) { T3.cam.roll = (T3.cam.roll || 0) + dx * 0.006; } else if (S.flat) { pan3d(dx, dy); } else { T3.cam.yaw -= dx * 0.006; T3.cam.pitch = Math.max(-1.45, Math.min(1.45, T3.cam.pitch + dy * 0.006)); }
@@ -607,8 +608,8 @@ function renderPanel() {
       <div class="heat">${[0, 1, 2, 3, 4, 5].map(i => `<i style="background:var(--h${i})" title="${i}"></i>`).join('')}<span style="margin-left:6px">none … very high</span></div>
       <div><span class="sw" style="border-top:2px dashed var(--flow);background:none;height:0"></span>dashed outline: changed in the version shown</div>
       <div>Selecting a part shows its direct links; <i>Whole chains</i> (Options) follows them further. <i>Relies on / Relied on by / Both</i> then hides everything else.</div>
-      <div><i>Web</i> lets the parts find their places in space; <i>Layers</i> sets them on four floors, from what you see down to data and sources. <i>Flat</i> lays either onto a plane. Spacing moves the parts closer or further apart. Twirl with two fingers (or Shift + drag). ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
-      <div>Four views of the same parts, the selection kept between them: <b>Flow</b> – columns from the sources on the left to the screen on the right; <b>Map</b> – each main part as a region with its parts, ribbons for how much they connect; <b>Focus</b> – the selected part in the middle, data coming in on the left and going out on the right, the code it calls above and the code calling it below; <b>Space</b> – the cards on strings in 3D. <b>Data</b>, <b>Code</b> and <b>Selected only</b> choose the lines, in any combination.</div>
+      <div>In <i>Space</i>, drag to turn the tower, pinch or scroll to zoom; <i>Front</i>, <i>Top</i> and <i>Corner</i> turn it for you, <i>Floors</i> sets the height between the floors. Far away, parts are chips in their colour; nearer, their names; near, the whole card. ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
+      <div>Four views of the same parts, the selection kept between them: <b>Flow</b> – columns from the sources on the left to the screen on the right; <b>Map</b> – each main part as a region with its parts, ribbons for how much they connect; <b>Focus</b> – the selected part in the middle, data coming in on the left and going out on the right, the code it calls above and the code calling it below; <b>Space</b> – a tower of four floors, the sources at the bottom and the screen on top: every main part a plot on its floor with its parts standing on it, lines between floors running straight up or down a shaft; Front, Top and Corner turn it, Floors sets their height. <b>Data</b>, <b>Code</b> and <b>Selected only</b> choose the lines, in any combination.</div>
       <div>In Flow, lines between parts of the same column are drawn only for the selected part (↕ on a card counts them), and the lines of an opened group are bundled into one ribbon per partner until a part is selected. Zoomed out, cards show only their names.</div>
       <div><b>Explore</b> opens guided walks through Pult, its start-up, traces of functions, where data comes from and goes, its health and comparisons between versions; the parts concerned light up, numbered by step.</div>
       <div>The strip of coloured boxes in the top bar shows the main parts by floor: bright ones are on screen, the framed one holds the selected part. Tap one to go there (Options → Overview strip).</div>
@@ -909,6 +910,135 @@ function move2(e) {
 }
 function wheel2(e) { const k = Math.max(0.12, Math.min(4, T2.k * Math.exp(-e.deltaY * 0.0015))), wx = (e.offsetX - T2.x) / T2.k, wy = (e.offsetY - T2.y) / T2.k; T2.k = k; T2.x = e.offsetX - wx * k; T2.y = e.offsetY - wy * k; T2.to = null; run3d(); }
 
+// ---------------------------------------------------------------- Space: a tower of four floors (sources at the bottom, the screen on top)
+// Every main part is a plot on its floor, its parts upright cards in rows on the plot; lines between floors run straight
+// up or down a shaft and across, never diagonally. Everything is placed by rule: nothing moves but the camera.
+const TW3 = { lay: null };
+const FLOORS = ['sources', 'engines', 'behind', 'screen'], FLOORNAME = { sources: 'Sources', engines: 'Engines', behind: 'Stored and behind the scenes', screen: 'On screen' };
+function layTower(vis) {
+  const items = new Map();
+  for (const l of MODEL.l1) { if (!V.ex.has(l.id)) continue;
+    let its = vis.filter(id => N.get(id).l1 === l.id);
+    if (its.length === 1 && its[0] === l.id) { const kids = N.get(l.id).children.filter(c => V.ex.has(c)); if (kids.length) its = kids; }
+    if (its.length) items.set(l.id, its); }
+  const all = new Set([...items.values()].flat()), edges = visEdges(all).filter(lineOn);
+  const TX = CW + 40, TZ = 150, PM = 50, FH = 560 * S.spread, pos = new Map(), plots = [], floors = [], groups = [];
+  FLOORS.forEach((t, fi) => {
+    const ls = MODEL.l1.filter(l => l.tier === t && items.has(l.id)); if (!ls.length) return;
+    const y = fi * FH;
+    // each plot: its own parts first, then each opened part as its own framed rows
+    const ps = ls.map(l => { const its = items.get(l.id), top = [], subs = new Map();
+      its.forEach(id => { const par = N.get(id).parent; if (!par || par === l.id) top.push(id); else (subs.get(par) || subs.set(par, []).get(par)).push(id); });
+      const cols = Math.max(1, Math.min(4, Math.ceil(Math.sqrt(its.length * 1.3)))), gs = [...subs].sort((a, b) => a[0].localeCompare(b[0]));
+      const rows = Math.ceil(top.length / cols) + gs.reduce((s, [, ids]) => s + Math.ceil(ids.length / cols) + 0.6, 0);
+      return { l, top, gs, cols, w: cols * TX + PM, d: Math.max(1, rows) * TZ + PM + 40 }; });
+    // plots side by side, wrapping into rows about this wide; the floor centred under the tower's axis
+    const WRAP = 2400, lines = [[]]; let lw = 0;
+    ps.forEach(p => { if (lw && lw + 80 + p.w > WRAP) { lines.push([]); lw = 0; } lines[lines.length - 1].push(p); lw += (lw ? 80 : 0) + p.w; });
+    let z = 0; const placed = [];
+    lines.forEach(ln => { const tw = ln.reduce((s, p) => s + p.w, 0) + (ln.length - 1) * 80; let x = -tw / 2, dz = 0;
+      ln.forEach(p => { p.x = x; p.z = z; x += p.w + 80; dz = Math.max(dz, p.d); placed.push(p); }); z += dz + 80; });
+    const zoff = -(z - 80) / 2; placed.forEach(p => p.z += zoff);
+    const x0 = Math.min(...placed.map(p => p.x)) - 70, x1 = Math.max(...placed.map(p => p.x + p.w)) + 70, z0 = Math.min(...placed.map(p => p.z)) - 70, z1 = Math.max(...placed.map(p => p.z + p.d)) + 70;
+    floors.push({ t, y, x0, x1, z0, z1 });
+    placed.forEach(p => { plots.push({ id: p.l.id, y, x0: p.x, x1: p.x + p.w, z0: p.z, z1: p.z + p.d });
+      let r = 0; const put = (ids, ind) => ids.forEach((id, i) => { const c = i % p.cols, rr = Math.floor(i / p.cols);
+        pos.set(id, { x: p.x + PM / 2 + ind + c * TX + CW / 2, y: y + CH / 2 + 8, z: p.z + PM / 2 + 40 + (r + rr) * TZ, fl: fi, plot: p.l.id }); });
+      put(p.top, 0); r += Math.ceil(p.top.length / p.cols);
+      p.gs.forEach(([par, ids]) => { const zA = p.z + PM / 2 + 40 + (r + 0.3) * TZ - TZ / 2, n = Math.ceil(ids.length / p.cols);
+        r += 0.3; put(ids, 0); groups.push({ id: par, y, x0: p.x + 12, x1: p.x + p.w - 12, z0: zA - 10, z1: zA + n * TZ + 6 }); r += n + 0.3; }); }); });
+  const bundles = new Map(); edges.forEach(e => { const a = N.get(e.a).l1, b = N.get(e.b).l1; if (a === b) return; const k = a + '>' + b + '>' + e.kind; const o = bundles.get(k) || bundles.set(k, { a, b, kind: e.kind, n: 0 }).get(k); o.n += e.n; });
+  return { pos, edges, plots, floors, groups, bundles: [...bundles.values()], FH };
+}
+const plotC = (lay, id) => { const p = lay.plots.find(p => p.id === id); return p && { x: (p.x0 + p.x1) / 2, y: p.y, z: (p.z0 + p.z1) / 2 }; };
+function shaft(a, b, FH, ca, cb) {   // a line between floors: straight up or down, across at the half-floor, then to the other end
+  if (Math.abs(a.y - b.y) < 1) { const top = a.y + CH + 150; return [{ x: a.x, y: a.y + (ca ? CH / 2 : 0), z: a.z }, { x: a.x, y: top, z: a.z }, { x: b.x, y: top, z: b.z }, { x: b.x, y: b.y + (cb ? CH / 2 : 0), z: b.z }]; }
+  const up = b.y > a.y, ym = (Math.max(a.y, b.y) - FH / 2) + (up ? 0 : 0) - 30;
+  const ay = up ? a.y + (ca ? CH + 8 : 0) : a.y, by = up ? b.y : b.y + (cb ? CH + 8 : 0);
+  return [{ x: a.x, y: ay, z: a.z }, { x: a.x, y: ym, z: a.z }, { x: b.x, y: ym, z: b.z }, { x: b.x, y: by, z: b.z }];
+}
+function frameTower(now) {
+  T3.raf = 0;
+  const dpr = devicePixelRatio || 1, W = cv3.clientWidth, H = cv3.clientHeight; if (!W || !H) return;
+  if (cv3.width !== Math.round(W * dpr) || cv3.height !== Math.round(H * dpr)) { cv3.width = Math.round(W * dpr); cv3.height = Math.round(H * dpr); }
+  const x = c3; x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, W, H); T3.drawn = [];
+  const lay = TW3.lay; if (!lay) return;
+  if (T3.fitAll) { T3.fitAll = false; fitTower(null, true); }
+  const c = T3.cam; let moving = false;
+  if (T3.camTo) { const t = T3.camTo; let done = true; for (const k of ['tx', 'ty', 'tz', 'dist', 'yaw', 'pitch', 'roll']) { if (t[k] == null) continue; c[k] = (c[k] || 0) + (t[k] - (c[k] || 0)) * 0.14; if (Math.abs(t[k] - c[k]) > (k[0] === 't' ? 0.5 : k === 'dist' ? 1 : 1e-3)) done = false; } if (done) { Object.assign(c, t); T3.camTo = null; } else moving = true; }
+  const f = H * 0.95, B = camBasis(), P = pt => proj(B, pt, W, H, f);
+  const quad = (y, x0, x1, z0, z1) => { const ps = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([a, b]) => P({ x: a, y, z: b })); return ps.every(Boolean) ? ps : null; };
+  const sel = S.sel && lay.pos.has(S.sel) ? S.sel : null, r = sel ? reach(sel, lay.edges) : null, HV = visHL(lay.pos);
+  const selPlot = sel && lay.pos.get(sel).plot, dk = dark2();
+  // floors: glass plates with their names
+  for (const fl of lay.floors) { const q = quad(fl.y, fl.x0, fl.x1, fl.z0, fl.z1); if (!q) continue;
+    x.beginPath(); q.forEach((p, i) => i ? x.lineTo(p.x, p.y) : x.moveTo(p.x, p.y)); x.closePath();
+    x.globalAlpha = dk ? 0.35 : 0.5; x.fillStyle = css('--soft'); x.fill(); x.globalAlpha = 0.8; x.lineWidth = 1.2; x.strokeStyle = css('--line'); x.stroke();
+    const lp = P({ x: fl.x0 + 20, y: fl.y, z: fl.z1 }); if (lp) { x.globalAlpha = 0.9; x.fillStyle = css('--mut'); x.font = `italic ${Math.round(16 * KZ())}px "Gentium Book Plus", Georgia, serif`; x.textAlign = 'left'; x.textBaseline = 'top'; x.fillText(FLOORNAME[fl.t], lp.x + 4, lp.y + 4); } }
+  // plots of the main parts, and the framed areas of opened parts
+  for (const p of lay.plots) { const q = quad(p.y + 2, p.x0, p.x1, p.z0, p.z1); if (!q) continue;
+    x.beginPath(); q.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath();
+    const lit = !HV.size || [...HV.keys()].some(k => N.get(k).l1 === p.id) || p.id === selPlot;
+    x.globalAlpha = lit ? 0.75 : 0.3; x.fillStyle = `hsl(${HUE(p.id)} 40% ${dk ? 26 : 82}%)`; x.fill(); x.globalAlpha = lit ? 1 : 0.4; x.lineWidth = S.sel === p.id ? 3 : 1.4; x.strokeStyle = S.sel === p.id ? css('--acc') : `hsl(${HUE(p.id)} 40% ${dk ? 48 : 58}%)`; x.stroke();
+    x.globalAlpha = 1; }
+  for (const g of lay.groups) { const q = quad(g.y + 3, g.x0, g.x1, g.z0, g.z1); if (!q) continue;
+    x.beginPath(); q.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath(); x.globalAlpha = 0.9; x.lineWidth = 2; x.strokeStyle = `hsl(${HUE(g.id)} 45% ${dk ? 55 : 45}%)`; x.setLineDash([6, 4]); x.stroke(); x.setLineDash([]);
+    const lp = P({ x: g.x0 + 10, y: g.y + 3, z: g.z0 + 14 }); if (lp) { x.fillStyle = S.sel === g.id ? css('--acc') : css('--ink'); x.font = `700 ${Math.round(Math.max(11, Math.min(17, 46 * lp.s)) * KZ())}px "Source Sans 3", sans-serif`; x.textAlign = 'left'; x.textBaseline = 'middle'; x.fillText('▾ ' + N.get(g.id).name, lp.x, lp.y); T3.drawn.push({ id: g.id, x: lp.x + 40, y: lp.y, w: 50, h: 10 }); }
+    x.globalAlpha = 1; }
+  // lines: with nothing selected one bundle per pair of main parts on different floors; with a part selected its own lines
+  const dep = e => e.kind === 'code' ? [e.a, e.b] : [e.b, e.a];
+  const drawPath = (pts, col, al, w, dash) => { const ps = pts.map(P); if (ps.some(v => !v)) return; x.globalAlpha = al; x.strokeStyle = col; x.fillStyle = col; x.lineWidth = w; x.lineJoin = 'round'; x.setLineDash(dash ? [7, 5] : []);
+    x.beginPath(); ps.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.stroke(); x.setLineDash([]);
+    const a = ps[ps.length - 2], b = ps[ps.length - 1], an = Math.atan2(b.y - a.y, b.x - a.x), h = 5 + w * 1.5; x.beginPath(); x.moveTo(b.x, b.y); x.lineTo(b.x - h * Math.cos(an - 0.4), b.y - h * Math.sin(an - 0.4)); x.lineTo(b.x - h * Math.cos(an + 0.4), b.y - h * Math.sin(an + 0.4)); x.fill(); };
+  const selP = !sel && S.sel && lay.plots.some(p => p.id === S.sel) ? S.sel : null;
+  if (selP) for (const o of lay.bundles) { if (o.a !== selP && o.b !== selP) continue; const a = plotC(lay, o.a), b = plotC(lay, o.b); if (!a || !b) continue;
+    const relies = o.kind === 'code' ? o.a === selP : o.b === selP;   // (uses the other's code, or takes its data)
+    drawPath(shaft(a, b, lay.FH, false, false), relies ? css('--up') : css('--down'), 0.9, Math.min(6, 1.4 + Math.log2(1 + o.n) * 0.8), o.kind === 'flow'); }
+  if (!sel && !selP && !S.lsel) for (const o of lay.bundles) { const a = plotC(lay, o.a), b = plotC(lay, o.b); if (!a || !b || Math.abs(a.y - b.y) < 1) continue;
+    const lit = !HV.size || ([...HV.keys()].some(k => N.get(k).l1 === o.a) && [...HV.keys()].some(k => N.get(k).l1 === o.b));
+    drawPath(shaft(a, b, lay.FH, false, false), o.kind === 'flow' ? css('--flow') : css('--mut'), lit ? 0.28 : 0.04, Math.min(6, 1 + Math.log2(1 + o.n) * 0.8), o.kind === 'flow'); }
+  for (const e of lay.edges) { const a = lay.pos.get(e.a), b = lay.pos.get(e.b); if (!a || !b) continue;
+    let col = null, al = 0.9;
+    if (sel) { const [u, v] = dep(e), up = (u === sel && r.up.has(v)) || (r.up.has(u) && r.up.has(v) && r.up.get(v) > r.up.get(u)), dn = (v === sel && r.down.has(u)) || (r.down.has(u) && r.down.has(v) && r.down.get(u) > r.down.get(v));
+      col = up ? css('--up') : dn ? css('--down') : null; }
+    else if (HV.size && HV.has(e.a) && HV.has(e.b)) col = e.kind === 'flow' ? css('--flow') : css('--ink');
+    if (!col) continue;
+    drawPath(shaft(a, b, lay.FH, true, true), col, al, Math.min(4, 1.2 + Math.log2(1 + e.n) * 0.6), e.kind === 'flow'); }
+  // the cards, upright and facing the viewer, far ones first
+  const cards = [...lay.pos].map(([id, p]) => [id, P(p)]).filter(v => v[1]).sort((a, b) => b[1].z - a[1].z);
+  const kSave = T2.k;
+  for (const [id, q] of cards) { let al = 1; if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al = 0.3; const hv = HV.get(id); if (!sel && HV.size && !hv) al = 0.25; if (S.offv && netOf(id) === 'online') al *= 0.35;
+    const mk = id === sel ? css('--acc') : hv ? hlCol(hv.t) : null;
+    if (CW * q.s < 74 * KZ()) {   // far: a chip in the part's colour, the plot's name says what is there
+      const w = Math.max(8, CW * q.s), h = Math.max(5, CH * q.s); x.globalAlpha = al; x.beginPath(); rrect(x, q.x - w / 2, q.y - h / 2, w, h, Math.min(4, h / 2)); x.fillStyle = fill(id); x.fill();
+      x.lineWidth = mk ? 2.5 : 0.8; x.strokeStyle = mk || css('--line'); x.stroke(); x.globalAlpha = 1; }
+    else { x.save(); x.translate(q.x, q.y); x.scale(q.s, q.s); T2.k = q.s;
+    paintCard2(x, id, { x: 0, y: 0, w: CW / 2, h: CH / 2 }, mk, al);
+    x.restore(); } const sb = { id, x: q.x, y: q.y, w: CW / 2 * q.s, h: CH / 2 * q.s }; T3.drawn.push(sb); if (hv?.n) badge(x, sb, hv, 1); }
+  T2.k = kSave; x.globalAlpha = 1;
+  // the names of the plots, last, on the edge facing the viewer, with a halo so cards never hide them
+  for (const p of lay.plots) { const cx = (p.x0 + p.x1) / 2, cz = (p.z0 + p.z1) / 2;
+    const lp = [{ x: cx, y: p.y, z: p.z0 }, { x: cx, y: p.y, z: p.z1 }, { x: p.x0, y: p.y, z: cz }, { x: p.x1, y: p.y, z: cz }].map(P).filter(Boolean).sort((a, b) => a.z - b.z)[0]; if (!lp) continue;
+    const lit = !HV.size || [...HV.keys()].some(k => N.get(k).l1 === p.id) || p.id === selPlot || p.id === S.sel;
+    x.globalAlpha = lit ? 1 : 0.45; x.font = `700 ${Math.round(Math.max(14, Math.min(24, 70 * lp.s)) * KZ())}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.lineJoin = 'round'; x.lineWidth = 5; x.strokeStyle = css('--bg'); x.strokeText(N.get(p.id).name, lp.x, lp.y + 12); x.fillStyle = S.sel === p.id ? css('--acc') : css('--ink'); x.fillText(N.get(p.id).name, lp.x, lp.y + 12);
+    const tw = x.measureText(N.get(p.id).name).width; T3.drawn.push({ id: p.id, x: lp.x, y: lp.y + 12, w: tw / 2 + 4, h: 12 }); }
+  x.globalAlpha = 1;
+  drawMini();
+  if (moving) run3d();
+}
+function fitTower(id, now) {   // the camera to one part, some, or the whole tower
+  const lay = TW3.lay; if (!lay) return; let pts = [];
+  if (typeof id === 'string' && lay.pos.has(id)) { const p = lay.pos.get(id); T3.camTo = { tx: p.x, ty: p.y, tz: p.z, dist: 1500 }; run3d(); return; }
+  if (Array.isArray(id)) pts = id.map(k => lay.pos.get(k)).filter(Boolean);
+  else lay.floors.forEach(fl => pts.push({ x: fl.x0, y: fl.y, z: fl.z0 }, { x: fl.x1, y: fl.y + CH, z: fl.z1 }));
+  if (!pts.length) return;
+  const cx = (Math.min(...pts.map(p => p.x)) + Math.max(...pts.map(p => p.x))) / 2, cy = (Math.min(...pts.map(p => p.y)) + Math.max(...pts.map(p => p.y))) / 2, cz = (Math.min(...pts.map(p => p.z)) + Math.max(...pts.map(p => p.z))) / 2;
+  const R = Math.max(400, ...pts.map(p => Math.hypot(p.x - cx, p.y - cy, p.z - cz)));
+  const t = { tx: cx, ty: cy, tz: cz, dist: R * 1.75 + 300 }; if (now) Object.assign(T3.cam, t); else T3.camTo = Object.assign(T3.camTo || {}, t); run3d();
+}
+const SNAPS = { front: { yaw: 0, pitch: -0.12, roll: 0 }, top: { yaw: 0, pitch: -1.45, roll: 0 }, corner: { yaw: 0.55, pitch: -0.38, roll: 0 } };
+
 // ---------------------------------------------------------------- explore: walks, start-up, traces, data, health, versions
 const GH = 'https://github.com/J555G/lesepult/blob/';
 const HELP = ['shell.core', 'shell.db.access', 'shell.db.settings', 'settings.dialog_kit'];   // helpers almost everything uses: listed, not followed
@@ -1113,7 +1243,7 @@ function startPlay() { stopPlay(); if (S.guide?.k !== 'startup') return; if (S.g
   renderPanel(); }
 function stopPlay(redraw) { if (S.play) { clearInterval(S.play); S.play = 0; if (redraw) renderPanel(); } }
 // the camera to the lit parts (asked for, never by itself)
-function fitHL() { if (S.view !== 'space') return fit2d([...visHL(T2.lay?.pos || new Map()).keys()]);
+function fitHL() { if (S.view === 'space') return fitTower([...visHL(TW3.lay?.pos || new Map()).keys()]); if (S.view !== 'space') return fit2d([...visHL(T2.lay?.pos || new Map()).keys()]);
   const ids = [...visHL().keys()].map(id => T3.nodes.get(id)).filter(Boolean); if (!ids.length) return;
   const cx = ids.reduce((a, p) => a + p.x, 0) / ids.length, cy = ids.reduce((a, p) => a + p.y, 0) / ids.length, cz = ids.reduce((a, p) => a + p.z, 0) / ids.length;
   const R = Math.max(250, ...ids.map(p => Math.hypot(p.x - cx, p.y - cy, p.z - cz)));
@@ -1164,12 +1294,13 @@ function seg(sel, key, cb) {
   $(sel).onclick = e => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); keep(); cb?.(); draw(); };
   set(S[key]);
 }
-const HINTS = { space: 'Drag to turn (flat: to move) · pinch or scroll to zoom · twirl with two fingers · drag a part to pull it · double-tap to open it',
+const HINTS = { space: 'Four floors, the sources at the bottom and the screen on top · drag to turn · pinch or scroll to zoom · Front, Top, Corner turn it for you · double-tap a part to open it',
   flow: 'From the sources on the left to the screen on the right · drag to move · pinch or scroll to zoom · double-tap a part to open it',
   map: 'Each main part with its parts · ribbons: how much they connect · select a part for its own lines · double-tap to open',
   focus: 'The selected part in the middle · tap a neighbour to move to it · double-tap to open it' };
-function viewChanged() { document.body.classList.toggle('v-space', S.view === 'space'); $('#hint').textContent = HINTS[S.view]; T2.fit = true; if (S.view === 'space') T3.fitAll = true; }
+function viewChanged() { document.body.classList.toggle('v-space', S.view === 'space'); $('#hint').textContent = HINTS[S.view]; T2.fit = true; if (S.view === 'space') { T3.fitAll = true; Object.assign(T3.cam, SNAPS.corner); } }
 seg('#segView', 'view', viewChanged); viewChanged();
+$('#segSnap').onclick = e => { const b = e.target.closest('button'); if (!b) return; T3.camTo = Object.assign({}, SNAPS[b.dataset.snap]); run3d(); };
 { const paint = () => [...$('#segLines').children].forEach(b => b.setAttribute('aria-pressed', !!S[b.dataset.l]));
   $('#segLines').onclick = e => { const b = e.target.closest('button'); if (!b) return; S[b.dataset.l] = !S[b.dataset.l]; paint(); keep(); draw(); }; paint(); }
 seg('#segArr', 'arr', () => { T3.alpha = 1; T3.fitNext = true; }); seg('#segMetric', 'metric'); seg('#segFocus', 'focus', () => { if (S.focus !== 'all' && !S.sel) note2('Select a part first'); T3.fitNext = true; });
@@ -1179,7 +1310,7 @@ function setFlat(on) {
   T3.fitNext = true; draw();
 }
 $('#back').onclick = () => navGo(-1); $('#fwd').onclick = () => navGo(1);
-$('#home').onclick = () => { T2.fit = true; select(null); T3.camTo = S.flat ? { yaw: 0, pitch: 0, roll: 0 } : { yaw: 0.5, pitch: -0.25, roll: 0 }; T3.fitNext = true; run3d(); };
+$('#home').onclick = () => { T2.fit = true; T3.fitAll = true; select(null); T3.camTo = S.flat ? { yaw: 0, pitch: 0, roll: 0 } : { yaw: 0.5, pitch: -0.25, roll: 0 }; T3.fitNext = true; run3d(); };
 addEventListener('keydown', e => { if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); navGo(-1); } if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); navGo(1); } });
 addEventListener('pointerdown', e => { if (e.button === 3) { e.preventDefault(); navGo(-1); } if (e.button === 4) { e.preventDefault(); navGo(1); } });
 addEventListener('popstate', e => { const i = e.state?.atlas; navTo(typeof i === 'number' ? i : 0); });
@@ -1188,7 +1319,7 @@ if (S.flat) Object.assign(T3.cam, { yaw: 0, pitch: 0, roll: 0 });
 
 function note2(t) { const h = $('#hint'), o = h.textContent; h.textContent = t; setTimeout(() => { h.textContent = o; }, 1800); }
 $('#spread').value = S.spread;
-$('#spread').oninput = e => { S.spread = +e.target.value; keep(); T3.alpha = Math.max(T3.alpha, 0.6); run3d(); };
+$('#spread').oninput = e => { S.spread = +e.target.value; keep(); draw(); };   // (in the tower: the height between floors)
 function closePanel() { stopPlay(); S.info = false; S.guide = null; S.hl = new Map(); if (S.sel) select(null); else draw(); }
 $('#guideBtn').onclick = () => { if (S.guide && !S.sel) closePanel(); else guide(S.guide || { k: 'menu' }); };
 $('#miniChk').checked = S.mini; $('#mini').hidden = !S.mini; $('#miniChk').onchange = e => { S.mini = e.target.checked; $('#mini').hidden = !S.mini; drawMini(); };
