@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="description" content="Every part of Pult, how the parts connect, what they cost the device, and how they grew version by version.">
 <meta name="theme-color" content="#1a2027">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,6 +40,7 @@ img { max-width: 100%; }
   --acc: #6aa9d8; --up: #6aa9ec; --down: #f08a4b; --flow: #b394e0; --add: #5fc08a;
   --h0: #39414a; --h1: #2f6b5f; --h2: #7d7034; --h3: #96662a; --h4: #a3502c; --h5: #a83a32; color-scheme: dark }
 html, body { height: 100%; }
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }   /* no double-tap zoom, no automatic text enlarging */
 body { height: 100dvh; }   /* Safari: exactly the visible screen, not the area behind its toolbars */
 [hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font: 14px/1.4 var(--ui); display: flex; flex-direction: column; overflow: hidden; }
@@ -127,7 +128,7 @@ body:not(.open) #pclose { display: none; }
 button.sm { font-size: 11.5px; padding: 0 7px; margin-left: 6px; text-transform: none; letter-spacing: 0; }
 #inside { width: 100%; display: block; }
 .backg { display: inline-block; margin-bottom: 6px; font-size: 12.5px; color: var(--acc); cursor: pointer; }
-#mini { position: absolute; left: 12px; bottom: 38px; width: 196px; height: 112px; border: 1px solid var(--line); border-radius: 8px; background: color-mix(in srgb, var(--surface) 88%, transparent); cursor: pointer; z-index: 4; }
+#mini { flex: 1 1 340px; min-width: 260px; max-width: 760px; height: 30px; border-radius: 6px; cursor: pointer; display: block; }   /* the overview strip in the top bar */
 .legend { font-size: 12.5px; color: var(--mut); display: grid; gap: 4px; }
 .legend span.sw { display: inline-block; width: 22px; height: 3px; vertical-align: middle; margin-right: 6px; }
 .heat { display: flex; gap: 2px; align-items: center; }
@@ -192,14 +193,27 @@ footer input[type=range] { accent-color: var(--acc); }
 .touch .results { width: calc(300px * var(--k)); } .touch .results button { min-height: calc(44px * var(--k)); font-size: calc(14px * var(--k)); }
 .touch .backg { padding: calc(10px * var(--k)) 0; font-size: calc(14px * var(--k)); }
 .touch button.sm { min-height: calc(36px * var(--k)); font-size: calc(13px * var(--k)); }
-.touch #mini { width: calc(196px * var(--k)); height: calc(112px * var(--k)); bottom: calc(30px + 10px * var(--k)); }
+.touch #mini { height: 44px; }
+@media (max-width: 560px) { #mini { display: none; } }
 .touch .res { font-size: calc(13px * var(--k)); } .touch .res .bar i { width: calc(16px * var(--k)); height: calc(8px * var(--k)); } .touch .res .note { font-size: calc(12.5px * var(--k)); }
 .touch .res { grid-template-columns: calc(74px * var(--k)) 1fr; } .touch .res b { font-size: calc(13px * var(--k)); }
 .touch h1 { font-size: calc(17px * var(--k)); } .touch h1 small { font-size: calc(12px * var(--k)); } .touch .rng { font-size: calc(12.5px * var(--k)); }
 .touch .tip { font-size: calc(12.5px * var(--k)); max-width: calc(280px * var(--k)); }
 @media (max-width: 760px) { .touch #panel { width: auto; max-width: none; } }
+.touch header .seg button, .touch header button.plain { min-height: 44px; min-width: 44px; padding: 0 11px; font-size: 15px; }
+.touch header .seg.nb button { font-size: 19px; } .touch header .search input { min-height: 44px; font-size: 16px; } .touch header .search { max-width: 280px; }
+.touch header input[type=range] { height: 44px; } .touch header .rng input { width: 110px; } .touch header { gap: 6px 8px; }
+.touch h1 { font-size: 17px; } .touch h1 small { font-size: 12px; } .touch .rng { font-size: 12.5px; }
+/* the version bar stays slim */
+.touch footer { padding-top: 1px; } .touch footer #play { min-height: 34px; min-width: 44px; padding: 0 10px; font-size: 14px; } .touch .track { height: 34px; }
+.touch footer input[type=range] { height: 34px; } .touch #verInfo { font-size: 13px; }
+#divider { flex: none; width: 16px; margin: 0 -8px; position: relative; z-index: 5; cursor: col-resize; touch-action: none; }
+#divider::after { content: ''; position: absolute; top: 50%; left: 50%; width: 6px; height: 48px; border-radius: 3px; background: var(--line); transform: translate(-50%, -50%); }
+#divider:hover::after, #divider.drag::after { background: var(--acc); }
+.touch #divider { width: 28px; margin: 0 -14px; } .touch #divider::after { width: 8px; height: 64px; }
+@media (max-width: 760px) { #divider { width: auto; height: 16px; margin: -8px 0; cursor: row-resize; } #divider::after { width: 48px; height: 6px; } .touch #divider { width: auto; height: 28px; margin: -14px 0; } .touch #divider::after { width: 64px; height: 8px; } }
 .sizes { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-@media (max-width: 560px) { .touch .seg button, .touch button.plain { padding: 0 9px; } .touch .rng input { width: 64px; } }
+@media (max-width: 560px) { .touch .seg button, .touch button.plain, .touch header .seg button, .touch header button.plain { padding: 0 9px; } .touch .rng input { width: 64px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
@@ -216,6 +230,7 @@ footer input[type=range] { accent-color: var(--acc); }
   <div class="seg" id="segFocus" title="With a part selected, show only…"><button data-v="all" aria-pressed="true">All</button><button data-v="up" aria-pressed="false" title="only what the selected part relies on" aria-label="Relies on"><span class="l">Relies on</span><span class="s">↑</span></button><button data-v="down" aria-pressed="false" title="only what relies on the selected part" aria-label="Relied on by"><span class="l">Relied on by</span><span class="s">↓</span></button><button data-v="both" aria-label="Both" aria-pressed="false" title="only the selected part's connections"><span class="l">Both</span><span class="s">↕</span></button></div>
   <label class="rng" title="How far apart the parts are"><span>Spacing</span> <input type="range" id="spread" min="0.4" max="3" step="0.05" value="1" aria-label="Spacing"></label>
   <button class="plain" id="optBtn" aria-expanded="false" title="Options"><span class="t">Options </span>▾</button>
+  <canvas id="mini" aria-label="Overview: the main parts by floor; tap one to go there"></canvas>
   <button class="plain" id="guideBtn" aria-pressed="false" title="Guided walks, start-up, traces, data, health, versions" aria-label="Explore"><span class="l">Explore</span><span class="s">✦</span></button>
   <button class="plain" id="infoBtn" title="How to read the drawing" aria-label="How to read the drawing">ⓘ</button>
 </header>
@@ -229,7 +244,8 @@ footer input[type=range] { accent-color: var(--acc); }
   <div class="row"><button class="plain" id="expAll">Expand all</button><button class="plain" id="colAll">Collapse</button></div>
 </div>
 <main>
-  <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><canvas id="mini" aria-label="Overview: the main parts by floor; tap one to go there"></canvas><div class="hint" id="hint">Drag to turn (flat: to move) · pinch or scroll to zoom · twirl with two fingers · drag a part to pull it · double-tap to open it</div><div class="tip" id="tip" hidden></div></div>
+  <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><div class="hint" id="hint">Drag to turn (flat: to move) · pinch or scroll to zoom · twirl with two fingers · drag a part to pull it · double-tap to open it</div><div class="tip" id="tip" hidden></div></div>
+  <div id="divider" role="separator" aria-orientation="vertical" aria-label="Drag to change the width of the pane; double-tap for the usual width" tabindex="0"></div>
   <aside id="panel" aria-label="About the part"><button class="plain" id="pclose" aria-label="Close">✕</button><div id="pbody"></div></aside>
 </main>
 <footer>
@@ -245,8 +261,8 @@ addEventListener('unhandledrejection', e => { const h = document.getElementById(
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const METRICS = { mem: 'Memory', store: 'Storage', cpu: 'CPU', gpu: 'GPU' };
 const S = { guide: null, hl: new Map(), play: 0, mini: innerWidth >= 560, info: false, arr: 'web', flat: false, metric: 'part', ind: true, offv: false, lbl: false, exp: new Set(), sel: null, ver: 0, depth: 1, focus: 'all', spread: 1, rot: 0 };
-try { const k = JSON.parse(localStorage.getItem('atlas') || '{}'); Object.assign(S, { spread: k.spread || 1, arr: k.arr === 'layers' ? 'layers' : 'web', flat: !!k.flat, metric: k.metric || 'part', ind: k.ind ?? true, size: k.size || null }); } catch (_) {}
-const keep = () => { try { localStorage.setItem('atlas', JSON.stringify({ arr: S.arr, flat: S.flat, metric: S.metric, ind: S.ind, spread: S.spread, size: S.size })); } catch (_) {} };
+try { const k = JSON.parse(localStorage.getItem('atlas') || '{}'); Object.assign(S, { spread: k.spread || 1, arr: k.arr === 'layers' ? 'layers' : 'web', flat: !!k.flat, metric: k.metric || 'part', ind: k.ind ?? true, size: k.size || null, paneW: k.paneW || null, paneH: k.paneH || null }); } catch (_) {}
+const keep = () => { try { localStorage.setItem('atlas', JSON.stringify({ arr: S.arr, flat: S.flat, metric: S.metric, ind: S.ind, spread: S.spread, size: S.size, paneW: S.paneW, paneH: S.paneH })); } catch (_) {} };
 let MODEL, HIST, N = new Map(), OWN = new Map(), V = null, CK = [];
 
 // ---------------------------------------------------------------- data
@@ -580,7 +596,7 @@ function renderPanel() {
       <div>Selecting a part shows its direct links; <i>Whole chains</i> (Options) follows them further. <i>Relies on / Relied on by / Both</i> then hides everything else.</div>
       <div><i>Web</i> lets the parts find their places in space; <i>Layers</i> sets them on four floors, from what you see down to data and sources. <i>Flat</i> lays either onto a plane. Spacing moves the parts closer or further apart. Twirl with two fingers (or Shift + drag). ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
       <div><b>Explore</b> opens guided walks through Pult, its start-up, traces of functions, where data comes from and goes, its health and comparisons between versions; the parts concerned light up, numbered by step.</div>
-      <div>The small map at the bottom left shows the main parts by floor: bright ones are on screen, the framed one holds the selected part. Tap one to go there (Options → Overview map).</div>
+      <div>The strip of coloured boxes in the top bar shows the main parts by floor: bright ones are on screen, the framed one holds the selected part. Tap one to go there (Options → Overview map).</div>
       <div>The selected part stays where it is until you move it by hand.</div>
       </div>
       <h3>The figures</h3><p>Sizes of code and data are measured from the repository for each version. Memory, storage, CPU and GPU loads are estimates from reading the code, rated 0 to 5, each with a note on what it is based on. Measured figures from your own devices can follow.</p>
@@ -862,15 +878,16 @@ function drawMini() {
   const sw = cv3.clientWidth, sh = cv3.clientHeight, onScr = new Set();
   for (const d of T3.drawn) if (d.x > -20 && d.x < sw + 20 && d.y > -20 && d.y < sh + 20) onScr.add(N.get(d.id)?.l1);
   const selL1 = S.sel && N.get(S.sel)?.l1, hlL1 = new Set([...(S.hl || new Map()).keys()].map(id => N.get(id)?.l1));
-  const rows = []; MODEL.tiers.forEach(t => { const ls = MODEL.l1.filter(l => l.tier === t.id && V.ex.has(l.id)), n = Math.ceil(ls.length / 4); for (let i = 0; i < n; i++) rows.push(ls.slice(Math.round(i * ls.length / n), Math.round((i + 1) * ls.length / n))); });
-  const rh = (H - 6) / rows.length; MINI = [];
-  rows.forEach((ls, r) => { const bw = (W - 8) / ls.length;
-    ls.forEach((l, i) => { const bx = 4 + i * bw, by = 3 + r * rh, w = bw - 3, h = rh - 3;
-      x.globalAlpha = onScr.has(l.id) ? 1 : 0.35; x.fillStyle = `hsl(${l.hue} 40% ${document.documentElement.dataset.theme === 'dark' || (matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light') ? 32 : 78}%)`;
-      x.beginPath(); rrect(x, bx, by, w, h, 3); x.fill(); x.globalAlpha = 1;
-      if (l.id === selL1 || hlL1.has(l.id)) { x.lineWidth = 2; x.strokeStyle = l.id === selL1 ? css('--acc') : css('--ink'); x.stroke(); }
-      if (w > 22) { x.fillStyle = css('--ink'); x.font = `600 ${Math.round(9 * (S.size || 1) * (TOUCH ? shrink() : 1))}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; let s = N.get(l.id).name; while (s.length > 2 && x.measureText(s).width > w - 4) s = s.slice(0, -1); x.fillText(s, bx + w / 2, by + h / 2); }
-      MINI.push({ id: l.id, x: bx, y: by, w, h }); }); });
+  const ls = [], gap = 7; MODEL.tiers.forEach((t, ti) => MODEL.l1.filter(l => l.tier === t.id && V.ex.has(l.id)).forEach((l, i) => ls.push([l, ti])));
+  const nt = new Set(ls.map(x => x[1])).size, bw = (W - gap * (nt - 1) - (ls.length - 1) * 2) / ls.length; MINI = []; let bx = 0, prev = null;
+  const dark = document.documentElement.dataset.theme === 'dark' || (matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light');
+  x.font = '600 11px "Source Sans 3", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  ls.forEach(([l, ti]) => { if (prev != null) bx += ti !== prev ? gap : 2; prev = ti; const by = 0, w = bw, h = H;
+      x.globalAlpha = onScr.has(l.id) ? 1 : 0.4; x.fillStyle = `hsl(${l.hue} 40% ${dark ? 32 : 78}%)`;
+      x.beginPath(); rrect(x, bx, by + 1, w, h - 2, 4); x.fill(); x.globalAlpha = 1;
+      if (l.id === selL1 || hlL1.has(l.id)) { x.lineWidth = 2.5; x.strokeStyle = l.id === selL1 ? css('--acc') : css('--ink'); x.stroke(); }
+      x.fillStyle = css('--ink'); let s = N.get(l.id).name; if (x.measureText(s).width > w - 4) s = s.split(' ')[0]; while (s.length > 2 && x.measureText(s).width > w - 4) s = s.slice(0, -1); if (w > 16) x.fillText(s, bx + w / 2, by + h / 2 + 0.5);
+      MINI.push({ id: l.id, x: bx, y: by, w, h }); bx += w; });
 }
 
 // ---------------------------------------------------------------- versions
@@ -948,13 +965,32 @@ $('#panel').onclick = e => { const a = e.target.closest('[data-g],[data-walk],[d
 // search: parts by name, and functions by name
 let hits = [], hi = 0;
 if (innerWidth <= 560) $('#q').placeholder = 'Find…';
+// the app itself never zooms: Safari's pinch gestures and ctrl + wheel are stopped everywhere, double-tap zoom by touch-action (Safari
+// ignores 'user-scalable=no'); the drawing still zooms with two fingers or the wheel, through its own pointer events
+['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+addEventListener('wheel', e => { if (e.ctrlKey && !e.target.closest('#cv3')) e.preventDefault(); }, { passive: false });
 const TOUCH = navigator.maxTouchPoints > 0 || matchMedia('(any-pointer: coarse)').matches; if (TOUCH) document.documentElement.classList.add('touch');   // (finger-sized controls)
 // Safari can draw the page wider than the screen and shrink it (Request Desktop Website, page zoom below 100 %):
 // the shrinking is measured against the screen's own width and made up for, so a 44 px button stays 44 points
-const KZ = () => (S.size || 1) * (TOUCH ? shrink() : 1);   // how much the writing in the drawing is enlarged
+const KZ = () => (S.size || 1) * (TOUCH ? shrink() : 1);   // (the top bar stays at 44 px whatever the Size)   // how much the writing in the drawing is enlarged
 function shrink() { const sw = innerWidth > innerHeight ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height); const f = sw ? innerWidth / sw : 1; return f > 1.04 && f < 3 ? f : 1; }
 function setSize(v) { S.size = v; document.documentElement.style.setProperty('--k', TOUCH ? v * shrink() : v); [...$('#segSize').children].forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === v)); keep(); if (MODEL && V) draw(); }
 if (!TOUCH) $('.sizes').hidden = true;
+// the divider: drag to make the pane wider or narrower (higher or lower on phones); double-tap for the usual size
+const isCol = () => getComputedStyle($('main')).flexDirection === 'column';
+function paneFit() { const P = $('#panel'), m = $('main').getBoundingClientRect();
+  if (isCol()) { P.style.width = ''; P.style.maxWidth = ''; P.style.height = S.paneH ? Math.max(120, Math.min(m.height - 140, S.paneH)) + 'px' : ''; }
+  else { P.style.height = ''; P.style.width = S.paneW ? Math.max(260, Math.min(m.width - 300, S.paneW)) + 'px' : ''; P.style.maxWidth = S.paneW ? 'none' : ''; } }
+{ const dv = $('#divider'); let drag = null, lastTap = 0;
+  dv.addEventListener('pointerdown', e => { e.preventDefault(); dv.setPointerCapture(e.pointerId); drag = e.pointerId; dv.classList.add('drag');
+    const now = Date.now(); if (now - lastTap < 350) { S.paneW = S.paneH = null; keep(); paneFit(); run3d(); drag = null; dv.classList.remove('drag'); } lastTap = now; });
+  dv.addEventListener('pointermove', e => { if (drag !== e.pointerId) return; const m = $('main').getBoundingClientRect();
+    if (isCol()) S.paneH = Math.round(m.bottom - e.clientY); else S.paneW = Math.round(m.right - e.clientX); paneFit(); run3d(); });
+  const end = e => { if (drag !== e.pointerId) return; drag = null; dv.classList.remove('drag'); keep(); draw(); };
+  dv.addEventListener('pointerup', end); dv.addEventListener('pointercancel', end);
+  dv.addEventListener('keydown', e => { const d = e.key === 'ArrowLeft' ? 20 : e.key === 'ArrowRight' ? -20 : 0; if (!d || isCol()) return; S.paneW = $('#panel').offsetWidth + d; paneFit(); keep(); draw(); }); }
+paneFit();
 $('#segSize').onclick = e => { const b = e.target.closest('button'); if (b) setSize(+b.dataset.v); };
 setSize(S.size || (TOUCH ? 1.25 : 1));   // (on touch screens Large unless chosen otherwise)
 
@@ -967,7 +1003,7 @@ function paintHits() { const r = $('#q').getBoundingClientRect(); $('#res').styl
 $('#q').onkeydown = e => { if (e.key === 'ArrowDown') { hi = Math.min(hits.length - 1, hi + 1); paintHits(); e.preventDefault(); } else if (e.key === 'ArrowUp') { hi = Math.max(0, hi - 1); paintHits(); e.preventDefault(); } else if (e.key === 'Enter' && hits[hi]) go(hits[hi].id); else if (e.key === 'Escape') $('#res').hidden = true; };
 $('#res').onclick = e => { const b = e.target.closest('button'); if (b) go(hits[+b.dataset.i].id); };
 function go(id) { $('#res').hidden = true; $('#q').blur(); select(id); setTimeout(() => fit(id), 60); }
-addEventListener('resize', () => { if (TOUCH) document.documentElement.style.setProperty('--k', S.size * shrink()); draw(); });
+addEventListener('resize', () => { paneFit(); if (TOUCH) document.documentElement.style.setProperty('--k', S.size * shrink()); draw(); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => draw());
 
 load().then(() => { $('#ver').max = HIST.length - 1; $('#ver').value = S.ver; setVer(S.ver); })
