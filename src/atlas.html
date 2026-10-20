@@ -589,6 +589,7 @@ function renderPanel() {
       <div>Selecting a part shows its direct links; <i>Whole chains</i> (Options) follows them further. <i>Relies on / Relied on by / Both</i> then hides everything else.</div>
       <div><i>Web</i> lets the parts find their places in space; <i>Layers</i> sets them on four floors, from what you see down to data and sources. <i>Flat</i> lays either onto a plane. Spacing moves the parts closer or further apart. Twirl with two fingers (or Shift + drag). ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
       <div>Four views of the same parts, the selection kept between them: <b>Flow</b> – columns from the sources on the left to the screen on the right; <b>Map</b> – each main part as a region with its parts, ribbons for how much they connect; <b>Focus</b> – the selected part in the middle, data coming in on the left and going out on the right, the code it calls above and the code calling it below; <b>Space</b> – the cards on strings in 3D. <b>Data</b>, <b>Code</b> and <b>Selected only</b> choose the lines, in any combination.</div>
+      <div>In Flow, lines between parts of the same column are drawn only for the selected part (↕ on a card counts them), and the lines of an opened group are bundled into one ribbon per partner until a part is selected. Zoomed out, cards show only their names.</div>
       <div><b>Explore</b> opens guided walks through Pult, its start-up, traces of functions, where data comes from and goes, its health and comparisons between versions; the parts concerned light up, numbered by step.</div>
       <div>The strip of coloured boxes in the top bar shows the main parts by floor: bright ones are on screen, the framed one holds the selected part. Tap one to go there (Options → Overview strip).</div>
       <div>The selected part stays where it is until you move it by hand.</div>
@@ -692,7 +693,7 @@ function layFlow(vis, edges) {
         if (framed && par && par !== r.g && par !== lastPar) {   // a part opened inside the group: its own sub-heading, one step in
           const pd = par.split('.').length - 1; frames.push({ id: par, sub: true, col: c, d: pd, x: x - CW / 2 + pd * IND, y: y + 2, w: CW - pd * IND, h: 22 }); y += 28; }
         lastPar = par;
-        const ind = d * IND; pos.set(id, { x: x + ind / 2, y: y + CH / 2, w: CW / 2 - ind / 2, h: CH / 2 }); y += CH + 10; });   // (indented one step per level; right edges stay in line)
+        const ind = d * IND; pos.set(id, { x: x + ind / 2, y: y + CH / 2, w: CW / 2 - ind / 2, h: CH / 2, c, g: framed ? r.g : null }); y += CH + 10; });   // (indented one step per level; right edges stay in line)
       if (framed) frames.push({ id: r.g, col: c, x: x - CW / 2 - 10, y: y0 - 32, w: CW + 20, h: y - y0 + 40, n: r.ids.length });
       y += 26; });
     const off = -y / 2; cs.forEach(id => pos.get(id).y += off); frames.filter(f => f.col === c).forEach(f => f.y += off);
@@ -759,9 +760,20 @@ function edgePath(x, a, b, kind) {   // a curve from one card to another, leavin
   x.moveTo(sx, sy); x.bezierCurveTo(sx + s * d, sy, ex - s * d, ey, ex, ey); return [ex, ey, s > 0 ? 0 : Math.PI];
 }
 function arrowHead(x, [ex, ey, an], w) { const h = 5 + w * 2; x.beginPath(); x.moveTo(ex, ey); x.lineTo(ex - h * Math.cos(an - 0.4), ey - h * Math.sin(an - 0.4)); x.lineTo(ex - h * Math.cos(an + 0.4), ey - h * Math.sin(an + 0.4)); x.fill(); }
-function paintCard2(x, id, b, mk, al) {
+function paintCard2(x, id, b, mk, al, nSame) {
   const cn = N.get(id), w = b.w * 2, h = b.h * 2, x0 = b.x - b.w, y0 = b.y - b.h, big = b.w > CW / 2;
   x.globalAlpha = al; x.beginPath(); rrect(x, x0, y0, w, h, 10); x.fillStyle = fill(id); x.fill();
+  const fs = 13 * KZ() / T2.k;   // the size the name needs to read well at this zoom
+  if (fs > 17) {   // zoomed out: only the name, as large as the card allows
+    const chg = V.chg.has(id) && S.ver > 0; x.lineWidth = (mk ? 3 : chg ? 2 : 1) / Math.min(1, T2.k * 1.4); x.strokeStyle = mk || (chg ? css('--flow') : css('--line')); x.stroke();
+    let f = Math.min(fs, 28); x.fillStyle = css('--ink'); x.textAlign = 'center'; x.textBaseline = 'middle';
+    const words = cn.name.split(' '); let ln;
+    for (;;) { x.font = `700 ${f}px "Source Sans 3", sans-serif`; ln = ['']; for (const wd of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + wd : wd; if (x.measureText(t).width > w - 16 && ln[ln.length - 1]) ln.push(wd); else ln[ln.length - 1] = t; }
+      if ((ln.length <= 2 && ln.every(t => x.measureText(t).width <= w - 16)) || f <= 12) break; f -= 1; }
+    ln = ln.slice(0, 2); if (x.measureText(ln[1] || '').width > w - 16) { let t = ln[1]; while (t.length > 2 && x.measureText(t + '…').width > w - 16) t = t.slice(0, -1); ln[1] = t + '…'; }
+    ln.forEach((t, i) => x.fillText(t, b.x, b.y + (i - (ln.length - 1) / 2) * f * 1.05));
+    x.globalAlpha = 1; return; }
+  if (nSame) { x.font = '600 12px "Source Sans 3", sans-serif'; x.textAlign = 'right'; x.textBaseline = 'alphabetic'; x.fillStyle = css('--mut'); x.fillText(`↕ ${nSame}`, x0 + w - 8, y0 + h - 8); }   // (links to parts in the same column, drawn when selected)
   const chg = V.chg.has(id) && S.ver > 0; x.lineWidth = mk ? 3 : chg ? 2 : 1; x.strokeStyle = mk || (chg ? css('--flow') : css('--line')); x.setLineDash(chg && !mk ? [4, 3] : []); x.stroke(); x.setLineDash([]);
   x.fillStyle = css('--ink'); x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.font = `600 ${big ? 18 : 15}px "Source Sans 3", sans-serif`;
   let nm = cn.name; while (nm.length > 4 && x.measureText(nm).width > w - 44) nm = nm.slice(0, -1); if (nm !== cn.name) nm = nm.trimEnd() + '…';
@@ -792,7 +804,7 @@ function frame2d(now) {
     if (!f.region) {   // an opened group: a header band and a bar down its left side, the parts indented inside
       x.save(); x.beginPath(); rrect(x, f.x, f.y, f.w, 28, 12); x.clip(); x.fillStyle = `hsl(${hue} 40% ${dark2() ? 28 : 84}%)`; x.fillRect(f.x, f.y, f.w, 28); x.restore();
       x.fillStyle = `hsl(${hue} 40% ${dark2() ? 50 : 55}%)`; x.fillRect(f.x + 8, f.y + 32, 4, f.h - 40); }
-    x.fillStyle = css('--ink'); x.font = `700 ${f.region ? 17 : 14}px "Source Sans 3", sans-serif`; x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+    x.fillStyle = css('--ink'); x.font = `700 ${Math.min(f.region ? 30 : 20, Math.max(f.region ? 17 : 14, 13 * KZ() / T2.k))}px "Source Sans 3", sans-serif`; x.textAlign = 'left'; x.textBaseline = 'alphabetic';
     x.fillText(f.region ? N.get(f.id).name : `▾ ${N.get(f.id).name}`, f.x + 12, f.y + (f.region ? 24 : 19));
     if (!f.region && f.n) { x.font = '12px "Source Sans 3", sans-serif'; x.fillStyle = css('--mut'); x.textAlign = 'right'; x.fillText(`${f.n} parts`, f.x + f.w - 12, f.y + 19); }
     T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + 14) * T2.k + T2.y, w: f.w / 2 * T2.k, h: 14 * T2.k }); }
@@ -800,7 +812,7 @@ function frame2d(now) {
     x.fillStyle = `hsl(${hue} 40% ${dark2() ? 50 : 55}%)`; x.fillRect(f.x + 4, f.y + 6, 3, 12); x.fillRect(f.x + 4, f.y + 22, 3, 6);
     x.fillStyle = f.id === sel ? css('--acc') : css('--ink'); x.font = '700 13px "Source Sans 3", sans-serif'; x.textAlign = 'left'; x.fillText(`▾ ${N.get(f.id).name}`, f.x + 12, f.y + 17);
     T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + 12) * T2.k + T2.y, w: f.w / 2 * T2.k, h: 12 * T2.k }); }
-  for (const h of lay.heads) { x.fillStyle = css('--mut'); x.font = 'italic 17px "Gentium Book Plus", Georgia, serif'; x.textAlign = 'center'; x.fillText(`${h.t} · ${h.n}`, h.x, h.y); }
+  for (const h of lay.heads) { x.fillStyle = css('--mut'); x.font = `italic ${Math.max(17, Math.min(40, 15 * KZ() / T2.k))}px "Gentium Book Plus", Georgia, serif`; x.textAlign = 'center'; x.fillText(`${h.t} · ${h.n}`, h.x, h.y); }
   // ribbons between regions (Map, with no part selected)
   if (lay.ribbons && !sel && !S.lsel) for (const rb of lay.ribbons) { const A = lay.frames.find(f => f.id === rb.a), B = lay.frames.find(f => f.id === rb.b); if (!A || !B) continue;
     const a = { x: A.x + A.w / 2, y: A.y + A.h / 2, w: A.w / 2, h: A.h / 2 }, b = { x: B.x + B.w / 2, y: B.y + B.h / 2, w: B.w / 2, h: B.h / 2 };
@@ -808,19 +820,27 @@ function frame2d(now) {
     x.globalAlpha = lit ? 0.32 : 0.06; x.strokeStyle = rb.kinds.has('flow') && !rb.kinds.has('code') ? css('--flow') : css('--mut'); x.lineWidth = Math.min(14, 1.5 + Math.log2(1 + rb.n) * 1.6); x.lineCap = 'round';
     x.beginPath(); edgePath(x, a, b, 'map'); x.stroke(); x.lineCap = 'butt'; }
   // the lines between parts
-  const showEdge = !(lay.ribbons && !sel);
+  const showEdge = !(lay.ribbons && !sel), flow = lay.kind === 'flow', same = new Map(), bundles = new Map();
+  const lineStyle = (e, al, w, col) => { x.globalAlpha = al; x.strokeStyle = col; x.fillStyle = col; x.lineWidth = w; x.setLineDash(e.kind === 'flow' ? [7, 5] : []); };
   if (showEdge) for (const e of lay.edges) { const a = lay.pos.get(e.a), b = lay.pos.get(e.b); if (!a || !b) continue;
     let col = e.kind === 'flow' ? css('--flow') : css('--mut'), al = 0.42, w = Math.min(5, 1 + Math.log2(1 + e.n) * 0.7), hot = false;
     if (sel) { const [u, v] = dep(e), up = (u === sel && r.up.has(v)) || (r.up.has(u) && r.up.has(v) && r.up.get(v) > r.up.get(u)), dn = (v === sel && r.down.has(u)) || (r.down.has(u) && r.down.has(v) && r.down.get(u) > r.down.get(v));
       if (up) { col = css('--up'); al = 0.95; hot = true; } else if (dn) { col = css('--down'); al = 0.95; hot = true; } else al = 0.06; }
     else if (HV.size) { if (HV.has(e.a) && HV.has(e.b)) { al = 0.85; hot = true; } else al = 0.06; }
     if (S.lsel && !hot) continue;
-    x.globalAlpha = al; x.strokeStyle = col; x.fillStyle = col; x.lineWidth = w; x.setLineDash(e.kind === 'flow' ? [7, 5] : []);
-    x.beginPath(); const end = edgePath(x, a, b, lay.kind); x.stroke(); x.setLineDash([]); arrowHead(x, end, w);
+    if (flow && a.c === b.c && !hot) { same.set(e.a, (same.get(e.a) || 0) + 1); same.set(e.b, (same.get(e.b) || 0) + 1); continue; }   // (within one column: only for the selected part)
+    if (flow && !hot && (a.g || b.g)) {   // (from or to an opened group: one ribbon per partner)
+      const ka = a.g || e.a, kb = b.g || e.b; if (ka === kb) continue; const k = ka + '>' + kb + '>' + e.kind;
+      const o = bundles.get(k) || bundles.set(k, { a: ka, b: kb, kind: e.kind, n: 0, al }).get(k); o.n += e.n; o.al = Math.min(o.al, al); continue; }
+    lineStyle(e, al, w, col); x.beginPath(); const end = edgePath(x, a, b, lay.kind); x.stroke(); x.setLineDash([]); arrowHead(x, end, w);
     if (hot && S.lbl && e.labels?.length) { const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2; x.globalAlpha = 1; x.font = '12px "Source Sans 3", sans-serif'; x.textAlign = 'center'; x.lineWidth = 3; x.strokeStyle = css('--bg'); const lab = e.labels[0] + (e.n > 1 ? ` (+${e.n - 1})` : ''); x.strokeText(lab, mx, my - 4); x.fillStyle = css('--ink'); x.fillText(lab, mx, my - 4); } }
+  const box = id => { const f = lay.frames.find(f => f.id === id && !f.sub); return f ? { x: f.x + f.w / 2, y: f.y + f.h / 2, w: f.w / 2, h: f.h / 2, c: lay.pos.get([...lay.pos.keys()].find(k => lay.pos.get(k).g === id))?.c } : lay.pos.get(id); };
+  for (const o of bundles.values()) { const a = box(o.a), b = box(o.b); if (!a || !b || a.c === b.c) continue;
+    const w = Math.min(16, 1.5 + Math.log2(1 + o.n) * 1.5); lineStyle(o, Math.min(0.5, o.al + 0.05), w, o.kind === 'flow' ? css('--flow') : css('--mut')); x.lineCap = 'round';
+    x.beginPath(); const end = edgePath(x, a, b, 'flow'); x.stroke(); x.setLineDash([]); x.lineCap = 'butt'; arrowHead(x, end, Math.min(4, w / 2)); }
   // the cards
   for (const [id, b] of lay.pos) { let al = 1; if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al = 0.25; const hv = HV.get(id); if (!sel && HV.size && !hv) al = 0.2; if (S.offv && netOf(id) === 'online') al *= 0.35;
-    paintCard2(x, id, b, id === sel ? css('--acc') : hv ? hlCol(hv.t) : null, al);
+    paintCard2(x, id, b, id === sel ? css('--acc') : hv ? hlCol(hv.t) : null, al, same.get(id));
     const sb = { id, x: b.x * T2.k + T2.x, y: b.y * T2.k + T2.y, w: b.w * T2.k, h: b.h * T2.k }; T3.drawn.push(sb);
     if (hv?.n) { x.setTransform(dpr, 0, 0, dpr, 0, 0); badge(x, sb, hv, 1); x.setTransform(dpr * T2.k, 0, 0, dpr * T2.k, dpr * T2.x, dpr * T2.y); } }
   x.setTransform(dpr, 0, 0, dpr, 0, 0); x.globalAlpha = 1;

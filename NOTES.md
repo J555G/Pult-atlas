@@ -63,6 +63,9 @@
   selected), Focus (selected part in the middle: data in left, data out right, calls above, callers below), Space (the
   3D cards, now settled before shown, distant names never overlap – a dot instead). The matrix view (D) was not chosen.
 - Lines: Data, Code, Selected only – independent switches, any combination; flow labels only with Options → Flow labels.
+- Flow tidied (01:44, the owner chose 1–3 of six): lines within one column only for the selected part (↕ n on the card
+  otherwise); an opened group's lines bundled into one ribbon per partner until a part is selected; zoomed out, cards show
+  only their name, large. Not chosen: accordion opening, sticky column heads, quiet colours.
 - Flow: an opened group has a header band (▾ name · n parts) and a bar down its left; its parts indented one step per
   level (right edges in line), a part opened inside it under its own ▾ sub-heading, its parts kept together.
 
