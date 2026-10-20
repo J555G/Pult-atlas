@@ -56,6 +56,14 @@
 - The app never zooms as a whole: no pinch, double-tap or ctrl+wheel page zoom (Safari gestures stopped, touch-action,
   viewport maximum-scale=1); the drawing keeps its own pinch zoom.
 
+## Decided 21 Oct (01:22)
+- Four views of the same parts, switchable, the selection kept between them: Flow (default; columns sources → stored and
+  behind the scenes → engines → screen, order untangled by barycentres, a main part's opened parts framed together),
+  Map (a region per main part with its parts, regions of a floor wrapping, ribbons between regions until a part is
+  selected), Focus (selected part in the middle: data in left, data out right, calls above, callers below), Space (the
+  3D cards, now settled before shown, distant names never overlap – a dot instead). The matrix view (D) was not chosen.
+- Lines: Data, Code, Selected only – independent switches, any combination; flow labels only with Options → Flow labels.
+
 ## Open
 - Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
 - "First in vN" counts from where a function's file was created: code moved between files (v160 split of app.js) looks
