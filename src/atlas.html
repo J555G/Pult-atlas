@@ -299,7 +299,7 @@ function badge(x, b, hv, al) {   // the number of a lit part (its step, or how m
   const r = Math.max(9, x.measureText(t).width / 2 + 5); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fillStyle = hlCol(hv.t); x.fill();
   x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, cx, cy + 0.5); x.restore(); }
 function farLabel(x, id, q, al, isSel, chg) {   // isSel: the colour it is marked in, if any   // a distant part: its name in large letters, a bar of its colour beneath; returns its hit box
-  const kz = S.size || 1, fs = Math.round((11 + 4 * Math.min(1, BW * q.s / FAR1)) * kz), maxW = 150 * kz, words = N.get(id).name.split(' '), ln = [''];
+  const kz = (S.size || 1) * (TOUCH ? shrink() : 1), fs = Math.round((11 + 4 * Math.min(1, BW * q.s / FAR1)) * kz), maxW = 150 * kz, words = N.get(id).name.split(' '), ln = [''];
   x.font = `700 ${fs}px "Source Sans 3", sans-serif`;
   for (const w of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + w : w; if (x.measureText(t).width > maxW && ln[ln.length - 1] && ln.length < 2) ln.push(w); else ln[ln.length - 1] = t; }
   if (x.measureText(ln[ln.length - 1]).width > maxW) { let t = ln[ln.length - 1]; while (t.length > 3 && x.measureText(t + '…').width > maxW) t = t.slice(0, -1); ln[ln.length - 1] = t + '…'; }
@@ -843,7 +843,7 @@ function drawMini() {
       x.globalAlpha = onScr.has(l.id) ? 1 : 0.35; x.fillStyle = `hsl(${l.hue} 40% ${document.documentElement.dataset.theme === 'dark' || (matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light') ? 32 : 78}%)`;
       x.beginPath(); rrect(x, bx, by, w, h, 3); x.fill(); x.globalAlpha = 1;
       if (l.id === selL1 || hlL1.has(l.id)) { x.lineWidth = 2; x.strokeStyle = l.id === selL1 ? css('--acc') : css('--ink'); x.stroke(); }
-      if (w > 22) { x.fillStyle = css('--ink'); x.font = `600 ${Math.round(9 * (S.size || 1))}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; let s = N.get(l.id).name; while (s.length > 2 && x.measureText(s).width > w - 4) s = s.slice(0, -1); x.fillText(s, bx + w / 2, by + h / 2); }
+      if (w > 22) { x.fillStyle = css('--ink'); x.font = `600 ${Math.round(9 * (S.size || 1) * (TOUCH ? shrink() : 1))}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; let s = N.get(l.id).name; while (s.length > 2 && x.measureText(s).width > w - 4) s = s.slice(0, -1); x.fillText(s, bx + w / 2, by + h / 2); }
       MINI.push({ id: l.id, x: bx, y: by, w, h }); }); });
 }
 
@@ -923,7 +923,10 @@ $('#panel').onclick = e => { const a = e.target.closest('[data-g],[data-walk],[d
 let hits = [], hi = 0;
 if (innerWidth <= 560) $('#q').placeholder = 'Find…';
 const TOUCH = navigator.maxTouchPoints > 0 || matchMedia('(any-pointer: coarse)').matches; if (TOUCH) document.documentElement.classList.add('touch');   // (finger-sized controls)
-function setSize(v) { S.size = v; document.documentElement.style.setProperty('--k', v); [...$('#segSize').children].forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === v)); keep(); if (MODEL && V) draw(); }
+// Safari can draw the page wider than the screen and shrink it (Request Desktop Website, page zoom below 100 %):
+// the shrinking is measured against the screen's own width and made up for, so a 44 px button stays 44 points
+function shrink() { const sw = innerWidth > innerHeight ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height); const f = sw ? innerWidth / sw : 1; return f > 1.04 && f < 3 ? f : 1; }
+function setSize(v) { S.size = v; document.documentElement.style.setProperty('--k', TOUCH ? v * shrink() : v); [...$('#segSize').children].forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === v)); keep(); if (MODEL && V) draw(); }
 if (!TOUCH) $('.sizes').hidden = true;
 $('#segSize').onclick = e => { const b = e.target.closest('button'); if (b) setSize(+b.dataset.v); };
 setSize(S.size || (TOUCH ? 1.25 : 1));   // (on touch screens Large unless chosen otherwise)
@@ -937,7 +940,7 @@ function paintHits() { const r = $('#q').getBoundingClientRect(); $('#res').styl
 $('#q').onkeydown = e => { if (e.key === 'ArrowDown') { hi = Math.min(hits.length - 1, hi + 1); paintHits(); e.preventDefault(); } else if (e.key === 'ArrowUp') { hi = Math.max(0, hi - 1); paintHits(); e.preventDefault(); } else if (e.key === 'Enter' && hits[hi]) go(hits[hi].id); else if (e.key === 'Escape') $('#res').hidden = true; };
 $('#res').onclick = e => { const b = e.target.closest('button'); if (b) go(hits[+b.dataset.i].id); };
 function go(id) { $('#res').hidden = true; $('#q').blur(); select(id); setTimeout(() => fit(id), 60); }
-addEventListener('resize', () => draw());
+addEventListener('resize', () => { if (TOUCH) document.documentElement.style.setProperty('--k', S.size * shrink()); draw(); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => draw());
 
 load().then(() => { $('#ver').max = HIST.length - 1; $('#ver').value = S.ver; setVer(S.ver); })

@@ -37,6 +37,8 @@
 - Touch screens: every control at least 44 px. The top bar then takes 2 rows on iPad, 4 on phones – kept as it is.
 - 44 px was still too small on the owner's iPad: a Size setting (Options → Size: Normal 44 px, Large 55 px, Extra large
   66 px) scales bars, panel, menus, overview map and the names in the drawing; touch screens start at Large.
+- The owner's Safari draws the page ~1,280 px wide on a ~1,030 pt screen (Request Desktop Website or page zoom < 100 %),
+  shrinking everything to ~80 %: the atlas measures innerWidth against screen.width and enlarges itself to make up for it.
 
 ## Open
 - Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
