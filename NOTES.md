@@ -34,6 +34,8 @@
 - Pult's numbered decisions are not needed now (decisions.json hook stays unused).
 - Distant names smaller (11–15 px). Phones: short labels (Lay, Sto, ↑ ↓ ↕, ✦).
 - Touch screens: every control at least 44 px. The top bar then takes 2 rows on iPad, 4 on phones – kept as it is.
+- 44 px was still too small on the owner's iPad: a Size setting (Options → Size: Normal 44 px, Large 55 px, Extra large
+  66 px) scales bars, panel, menus, overview map and the names in the drawing; touch screens start at Large.
 
 ## Open
 - Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
