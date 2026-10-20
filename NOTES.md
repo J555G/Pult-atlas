@@ -71,6 +71,17 @@
 - Flow: an opened group has a header band (▾ name · n parts) and a bar down its left; its parts indented one step per
   level (right edges in line), a part opened inside it under its own ▾ sub-heading, its parts kept together.
 
+## Decided 21 Oct (01:49)
+- Space rebuilt from scratch as a tower of four floors (the owner chose it over 'flow in depth' and 'ring of floors'):
+  sources at the bottom, then engines, stored and behind the scenes, the screen on top; every main part a plot in its
+  colour, its parts upright cards (facing the viewer) in rows, opened parts as dashed areas with ▾ names; lines between
+  floors straight up or down a shaft and across at the half-floor; same-floor lines as arches only for the selection;
+  with nothing selected one bundle per pair of main parts; a selected plot shows its links in blue / orange.
+  Nothing moves but the camera: no physics, no pulling parts. Snaps Front / Top / Corner; Floors sets the floor height.
+  Far parts are chips, nearer their names, near the whole card; plot names drawn last with a halo.
+- The old physics web (draw3d, frame3d, tick3d …) is no longer used – still in the code, to be removed when the tower
+  has proved itself.
+
 ## Open
 - Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
 - "First in vN" counts from where a function's file was created: code moved between files (v160 split of app.js) looks
