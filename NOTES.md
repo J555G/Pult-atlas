@@ -46,6 +46,7 @@
   returns to it. The pane grows with Size but leaves the drawing at least about half the width.
 - Safari's page zoom was the cause of the tiny page (80 %, shared by all of j555g.github.io); recommended: 100 % or the
   Home Screen app. The compensation for shrinking stays until the owner decides.
+- 21 Oct 01:14: the owner reset Safari's settings (page zoom back to 100 %).
 
 ## Open
 - Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
