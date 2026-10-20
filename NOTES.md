@@ -31,6 +31,7 @@
 - Inventory: the offline helper's scripts (sw.js, reliefsw.js) are their own scope – names no longer link across.
 
 ## Decided 21 Oct (night)
+- Safari: the atlas loads on the owner's iPad (seen 21 Oct, 00:54) – the loading problem is solved.
 - Pult's numbered decisions are not needed now (decisions.json hook stays unused).
 - Distant names smaller (11–15 px). Phones: short labels (Lay, Sto, ↑ ↓ ↕, ✦).
 - Touch screens: every control at least 44 px. The top bar then takes 2 rows on iPad, 4 on phones – kept as it is.
@@ -41,10 +42,6 @@
 - Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
 - "First in vN" counts from where a function's file was created: code moved between files (v160 split of app.js) looks
   new there.
-- Safari (owner's iPad): the page did not load (before the fixes of 20 Oct: offline-helper page requests, no
-  structuredClone/roundRect, errors shown in the hint line). Those fixes broke `sw.js` – the line's code sat after a `//`
-  comment, so the helper returned nothing and the page failed after the first visit on every browser; fixed 20 Oct
-  (e6f0e92). Await his report from the iPad: iPadOS version, what he sees.
 - Live measurement on the devices (memory, storage per cache, frame times) – "later". Decided: the figures go to a shared
   online store the atlas reads live (not a committed file). Still open: measure inside Pult, on an atlas test page, or
   both. Safari limits: no page memory or per-cache size directly; frame times yes; storage per cache by adding up the
