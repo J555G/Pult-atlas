@@ -675,7 +675,7 @@ function drawSpark(sv, ys, cur) {
 // world units: a card is CW × CH; screen = world × T2.k + (T2.x, T2.y). Laid out afresh at every draw (cheap), the
 // viewpoint only changes when asked (switching view, Show them, ⌂) or in Focus when the part in the middle changes.
 const T2 = { k: 1, x: 0, y: 0, to: null, lay: null, fit: true, focusOf: null, pinch: null };
-const CW = 200, CH = 56, COLS = [['sources', 'Sources'], ['behind', 'Stored and behind the scenes'], ['engines', 'Engines'], ['screen', 'On screen']];
+const IND = 18, CW = 200, CH = 56, COLS = [['sources', 'Sources'], ['behind', 'Stored and behind the scenes'], ['engines', 'Engines'], ['screen', 'On screen']];
 const tierOf = id => MODEL.l1.find(l => l.id === N.get(id).l1)?.tier || 'screen';
 const lineOn = e => e.kind === 'flow' ? S.ldata : S.lcode;
 function lay2d() {
@@ -697,7 +697,9 @@ function layFlow(vis, edges) {
     cols.forEach((cs, c) => {
       const bc = id => { const ns = nb.get(id).filter(x => col.get(x) !== c); return ns.length ? ns.reduce((s, x) => s + rank.get(x), 0) / ns.length : rank.get(id); };
       const groups = new Map(); cs.forEach(id => { const g = N.get(id).l1; (groups.get(g) || groups.set(g, []).get(g)).push(id); });
-      const gs = [...groups.values()].map(ids => { ids.sort((a, b) => bc(a) - bc(b)); return { ids, b: ids.reduce((s, x) => s + bc(x), 0) / ids.length }; }).sort((a, b) => a.b - b.b);
+      const gs = [...groups.values()].map(ids => { ids.sort((a, b) => bc(a) - bc(b));
+        const byPar = new Map(); ids.forEach(id => { const k = id.split('.').slice(0, 2).join('.'); (byPar.get(k) || byPar.set(k, []).get(k)).push(id); });   // (the parts of an opened part stay together)
+        ids = [...byPar.values()].flat(); return { ids, b: ids.reduce((s, x) => s + bc(x), 0) / ids.length }; }).sort((a, b) => a.b - b.b);
       cols[c] = gs.flatMap(g => g.ids); });
     setRank(); }
   const pos = new Map(), frames = [], heads = [], GX = CW + 120;
@@ -705,11 +707,15 @@ function layFlow(vis, edges) {
     const x = c * GX; let y = 0; const runs = [];
     cs.forEach(id => { const g = N.get(id).l1; const r = runs[runs.length - 1]; if (r && r.g === g) r.ids.push(id); else runs.push({ g, ids: [id] }); });
     runs.forEach(r => { const framed = r.ids.length > 1 || r.ids[0] !== r.g;
-      if (framed) y += 26; const y0 = y;
-      r.ids.forEach(id => { pos.set(id, { x, y: y + CH / 2, w: CW / 2, h: CH / 2 }); y += CH + 12; });
-      if (framed) frames.push({ id: r.g, x: x - CW / 2 - 10, y: y0 - 24, w: CW + 20, h: y - y0 + 22 });
-      y += 22; });
-    const off = -y / 2; cs.forEach(id => pos.get(id).y += off); frames.filter(f => Math.abs(f.x + CW / 2 + 10 - x) < 1).forEach(f => f.y += off);
+      if (framed) y += 34; const y0 = y; let lastPar = r.g;
+      r.ids.forEach(id => { const d = framed ? id.split('.').length - 1 : 0, par = N.get(id).parent;
+        if (framed && par && par !== r.g && par !== lastPar) {   // a part opened inside the group: its own sub-heading, one step in
+          const pd = par.split('.').length - 1; frames.push({ id: par, sub: true, col: c, d: pd, x: x - CW / 2 + pd * IND, y: y + 2, w: CW - pd * IND, h: 22 }); y += 28; }
+        lastPar = par;
+        const ind = d * IND; pos.set(id, { x: x + ind / 2, y: y + CH / 2, w: CW / 2 - ind / 2, h: CH / 2 }); y += CH + 10; });   // (indented one step per level; right edges stay in line)
+      if (framed) frames.push({ id: r.g, col: c, x: x - CW / 2 - 10, y: y0 - 32, w: CW + 20, h: y - y0 + 40, n: r.ids.length });
+      y += 26; });
+    const off = -y / 2; cs.forEach(id => pos.get(id).y += off); frames.filter(f => f.col === c).forEach(f => f.y += off);
     heads.push({ x, y: off - 46, t: COLS[c][1], n: cs.length }); });
   return { pos, edges: edges.filter(e => pos.has(e.a) && pos.has(e.b)), frames, heads, kind: 'flow' };
 }
@@ -801,10 +807,19 @@ function frame2d(now) {
   const sel = S.sel && lay.pos.has(S.sel) ? S.sel : null, r = sel ? reach(sel, lay.edges) : null, HV = visHL(lay.pos);
   const dep = e => e.kind === 'code' ? [e.a, e.b] : [e.b, e.a];
   // frames and regions, column heads
-  for (const f of lay.frames) { x.beginPath(); rrect(x, f.x, f.y, f.w, f.h, f.region ? 16 : 12);
-    x.fillStyle = `hsl(${HUE(f.id)} 35% ${dark2() ? 18 : 94}%)`; x.globalAlpha = 1; x.fill(); x.lineWidth = f.id === sel ? 3 : 1; x.strokeStyle = f.id === sel ? css('--acc') : `hsl(${HUE(f.id)} 30% ${dark2() ? 40 : 70}%)`; x.stroke();
-    x.fillStyle = css('--ink'); x.font = `700 ${f.region ? 17 : 13}px "Source Sans 3", sans-serif`; x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillText(N.get(f.id).name, f.x + 14, f.y + (f.region ? 24 : 17));
+  for (const f of lay.frames.filter(f => !f.sub)) { const hue = HUE(f.id); x.beginPath(); rrect(x, f.x, f.y, f.w, f.h, f.region ? 16 : 12);
+    x.fillStyle = `hsl(${hue} 35% ${dark2() ? 18 : 94}%)`; x.globalAlpha = 1; x.fill(); x.lineWidth = f.id === sel ? 3 : 1.5; x.strokeStyle = f.id === sel ? css('--acc') : `hsl(${hue} 35% ${dark2() ? 45 : 62}%)`; x.stroke();
+    if (!f.region) {   // an opened group: a header band and a bar down its left side, the parts indented inside
+      x.save(); x.beginPath(); rrect(x, f.x, f.y, f.w, 28, 12); x.clip(); x.fillStyle = `hsl(${hue} 40% ${dark2() ? 28 : 84}%)`; x.fillRect(f.x, f.y, f.w, 28); x.restore();
+      x.fillStyle = `hsl(${hue} 40% ${dark2() ? 50 : 55}%)`; x.fillRect(f.x + 8, f.y + 32, 4, f.h - 40); }
+    x.fillStyle = css('--ink'); x.font = `700 ${f.region ? 17 : 14}px "Source Sans 3", sans-serif`; x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+    x.fillText(f.region ? N.get(f.id).name : `▾ ${N.get(f.id).name}`, f.x + 12, f.y + (f.region ? 24 : 19));
+    if (!f.region && f.n) { x.font = '12px "Source Sans 3", sans-serif'; x.fillStyle = css('--mut'); x.textAlign = 'right'; x.fillText(`${f.n} parts`, f.x + f.w - 12, f.y + 19); }
     T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + 14) * T2.k + T2.y, w: f.w / 2 * T2.k, h: 14 * T2.k }); }
+  for (const f of lay.frames.filter(f => f.sub)) { const hue = HUE(f.id);   // a part opened inside a group: a sub-heading with a tick to its own bar
+    x.fillStyle = `hsl(${hue} 40% ${dark2() ? 50 : 55}%)`; x.fillRect(f.x + 4, f.y + 6, 3, 12); x.fillRect(f.x + 4, f.y + 22, 3, 6);
+    x.fillStyle = f.id === sel ? css('--acc') : css('--ink'); x.font = '700 13px "Source Sans 3", sans-serif'; x.textAlign = 'left'; x.fillText(`▾ ${N.get(f.id).name}`, f.x + 12, f.y + 17);
+    T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + 12) * T2.k + T2.y, w: f.w / 2 * T2.k, h: 12 * T2.k }); }
   for (const h of lay.heads) { x.fillStyle = css('--mut'); x.font = 'italic 17px "Gentium Book Plus", Georgia, serif'; x.textAlign = 'center'; x.fillText(`${h.t} · ${h.n}`, h.x, h.y); }
   // ribbons between regions (Map, with no part selected)
   if (lay.ribbons && !sel && !S.lsel) for (const rb of lay.ribbons) { const A = lay.frames.find(f => f.id === rb.a), B = lay.frames.find(f => f.id === rb.b); if (!A || !B) continue;
