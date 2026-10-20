@@ -30,13 +30,15 @@
   "how it came about", overview map. Lit parts never move the camera by themselves ("Show them" does, when tapped).
 - Inventory: the offline helper's scripts (sw.js, reliefsw.js) are their own scope – names no longer link across.
 
+## Decided 21 Oct (night)
+- Pult's numbered decisions are not needed now (decisions.json hook stays unused).
+- Distant names smaller (11–15 px). Phones: short labels (Lay, Sto, ↑ ↓ ↕, ✦).
+- Touch screens: every control at least 44 px. The top bar then takes 2 rows on iPad, 4 on phones – kept as it is.
+
 ## Open
-- Pult's numbered decisions (475 …) are not in either repository; decisions.json is ready to take them (number, text,
-  parts) – ask where they are kept.
 - Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
 - "First in vN" counts from where a function's file was created: code moved between files (v160 split of app.js) looks
   new there.
-- On phones the top bar wraps to three rows – ask whether to shorten labels or move something.
 - Safari (owner's iPad): the page did not load (before the fixes of 20 Oct: offline-helper page requests, no
   structuredClone/roundRect, errors shown in the hint line). Those fixes broke `sw.js` – the line's code sat after a `//`
   comment, so the helper returned nothing and the page failed after the first visit on every browser; fixed 20 Oct
