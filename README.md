@@ -12,9 +12,13 @@ the device (memory, storage, CPU, GPU) – drawn in space as cards on strings, w
   data flows between parts. `fixups.json` sharpens flows that name only a whole part.
 - `tools/archgen.py` – reads every commit of Pult: files and sizes, every top-level declaration of every script, and which
   declarations use which (history.json delta-encoded; current.json).
+- `tools/startup.py` – how Pult starts, read from its code: script order, page-ready handlers, the steps of app.js's main().
+- `walks.json` – the guided walks, written by hand from Pult's code (each step: parts, functions, a sentence), and captions for
+  the start-up steps. `decisions.json` (optional, not yet written) – Pult's numbered decisions with the parts they concern.
 - `tools/merge.py` – joins the parts with the inventory into model.json; new functions not yet placed in `parts/` go to
   the main part of their file and are listed in its report.
-- `src/atlas.html` – the page (one view in space; Web or Layers, optionally Flat).
+- `src/atlas.html` – the page (one view in space; Web or Layers, optionally Flat; Explore: walks, start-up, trace, data,
+  health, compare; per part: functions with GitHub links, its inner call drawing, history; an overview map).
 - `tools/site.py` – the web app at the root: the page with its own head, d3, Pult's fonts, an offline helper (`sw.js`),
   manifest, icons, the data.
 - `tools/build.sh <Pult checkout> [--site]` – all of it. Without `--site` only `out/` (for the private Claude copy).

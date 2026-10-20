@@ -21,7 +21,21 @@
   screen, crossfading) the full card. One tap slides the panel in over the drawing (bottom sheet on phones); ✕, Escape
   or a tap on the empty drawing closes it. The legend that used to fill the empty panel opens from ⓘ in the top bar.
 
+## Decided 21 Oct (later)
+- The selected part stays where it is until moved by hand – also when filters or the arrangement change (no refit then).
+- Opening or closing a part keeps it in place: its parts start side by side where it was.
+- All nine suggestions for understanding Pult approved and built: guided walks (8, in walks.json), start-up order
+  (tools/startup.py), trace a function, follow the data (two flow steps each way), health (most relied on, circles,
+  pairs, largest, code nothing calls), compare two versions, per part: GitHub links, inner call drawing, history and
+  "how it came about", overview map. Lit parts never move the camera by themselves ("Show them" does, when tapped).
+- Inventory: the offline helper's scripts (sw.js, reliefsw.js) are their own scope – names no longer link across.
+
 ## Open
+- Pult's numbered decisions (475 …) are not in either repository; decisions.json is ready to take them (number, text,
+  parts) – ask where they are kept.
+- Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
+- "First in vN" counts from where a function's file was created: code moved between files (v160 split of app.js) looks
+  new there.
 - On phones the top bar wraps to three rows – ask whether to shorten labels or move something.
 - Safari (owner's iPad): the page did not load (before the fixes of 20 Oct: offline-helper page requests, no
   structuredClone/roundRect, errors shown in the hint line). Those fixes broke `sw.js` – the line's code sat after a `//`

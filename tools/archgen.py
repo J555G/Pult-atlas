@@ -17,6 +17,8 @@ git = lambda *a: subprocess.run(['git', '-C', REPO, *a], capture_output=True, ch
 DECL = re.compile(r'^(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)|^(?:const|let|var)\s+([A-Za-z_$][\w$]*)|^class\s+([A-Za-z_$][\w$]*)')
 IDENT = re.compile(r'[A-Za-z_$][\w$]*')
 CONT = tuple('})].+?:,\'"`*/-|&')
+WORKER = {'sw.js', 'reliefsw.js'}                                    # (they run in the offline helper, apart from the page's scripts)
+scope = lambda f: 'w' if f in WORKER else 'p'
 
 def strip_comments(t):
     t = re.sub(r'/\*.*?\*/', ' ', t, flags=re.S)
@@ -70,7 +72,7 @@ def main():
                 if sha not in blobs: blobs[sha] = analyse_js(blob(sha))
                 for name, (s, line, ids) in blobs[sha].items():
                     decls[f'{path}|{name}'] = s
-                    if name != '(top level)': defs.setdefault(name, path)
+                    if name != '(top level)': defs.setdefault((scope(path), name), path)
                     used[f'{path}|{name}'] = (ids, line)
             if path == 'sw.js': sw = blob(sha)
         v = re.search(r"lesepult-v(\d+)", sw or ''); v = int(v.group(1)) if v else None
@@ -79,7 +81,7 @@ def main():
         for key, (ids, _) in used.items():
             f = key.split('|')[0]; me = key.split('|')[1]
             for i in ids:
-                g = defs.get(i)
+                g = defs.get((scope(f), i))
                 if g and not (g == f and i == me):
                     dedges[key].add(f'{g}|{i}')
                     if g != f: fedges[f'{f}>{g}'] += 1

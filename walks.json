@@ -1,0 +1,179 @@
+{
+  "_": "Guided walks through Pult, written by hand from its code (functions named as file|name). Each step lights up its parts; merge.py checks that every part exists. 'startup' holds captions for the steps of tools/startup.py.",
+  "walks": [
+    {
+      "id": "tapword",
+      "title": "Tapping a word",
+      "intro": "What happens between your finger touching a Greek or Latin word and its dictionary entry appearing on the right.",
+      "steps": [
+        { "parts": ["shell.events.taps"], "fns": ["app.js|wire"],
+          "text": "The text pane has one listener for all its words, set up once at start. It finds the tapped word's number, marks it and asks the dictionary to show it." },
+        { "parts": ["dict.nav.show"], "fns": ["dictview.js|showWord"],
+          "text": "showWord starts a fresh history for a word from the text (Back and Forward then step through what you look up from there) and switches the right pane to the Entry tab." },
+        { "parts": ["dict.entry.page"], "fns": ["dictview.js|renderView"],
+          "text": "renderView builds the entry page. First it needs to know what the word form can be." },
+        { "parts": ["reader.morph.greek", "reader.morph.latin"], "fns": ["analysis.js|analyses"],
+          "text": "The form is turned into a key and looked up in the installed morphology: Greek forms in the Morpheus analyses, Latin ones by the Collatinus or Whitaker engine, which split stem and ending." },
+        { "parts": ["reader.morph.buckets", "shell.db.dictdbs", "storage.idb_dicts.buckets"], "fns": ["analysis.js|bucket"],
+          "text": "Dictionaries are stored in pieces (buckets) by key prefix, one database per dictionary. Only the bucket holding this key is read, and kept in a small cache for the next tap." },
+        { "parts": ["reader.morph.entries", "dict.entry.html", "dict.entry.tappable"], "fns": ["analysis.js|entriesFor", "dictview.js|renderEntryHTML"],
+          "text": "For each possible lemma the entries of every switched-on dictionary are fetched the same way, turned into HTML, and Greek (and Latin) words inside them made tappable." },
+        { "parts": ["reader.glosses.box", "dict.hl.paint", "dict.entry.scroll"],
+          "text": "Finally your gloss box is filled, your highlights are painted back in, and the pane scrolls to where you last were in this entry." }
+      ]
+    },
+    {
+      "id": "opentext",
+      "title": "Opening a text",
+      "intro": "From choosing a work in the Library to words you can read and tap.",
+      "steps": [
+        { "parts": ["library.catalog.fetch", "net.ghpages.texts"],
+          "text": "The Library knows the 2,547 available works from catalog.json, fetched from the website when online and otherwise taken from the copy saved on the device." },
+        { "parts": ["library.catalog.download", "settings.downloads.queue"], "fns": ["library.js|downloadWork"],
+          "text": "Downloading a work goes through the one download queue Pult has for everything: dictionaries, texts and map packages." },
+        { "parts": ["library.store.install", "reader.packages.read", "storage.idb_library"], "fns": ["library.js|installWork"],
+          "text": "The gzip package is unpacked in the browser and written into the library database, one record per book, so later only the book you open is loaded." },
+        { "parts": ["reader.open.open", "library.store.books"], "fns": ["text.js|openText"],
+          "text": "openText loads that one book, with your glosses, your marker and the position where you stopped." },
+        { "parts": ["reader.open.tokenize", "library.nav.refs"],
+          "text": "The book is split into words, punctuation and blocks, and its references (lines, sections, Stephanus pages) are found." },
+        { "parts": ["reader.readings.resolve", "reader.readings.context", "reader.readings.choice"],
+          "text": "Every word gets a lemma, a reading and a word class: from the GLAUx annotation where the work has one, from your own choices, otherwise from the morphology. The text updates as this runs." },
+        { "parts": ["reader.render.draw", "reader.render.chunks", "reader.render.lazy"],
+          "text": "The text is drawn. Long books are cut into parts of about 200 words that are only drawn when they come near the screen, and emptied again when far away." }
+      ]
+    },
+    {
+      "id": "gloss",
+      "title": "Writing a gloss",
+      "intro": "How a translation you mark in a dictionary entry ends up under the word in the text, and in your exports.",
+      "steps": [
+        { "parts": ["dict.hl.fab", "shell.events.selection"],
+          "text": "Selecting text in an entry (finger, Apple Pencil or long press) brings up the floating buttons: highlight, + Gloss, + Default." },
+        { "parts": ["reader.glosses.add"], "fns": ["text.js|addGloss"],
+          "text": "+ Gloss takes the selected words as the gloss of the tapped word or phrase; + Default makes it the gloss of the lemma everywhere it occurs." },
+        { "parts": ["reader.glosses.store", "dict.glosses.meta", "storage.idb_reader.glosses"], "fns": ["text.js|saveSpanGloss"],
+          "text": "The gloss is saved with its words, lemma, reference, the five words on each side and the text's title, so it can find its place again if the text is ever corrected." },
+        { "parts": ["reader.glosses.show", "reader.render.html"],
+          "text": "The text is redrawn: the gloss appears small and blue under its words, never wider than the column." },
+        { "parts": ["dict.glosses.export", "export.docx.body"],
+          "text": "Later the glosses can be exported on their own (CSV, PDF, HTML, Word), or the text itself as an interlinear Word document with the glosses under the words." }
+      ]
+    },
+    {
+      "id": "dicts",
+      "title": "Installing dictionaries",
+      "intro": "What 'Download the free dictionaries' does, from the website's list to entries you can look up offline.",
+      "steps": [
+        { "parts": ["settings.packages.manifest", "net.ghpages.packages"], "fns": ["dialogs.js|fetchManifest"],
+          "text": "Pult reads packages.json from its website: every dictionary and analysis package with its size, licence and a content hash as version." },
+        { "parts": ["settings.packages.bulk", "settings.downloads.checks"], "fns": ["dialogs.js|syncPackages"],
+          "text": "Before downloading it checks that the website answers and that the device has room; then the packages come one by one with a progress window." },
+        { "parts": ["reader.packages.read", "engine.browser.streams"],
+          "text": "Each .gdpkg.gz is unpacked with the browser's own decompression and parsed." },
+        { "parts": ["reader.packages.import", "shell.db.dictdbs", "storage.idb_dicts"],
+          "text": "It is written into a database of its own, so deleting a dictionary later frees all its space, and the old version stays usable until the new one is complete." },
+        { "parts": ["reader.packages.registry", "storage.idb_reader.dicts"], "fns": ["analysis.js|loadDicts"],
+          "text": "The list of installed dictionaries is updated, and the open text is analysed again with the new morphology." },
+        { "parts": ["settings.packages.updates"], "fns": ["dialogs.js|updCheck"],
+          "text": "From now on, a few seconds after each start (when online) Pult quietly compares the installed versions with the list and offers updates in Instruments." }
+      ]
+    },
+    {
+      "id": "offline",
+      "title": "Working offline",
+      "intro": "Why Pult opens and works on a plane: what is kept on the device, and who answers when there is no network.",
+      "steps": [
+        { "parts": ["offline.worker.precache", "storage.cache_app"],
+          "text": "When a version of Pult is installed, its offline helper fetches every script, the stylesheet, the fonts and pictures (about 2.7 MB) and keeps them in the app cache." },
+        { "parts": ["offline.routes.app"],
+          "text": "Every request of the page passes through the helper. App files come fresh from the website when it answers quickly (so updates arrive at once), otherwise from the stored copy." },
+        { "parts": ["offline.routes.bypass"],
+          "text": "Downloads of dictionaries and texts go straight to the network: once installed they live in databases, not in the cache." },
+        { "parts": ["storage.idb_reader", "storage.idb_dicts", "storage.idb_library"],
+          "text": "Your texts, glosses, settings, dictionaries and library books are all in IndexedDB on the device, so reading and looking up need no network at all." },
+        { "parts": ["offline.routes.maps", "storage.cache_maps", "offline.routes.relief", "storage.cache_relief"],
+          "text": "Map packages are served from their own cache, and relief from the areas you saved; deeper than you saved, the nearest coarser tile is enlarged." },
+        { "parts": ["storage.quota", "offline.worker.cleanup"],
+          "text": "Pult asks the browser to keep its data for good, and when a new version arrives only the old app cache is removed: maps, relief and libraries stay." }
+      ]
+    },
+    {
+      "id": "map",
+      "title": "Places of a text on the map",
+      "intro": "How the place names of the text you read become dots on the map of the ancient world.",
+      "steps": [
+        { "parts": ["map.packages", "data.maps.base", "data.maps.places"],
+          "text": "The map needs two packages from Instruments → Map: the base map with its engine, and the Pleiades gazetteer of about 34,500 ancient places." },
+        { "parts": ["map.gazetteer.build", "storage.idb_places"],
+          "text": "The gazetteer file is turned into an index on the device, by normalised name keys, so that a text only loads the places whose names occur in it." },
+        { "parts": ["map.textplaces.find", "map.textplaces.choose"], "fns": ["maps.js|placesForText"],
+          "text": "For the open text, the lemmas of proper nouns are looked up in that index, and for names shared by several places the most likely one is picked, with how sure that is." },
+        { "parts": ["map.engine.start", "map.engine.lib", "engine.maplibre"], "fns": ["maps.js|showMap1"],
+          "text": "Opening the Map tab loads MapLibre from the base package and builds the map step by step, saying clearly what failed if something does." },
+        { "parts": ["map.view.base", "map.view.labels", "map.layers.style"],
+          "text": "The places become dots with names drawn without overlaps, over the base map and the layers you switched on." },
+        { "parts": ["map.view.card", "map.textplaces.corrections"],
+          "text": "Tapping a place opens its card with the passages that name it, each leading back into the text; a wrong place can be corrected for one passage, the work or everywhere." }
+      ]
+    },
+    {
+      "id": "search",
+      "title": "Searching",
+      "intro": "From letters typed in the search box to dictionaries, forms and every text on the device.",
+      "steps": [
+        { "parts": ["dict.search.field"], "fns": ["search.js|wireSearch"],
+          "text": "The search box in the top bar reacts to every letter, the arrow keys, Enter and Escape." },
+        { "parts": ["dict.query.plan"],
+          "text": "First it decides what to look for: Greek letters search Greek; Latin letters search Latin and, read as transliteration, Greek too." },
+        { "parts": ["dict.query.hwlists", "dict.query.match", "storage.idb_dicts.headwords"],
+          "text": "The headwords of the searched dictionaries are merged into one sorted list per language; keys are found by prefix, by wildcard, or by similarity when nothing matches exactly." },
+        { "parts": ["dict.search.suggest", "dict.query.lookup"], "fns": ["search.js|updateSuggestions"],
+          "text": "While typing, suggestions show matching headwords with the start of their first entry, and analysed forms." },
+        { "parts": ["dict.search.results", "dict.search.intext", "dict.index.query", "storage.idb_search"], "fns": ["search.js|renderSearch"],
+          "text": "Enter opens the results page: dictionaries, forms, the open text, and all texts on the device, the last answered by an index from lemma to every place it occurs." }
+      ]
+    },
+    {
+      "id": "export",
+      "title": "Exporting a text",
+      "intro": "How the text on screen becomes a Word file, an HTML page or a PDF.",
+      "steps": [
+        { "parts": ["export.dialog.options", "export.range"], "fns": ["export.js|exportDialog"],
+          "text": "The export dialog asks for the format and the range: the whole text, from one reference to another, or a passage marked by tapping its first and last word." },
+        { "parts": ["export.model"],
+          "text": "The text as displayed is read into plain data: blocks of words with their colour, grammar line and glosses, punctuation, breaks and references." },
+        { "parts": ["export.docx.body", "export.docx.package", "export.docx.zip"],
+          "text": "For Word, each line becomes a borderless table with one column per word when glosses or grammar are included, and everything is zipped into a .docx, without any library." },
+        { "parts": ["export.html.file", "export.html.print"],
+          "text": "For HTML the fonts are embedded so the file looks the same everywhere; PDF goes through the browser's print dialog." }
+      ]
+    }
+  ],
+  "startup": {
+    "core.js": "Shared helpers and the one state object every other script uses.",
+    "analysis.js": "Morphology, dictionary lookup and package installing.",
+    "text.js": "Opening, analysing and drawing texts.",
+    "dictview.js": "The dictionary pane.",
+    "dialogs.js": "The dialogs: Settings, Instruments, downloads, This Pult.",
+    "app.js": "The wiring of the page; its main() runs the start-up below.",
+    "maps.js": "The map; the other map scripts follow it.",
+    "ready": "These scripts wait for the page to be ready, then set up their own buttons and listeners.",
+    "register the offline helper": "Registers sw.js, which keeps Pult working offline (it runs on its own, alongside the page).",
+    "openDB": "Opens the main database 'greekreader' with its five stores. Everything after this waits for it.",
+    "migrateOld": "Once only: moves data from the old single database into the current layout.",
+    "wire": "Connects every tap, menu and switch to its code.",
+    "setTheme": "Light or dark, as you left it (dark the first time).",
+    "loadDicts": "Registers the installed dictionaries and analysis tools in their order.",
+    "updCheck": "Five seconds later, when online: looks for newer versions of installed packages.",
+    "housekeep": "Twenty seconds later: quietly removes what can no longer be used.",
+    "glossMigrate": "Thirty seconds later: fills in the context of older glosses, once.",
+    "setGlossVisible": "Glosses shown or hidden, as you left them.",
+    "applyMapsOn": "Shows the map tab if the map packages are installed.",
+    "setSplit": "The split between text and dictionary, as you left it.",
+    "setTextZoom": "Your text size.",
+    "loadSearchCfg": "Your search settings.",
+    "openText": "Reopens the text you were reading, at the place you stopped.",
+    "syncPackages": "On a first start: the offer to download the free dictionaries."
+  }
+}

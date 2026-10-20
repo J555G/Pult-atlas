@@ -10,16 +10,17 @@
   --up: #2563a8;           /* what the selected part uses */
   --down: #c2410c;         /* what uses the selected part */
   --flow: #7c5aa6;         /* data flows */
+  --add: #2f8a57;          /* new in a later version */
   --h0: #d9ddd8; --h1: #b9dfd4; --h2: #f2e39a; --h3: #f7c06a; --h4: #ef8a4f; --h5: #d9483b;
   --display: "Gentium Book Plus", Georgia, serif; --ui: "Source Sans 3", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #12161b; --surface: #1a2027; --ink: #e5e8ea; --mut: #98a2ad; --line: #39424c; --soft: #232a32;
-  --acc: #6aa9d8; --up: #6aa9ec; --down: #f08a4b; --flow: #b394e0;
+  --acc: #6aa9d8; --up: #6aa9ec; --down: #f08a4b; --flow: #b394e0; --add: #5fc08a;
   --h0: #39414a; --h1: #2f6b5f; --h2: #7d7034; --h3: #96662a; --h4: #a3502c; --h5: #a83a32; color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #12161b; --surface: #1a2027; --ink: #e5e8ea; --mut: #98a2ad; --line: #39424c; --soft: #232a32;
-  --acc: #6aa9d8; --up: #6aa9ec; --down: #f08a4b; --flow: #b394e0;
+  --acc: #6aa9d8; --up: #6aa9ec; --down: #f08a4b; --flow: #b394e0; --add: #5fc08a;
   --h0: #39414a; --h1: #2f6b5f; --h2: #7d7034; --h3: #96662a; --h4: #a3502c; --h5: #a83a32; color-scheme: dark }
 html, body { height: 100%; }
 body { height: 100dvh; }   /* Safari: exactly the visible screen, not the area behind its toolbars */
@@ -79,6 +80,34 @@ body.open #panel { transform: none; visibility: visible; transition: transform .
 .list a { color: var(--ink); cursor: pointer; }
 .list .k { color: var(--mut); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dirup { color: var(--up); } .dirdown { color: var(--down); } .dirflow { color: var(--flow); }
+.glist { list-style: none; padding: 0; margin: 8px 0; }
+.glist li { border-top: 1px solid var(--line); }
+.glist a { display: block; padding: 9px 2px; cursor: pointer; color: var(--ink); }
+.glist b { display: block; font-size: 15px; } .glist span { color: var(--mut); font-size: 12.5px; }
+.steps { display: flex; gap: 5px; flex-wrap: wrap; margin: 8px 0; }
+.steps button { min-width: 28px; height: 28px; border-radius: 14px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: 600 12.5px var(--ui); cursor: pointer; }
+.steps button.done { background: var(--soft); }
+.steps button[aria-current="true"] { background: var(--acc); border-color: var(--acc); color: #fff; }
+.stepnav { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.ghl { border-left: 3px solid var(--acc); background: var(--soft); border-radius: 0 7px 7px 0; padding: 6px 10px; }
+.ghl p { margin: 4px 0; }
+.lab { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--mut); }
+.hintp { font-size: 12.5px; color: var(--mut); }
+.hintp a, .list a.ic, a.ic { cursor: pointer; color: var(--acc); text-decoration: none; }
+.sub { font-size: 12px; color: var(--mut); }
+.tag { font: 600 10.5px var(--ui); border-radius: 4px; padding: 0 5px; margin-left: 5px; background: var(--soft); color: var(--mut); }
+.sup { padding-left: 22px; margin: 6px 0; font-size: 13px; }
+.sup li { padding: 4px 4px; border-radius: 6px; cursor: pointer; }
+.sup li.on { background: var(--soft); outline: 2px solid var(--acc); }
+.tree li { border-bottom: 0; padding-top: 1px; padding-bottom: 1px; }
+.cmp { display: grid; gap: 6px; margin: 8px 0; } .cmp label { display: flex; gap: 8px; align-items: center; font-size: 12.5px; } .cmp input { flex: 1; accent-color: var(--acc); }
+.add { color: var(--add); }
+#tq { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; background: var(--bg); color: var(--ink); font: 14px var(--ui); margin: 6px 0; }
+#tdir { margin: 4px 0; }
+button.sm { font-size: 11.5px; padding: 0 7px; margin-left: 6px; text-transform: none; letter-spacing: 0; }
+#inside { width: 100%; display: block; }
+.backg { display: inline-block; margin-bottom: 6px; font-size: 12.5px; color: var(--acc); cursor: pointer; }
+#mini { position: absolute; left: 12px; bottom: 38px; width: 196px; height: 112px; border: 1px solid var(--line); border-radius: 8px; background: color-mix(in srgb, var(--surface) 88%, transparent); cursor: pointer; z-index: 4; }
 .legend { font-size: 12.5px; color: var(--mut); display: grid; gap: 4px; }
 .legend span.sw { display: inline-block; width: 22px; height: 3px; vertical-align: middle; margin-right: 6px; }
 .heat { display: flex; gap: 2px; align-items: center; }
@@ -127,6 +156,7 @@ footer input[type=range] { accent-color: var(--acc); }
   <div class="seg" id="segFocus" title="With a part selected, show only…"><button data-v="all" aria-pressed="true">All</button><button data-v="up" aria-pressed="false" title="only what the selected part relies on">Relies on</button><button data-v="down" aria-pressed="false" title="only what relies on the selected part">Relied on by</button><button data-v="both" aria-pressed="false" title="only the selected part's connections">Both</button></div>
   <label class="rng" title="How far apart the parts are"><span>Spacing</span> <input type="range" id="spread" min="0.4" max="3" step="0.05" value="1" aria-label="Spacing"></label>
   <button class="plain" id="optBtn" aria-expanded="false" title="Options"><span class="t">Options </span>▾</button>
+  <button class="plain" id="guideBtn" aria-pressed="false" title="Guided walks, start-up, traces, data, health, versions">Explore</button>
   <button class="plain" id="infoBtn" title="How to read the drawing" aria-label="How to read the drawing">ⓘ</button>
 </header>
 <div class="menu" id="opts" hidden>
@@ -134,10 +164,11 @@ footer input[type=range] { accent-color: var(--acc); }
   <label class="chk"><input type="checkbox" id="offv"> Offline view</label>
   <label class="chk"><input type="checkbox" id="lbl"> Flow labels</label>
   <label class="chk"><input type="checkbox" id="chain"> Whole chains</label>
+  <label class="chk"><input type="checkbox" id="miniChk"> Overview map</label>
   <div class="row"><button class="plain" id="expAll">Expand all</button><button class="plain" id="colAll">Collapse</button></div>
 </div>
 <main>
-  <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><div class="hint" id="hint">Drag to turn (flat: to move) · pinch or scroll to zoom · twirl with two fingers · drag a part to pull it · double-tap to open it</div><div class="tip" id="tip" hidden></div></div>
+  <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><canvas id="mini" aria-label="Overview: the main parts by floor; tap one to go there"></canvas><div class="hint" id="hint">Drag to turn (flat: to move) · pinch or scroll to zoom · twirl with two fingers · drag a part to pull it · double-tap to open it</div><div class="tip" id="tip" hidden></div></div>
   <aside id="panel" aria-label="About the part"><button class="plain" id="pclose" aria-label="Close">✕</button><div id="pbody"></div></aside>
 </main>
 <footer>
@@ -152,7 +183,7 @@ addEventListener('error', e => { const h = document.getElementById('hint'); if (
 addEventListener('unhandledrejection', e => { const h = document.getElementById('hint'); if (h) { h.textContent = 'Error: ' + (e.reason?.message || e.reason); h.style.color = '#c2410c'; } });
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const METRICS = { mem: 'Memory', store: 'Storage', cpu: 'CPU', gpu: 'GPU' };
-const S = { info: false, arr: 'web', flat: false, metric: 'part', ind: true, offv: false, lbl: false, exp: new Set(), sel: null, ver: 0, depth: 1, focus: 'all', spread: 1, rot: 0 };
+const S = { guide: null, hl: new Map(), play: 0, mini: innerWidth >= 560, info: false, arr: 'web', flat: false, metric: 'part', ind: true, offv: false, lbl: false, exp: new Set(), sel: null, ver: 0, depth: 1, focus: 'all', spread: 1, rot: 0 };
 try { const k = JSON.parse(localStorage.getItem('atlas') || '{}'); Object.assign(S, { spread: k.spread || 1, arr: k.arr === 'layers' ? 'layers' : 'web', flat: !!k.flat, metric: k.metric || 'part', ind: k.ind ?? true }); } catch (_) {}
 const keep = () => { try { localStorage.setItem('atlas', JSON.stringify({ arr: S.arr, flat: S.flat, metric: S.metric, ind: S.ind, spread: S.spread })); } catch (_) {} };
 let MODEL, HIST, N = new Map(), OWN = new Map(), V = null, CK = [];
@@ -228,17 +259,21 @@ function fill(id) {
 }
 const BW = 168, BH = 50;
 const FAR0 = 70, FAR1 = 105;   // a card narrower on screen than FAR0 px shows only its name, large; wider than FAR1 px the whole card
-function farLabel(x, id, q, al, isSel, chg) {   // a distant part: its name in large letters, a bar of its colour beneath; returns its hit box
+function badge(x, b, hv, al) {   // the number of a lit part (its step, or how many steps away)
+  const cx = b.x - b.w + 2, cy = b.y - b.h + 2, t = String(hv.n); x.save(); x.globalAlpha = Math.max(al, 0.9); x.font = '700 11px "Source Sans 3", sans-serif';
+  const r = Math.max(9, x.measureText(t).width / 2 + 5); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fillStyle = hlCol(hv.t); x.fill();
+  x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, cx, cy + 0.5); x.restore(); }
+function farLabel(x, id, q, al, isSel, chg) {   // isSel: the colour it is marked in, if any   // a distant part: its name in large letters, a bar of its colour beneath; returns its hit box
   const fs = Math.round(15 + 6 * Math.min(1, BW * q.s / FAR1)), maxW = 200, words = N.get(id).name.split(' '), ln = [''];
   x.font = `700 ${fs}px "Source Sans 3", sans-serif`;
   for (const w of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + w : w; if (x.measureText(t).width > maxW && ln[ln.length - 1] && ln.length < 2) ln.push(w); else ln[ln.length - 1] = t; }
   if (x.measureText(ln[ln.length - 1]).width > maxW) { let t = ln[ln.length - 1]; while (t.length > 3 && x.measureText(t + '…').width > maxW) t = t.slice(0, -1); ln[ln.length - 1] = t + '…'; }
   const lh = fs * 1.08, top = q.y - (ln.length * lh) / 2, wd = Math.max(...ln.map(t => x.measureText(t).width));
   x.save(); x.globalAlpha = al; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
-  x.lineWidth = 4; x.strokeStyle = css('--bg'); x.fillStyle = isSel ? css('--acc') : css('--ink');
+  x.lineWidth = 4; x.strokeStyle = css('--bg'); x.fillStyle = isSel || css('--ink');
   ln.forEach((t, i) => { const y = top + lh * (i + 0.5); x.strokeText(t, q.x, y); x.fillText(t, q.x, y); });
   const by = top + ln.length * lh + 2; x.fillStyle = fill(id); x.fillRect(q.x - wd / 2, by, wd, 4);
-  if (isSel || chg) { x.strokeStyle = isSel ? css('--acc') : css('--flow'); x.lineWidth = 1.5; x.setLineDash(chg && !isSel ? [4, 3] : []); x.strokeRect(q.x - wd / 2 - 0.5, by - 0.5, wd + 1, 5); x.setLineDash([]); }
+  if (isSel || chg) { x.strokeStyle = isSel || css('--flow'); x.lineWidth = 1.5; x.setLineDash(chg && !isSel ? [4, 3] : []); x.strokeRect(q.x - wd / 2 - 0.5, by - 0.5, wd + 1, 5); x.setLineDash([]); }
   x.restore(); return { id, x: q.x, y: q.y + 3, w: wd / 2 + 6, h: (ln.length * lh) / 2 + 8 };
 }
 function draw(refit) {
@@ -371,7 +406,7 @@ function frame3d(now) {
       p.sv += -0.12 * (p.sc - 1) - 0.18 * p.sv - 0.0009 * vy; p.sc = Math.max(0.9, Math.min(1.1, p.sc + p.sv));
       if (Math.abs(p.om) > 2e-4 || Math.abs(p.sv) > 2e-4 || Math.abs(p.th) > 1e-3) moving = true; }
     p.px = q.x; p.py = q.y; }
-  const sel = S.sel && T3.nodes.has(S.sel) ? S.sel : null, r = sel ? reach(sel, T3.edges) : null;
+  const sel = S.sel && T3.nodes.has(S.sel) ? S.sel : null, r = sel ? reach(sel, T3.edges) : null, HV = visHL();
   const zs = [...P.values()].map(q => q.z), z0 = Math.min(...zs), z1 = Math.max(...zs), fog = z => 1 - 0.45 * Math.max(0, Math.min(1, (z - z0) / Math.max(400, z1 - z0)));
   const hw = q => BW * q.s / 2, hh = q => BH * q.s / 2;
   const clip = (a, b) => { // where the line from a to b meets b's card
@@ -383,6 +418,7 @@ function frame3d(now) {
     let col = e.kind === 'flow' ? css('--flow') : css('--mut'), al = 0.28 * Math.min(fog(a.z), fog(b.z)), w = Math.min(3, 0.6 + Math.log2(1 + e.n) * 0.4) * Math.sqrt(Math.min(a.s, b.s) * 3);
     if (sel) { const [u, v] = dep(e), up = (u === sel && r.up.has(v)) || (r.up.has(u) && r.up.has(v) && r.up.get(v) > r.up.get(u)), dn = (v === sel && r.down.has(u)) || (r.down.has(u) && r.down.has(v) && r.down.get(u) > r.down.get(v));
       if (up) { col = css('--up'); al = 0.95; } else if (dn) { col = css('--down'); al = 0.95; } else al *= 0.15; }
+    else if (HV.size) { if (HV.has(e.a) && HV.has(e.b)) al = Math.max(al, 0.75); else al *= 0.12; }
     const [ex, ey] = clip(a, b); x.globalAlpha = al; x.strokeStyle = col; x.lineWidth = w;
     x.setLineDash(e.kind === 'flow' ? [6, 4] : []); x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(ex, ey); x.stroke(); x.setLineDash([]);
     const an = Math.atan2(ey - a.y, ex - a.x), ah = 5 + w * 2; x.fillStyle = col; x.beginPath(); x.moveTo(ex, ey); x.lineTo(ex - ah * Math.cos(an - 0.4), ey - ah * Math.sin(an - 0.4)); x.lineTo(ex - ah * Math.cos(an + 0.4), ey - ah * Math.sin(an + 0.4)); x.fill();
@@ -400,11 +436,12 @@ function frame3d(now) {
   const order = [...P.entries()].sort((a, b) => b[1].z - a[1].z); T3.drawn = [];
   for (const [id, q] of order) { const p = T3.nodes.get(id), cn = N.get(id);
     let al = fog(q.z); if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al *= 0.18; if (S.offv && netOf(id) === 'online') al *= 0.35;
+    const hv = HV.get(id); if (!sel && HV.size && !hv) al *= 0.16; const mk = id === sel ? css('--acc') : hv ? hlCol(hv.t) : null;
     const k = q.s * p.sc, near = Math.max(0, Math.min(1, (BW * k - FAR0) / (FAR1 - FAR0)));   // 0: far – the name alone, 1: the card
-    if (near < 1) { const b = farLabel(x, id, q, al * (1 - near), id === sel, V.chg.has(id) && S.ver > 0); if (near === 0) { T3.drawn.push(b); continue; } }
+    if (near < 1) { const b = farLabel(x, id, q, al * (1 - near), mk, V.chg.has(id) && S.ver > 0); if (near === 0) { T3.drawn.push(b); if (hv?.n) badge(x, b, hv, al); continue; } }
     x.save(); x.globalAlpha = al * near; x.translate(q.x, q.y); x.rotate(p.th); x.scale(k, k);
     x.beginPath(); rrect(x, -BW / 2, -BH / 2, BW, BH, 9); x.fillStyle = fill(id); x.fill();
-    x.lineWidth = (id === sel ? 3 : V.chg.has(id) && S.ver > 0 ? 2 : 1) / k * Math.min(1, k * 1.5); x.strokeStyle = id === sel ? css('--acc') : V.chg.has(id) && S.ver > 0 ? css('--flow') : css('--line'); x.setLineDash(V.chg.has(id) && S.ver > 0 && id !== sel ? [4, 3] : []); x.stroke(); x.setLineDash([]);
+    x.lineWidth = (mk ? 3 : V.chg.has(id) && S.ver > 0 ? 2 : 1) / k * Math.min(1, k * 1.5); x.strokeStyle = mk || (V.chg.has(id) && S.ver > 0 ? css('--flow') : css('--line')); x.setLineDash(V.chg.has(id) && S.ver > 0 && !mk ? [4, 3] : []); x.stroke(); x.setLineDash([]);
     if (BW * k > 50) {   // the writing, once the card is big enough to read
       x.fillStyle = css('--ink'); x.textAlign = 'left'; x.font = '600 12.5px "Source Sans 3", sans-serif';
       let nm = cn.name; while (nm.length > 4 && x.measureText(nm).width > BW - 50) nm = nm.slice(0, -1); if (nm !== cn.name) nm = nm.trimEnd() + '…';
@@ -415,9 +452,10 @@ function frame3d(now) {
       const n = netOf(id); x.beginPath(); x.arc(BW / 2 - 28, -BH / 2 + 15, 4.5, 0, 7); x.lineWidth = 1.2; x.strokeStyle = css('--ink'); x.stroke(); if (n === 'offline') { x.fillStyle = css('--ink'); x.fill(); } else if (n === 'both') { x.beginPath(); x.arc(BW / 2 - 28, -BH / 2 + 15, 4.5, Math.PI / 2, -Math.PI / 2); x.fillStyle = css('--ink'); x.fill(); }
       if (S.ind) Object.keys(METRICS).forEach((m, i) => { x.fillStyle = css('--h' + rating(id, m)); x.fillRect(-BW / 2 + 10 + i * 26, BH / 2 - 10, 23, 5); });
     }
-    x.restore(); T3.drawn.push({ id, x: q.x, y: q.y, w: hw(q) * p.sc, h: hh(q) * p.sc });
+    x.restore(); const bx = { id, x: q.x, y: q.y, w: hw(q) * p.sc, h: hh(q) * p.sc }; T3.drawn.push(bx); if (hv?.n) badge(x, bx, hv, al);
   }
   x.globalAlpha = 1;
+  drawMini();
   if (T3.alpha > 0.002 || moving || T3.camTo || T3.drag) run3d();
 }
 function pan3d(dx, dy) {   // the view moved across the screen by dx, dy pixels
@@ -463,8 +501,9 @@ cv3.addEventListener('pointerleave', () => { $('#tip').hidden = true; });
 // ---------------------------------------------------------------- the panel
 function bars(v) { return `<div class="bar">${[1, 2, 3, 4, 5].map(i => `<i style="background:${i <= v ? css('--h' + v) : ''}"></i>`).join('')}</div>`; }
 function renderPanel() {
-  const P = $('#pbody'); const id = S.sel; if (id) S.info = false; const open = !!id || S.info;
-  document.body.classList.toggle('open', open); $('#panel').inert = !open; $('#infoBtn').setAttribute('aria-pressed', !id && S.info);
+  const P = $('#pbody'); const id = S.sel; if (id) S.info = false; const open = !!id || S.info || !!S.guide;
+  document.body.classList.toggle('open', open); $('#panel').inert = !open; $('#infoBtn').setAttribute('aria-pressed', !id && S.info); $('#guideBtn').setAttribute('aria-pressed', !!S.guide && !id);
+  if (!id && S.guide && !S.info) { renderGuide(P); return; }
   if (!id) {
     const vs = HIST[S.ver], kinds = MODEL.l1.filter(l => V.ex.has(l.id));
     P.innerHTML = `<h2>Pult, part by part</h2><p>Every part of the app, what it does, what it relies on and what it costs your device. Open a part to see what it is made of, down to its functions.</p>
@@ -479,6 +518,9 @@ function renderPanel() {
       <div><span class="sw" style="border-top:2px dashed var(--flow);background:none;height:0"></span>dashed outline: changed in the version shown</div>
       <div>Selecting a part shows its direct links; <i>Whole chains</i> (Options) follows them further. <i>Relies on / Relied on by / Both</i> then hides everything else.</div>
       <div><i>Web</i> lets the parts find their places in space; <i>Layers</i> sets them on four floors, from what you see down to data and sources. <i>Flat</i> lays either onto a plane. Spacing moves the parts closer or further apart. Twirl with two fingers (or Shift + drag). ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
+      <div><b>Explore</b> opens guided walks through Pult, its start-up, traces of functions, where data comes from and goes, its health and comparisons between versions; the parts concerned light up, numbered by step.</div>
+      <div>The small map at the bottom left shows the main parts by floor: bright ones are on screen, the framed one holds the selected part. Tap one to go there (Options → Overview map).</div>
+      <div>The selected part stays where it is until you move it by hand.</div>
       </div>
       <h3>The figures</h3><p>Sizes of code and data are measured from the repository for each version. Memory, storage, CPU and GPU loads are estimates from reading the code, rated 0 to 5, each with a note on what it is based on. Measured figures from your own devices can follow.</p>
       <h3>This version</h3><p><b>v${vs.v ?? '?'}</b> · ${new Date(vs.d).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(vs.m)}</p>
@@ -497,7 +539,8 @@ function renderPanel() {
   const net = netOf(id), code = V.tot(id, V.code), asset = V.tot(id, V.asset);
   const first = firstSeen(id);
   const conn = (m, cls) => [...m].sort((a, b) => b[1] - a[1]).slice(0, 14).map(([x, n]) => `<li><a data-go="${x}" class="${cls}">${esc(N.get(x)?.name || x)}</a><span class="k">${esc(N.get(N.get(x)?.l1)?.name || '')} · ${n}×</span></li>`).join('');
-  P.innerHTML = `<div class="crumbs">${crumbs.join(' › ') || 'Pult'}</div><h2>${esc(c.name)}</h2>
+  const hist = historyOf(id), inside = insideGraph(id), decis = (MODEL.decisions || []).filter(d => d.parts.some(x => x === id || id.startsWith(x + '.') || x.startsWith(id + '.')));
+  P.innerHTML = `${S.guide ? `<a class="backg" data-gback>‹ Back to ${esc(guideTitle())}</a>` : ''}<div class="crumbs">${crumbs.join(' › ') || 'Pult'}</div><h2>${esc(c.name)}</h2>
     <div class="pills"><span class="pill">${net === 'offline' ? '● works offline' : net === 'online' ? '○ needs the network' : '◐ offline with what was saved'}</span>${code ? `<span class="pill">${fmtB(code)} code</span>` : ''}${asset ? `<span class="pill">${fmtB(asset)} data</span>` : ''}${first ? `<span class="pill">since v${first.v}</span>` : ''}</div>
     ${kids.length ? `<button class="plain" data-tog="${id}">${S.exp.has(id) ? 'Close up its parts' : `Open its ${kids.length} parts`}</button>` : ''}
     <p>${esc(c.desc || '')}</p>${c.detail ? `<p style="color:var(--mut)">${esc(c.detail).replace(/`([^`]+)`/g, '<code class="mono">$1</code>')}</p>` : ''}${c.netNote ? `<p style="color:var(--mut)"><i>Network:</i> ${esc(c.netNote)}</p>` : ''}
@@ -507,11 +550,15 @@ function renderPanel() {
     ${fl.length ? `<h3>Data flows</h3><ul class="list">${fl.map(f => { const out = mine(f.from), o = out ? f.to : f.from; return `<li><span><span class="dirflow">${out ? '→' : '←'}</span> <a data-go="${o}">${esc(N.get(o)?.name || o)}</a><br><small style="color:var(--mut)">${esc(f.label)}</small></span></li>`; }).join('')}</ul>` : ''}
     ${uses.size ? `<h3><span class="dirup">Relies on</span> (code it calls)</h3><ul class="list">${conn(uses, 'dirup')}</ul>` : ''}
     ${usedBy.size ? `<h3><span class="dirdown">Relied on by</span></h3><ul class="list">${conn(usedBy, 'dirdown')}</ul>` : ''}
-    ${decls.length ? `<h3>Functions and constants (${decls.length})</h3><ul class="list">${decls.slice(0, 60).map(([k, s]) => `<li><code>${esc(k.split('|')[1])}</code><span class="k">${esc(k.split('|')[0])}${MODEL.declLine[k] && S.ver === HIST.length - 1 ? ':' + MODEL.declLine[k] : ''} · ${fmtB(s)}</span></li>`).join('')}${decls.length > 60 ? `<li><span class="k">… and ${decls.length - 60} more</span></li>` : ''}</ul>` : ''}
+    ${inside ? `<h3>Inside: which of its functions call which</h3><p class="hintp">Arrows point to the function called; tap one to trace it.</p><svg id="inside"></svg>` : ''}
+    ${decls.length ? `<h3>Functions and constants (${decls.length})</h3><p class="hintp">↗ the code on GitHub${atLast() ? '' : ` (as of v${HIST[S.ver].v})`} · ⤳ trace what it sets off</p><ul class="list">${decls.slice(0, 80).map(([k, s]) => fnRow(k, `<span class="k">${fmtB(s)}</span>`)).join('')}${decls.length > 80 ? `<li><span class="k">… and ${decls.length - 80} more</span></li>` : ''}</ul>` : ''}
     ${(c.assets || []).length ? `<h3>Files</h3><ul class="list">${c.assets.map(a => `<li><code>${esc(a)}</code><span class="k">${fmtB(assetBytes(a, V.st.files))}</span></li>`).join('')}</ul>` : ''}
-    <h3>Size over the versions</h3><svg id="pspark" style="width:100%;height:44px"></svg>`;
-  sparkFor(id);
+    <h3>Size over the versions</h3><svg id="pspark" style="width:100%;height:44px"></svg>
+    ${first || decis.length ? `<h3>How it came about</h3>${decis.map(d => `<p><b>Decision ${esc(d.n)}</b> – ${esc(d.text)}</p>`).join('')}${first ? `<p>First in <a data-ver="${HIST.indexOf(first)}"><b>v${first.v}</b></a> (${new Date(first.d).toLocaleDateString('en-GB', { dateStyle: 'medium' })}): ${esc(first.m)}</p>` : ''}` : ''}
+    ${hist.length ? `<h3>History (${hist.length} versions changed it)</h3><ul class="list">${hist.slice(0, 30).map(h => `<li><span><a data-ver="${h.i}"><b>v${h.c.v ?? '?'}</b></a> ${esc(h.c.m)}</span><span class="k">${sgn(h.d)}${h.add ? ` · <span class="add">+${h.add}</span>` : ''}${h.del ? ` · −${h.del}` : ''}</span></li>`).join('')}${hist.length > 30 ? `<li><span class="k">… and ${hist.length - 30} earlier</span></li>` : ''}</ul>` : ''}`;
+  sparkFor(id); if (inside) drawInside(inside);
 }
+function guideTitle() { const g = S.guide; return g.k === 'walk' ? MODEL.walks.find(w => w.id === g.w).title : { menu: 'Explore', walks: 'Walks', startup: 'Start-up', trace: 'Trace', data: 'Data', health: 'Health', compare: 'Compare' }[g.k]; }
 const cacheFirst = new Map();
 function firstSeen(id) {
   if (cacheFirst.has(id)) return cacheFirst.get(id);
@@ -533,6 +580,238 @@ function drawSpark(sv, ys, cur) {
   sv.append('circle').attr('cx', x(cur)).attr('cy', y(ys[cur])).attr('r', 3).style('fill', css('--acc'));
 }
 
+// ---------------------------------------------------------------- explore: walks, start-up, traces, data, health, versions
+const GH = 'https://github.com/J555G/lesepult/blob/';
+const HELP = ['shell.core', 'shell.db.access', 'shell.db.settings', 'settings.dialog_kit'];   // helpers almost everything uses: listed, not followed
+const isHelp = id => !!id && HELP.some(h => id === h || id.startsWith(h + '.'));
+const fnName = k => k.split('|')[1], fnFile = k => k.split('|')[0];
+const atLast = () => S.ver === HIST.length - 1;
+function ghLink(k) { const ln = atLast() && MODEL.declLine[k]; return GH + (atLast() ? MODEL.generated.h : HIST[S.ver].h) + '/' + fnFile(k) + (ln ? '#L' + ln : ''); }
+const nm = id => esc(N.get(id)?.name || id);
+const partLink = id => id ? `<a data-go="${id}">${nm(id)}</a>` : '';
+function fnRow(k, right = '', pad = 0) {
+  const ln = atLast() && MODEL.declLine[k];
+  return `<li style="padding-left:${pad * 14}px"><span><code>${esc(fnName(k))}</code>${right ? ' ' + right : ''}</span><span class="k">${esc(fnFile(k))}${ln ? ':' + ln : ''} <a class="ic" href="${ghLink(k)}" target="_blank" rel="noopener" title="Open the code on GitHub" aria-label="Code on GitHub">↗</a> <a class="ic" data-trace="${esc(k)}" title="Trace what it sets off" aria-label="Trace">⤳</a></span></li>`;
+}
+const HLP = { now: 5, add: 4, del: 4, chg: 3, a: 2, b: 2, past: 1 };
+const hlCol = t => css({ now: '--acc', past: '--mut', a: '--up', b: '--down', add: '--add', del: '--down', chg: '--flow' }[t] || '--acc');
+function visHL() {   // the highlighted parts as the cards that stand for them now (an opened part: all its visible parts)
+  const m = new Map(); if (!S.hl?.size) return m;
+  const put = (r, h) => { const o = m.get(r); if (!o || HLP[h.t] > HLP[o.t] || (HLP[h.t] === HLP[o.t] && (h.n ?? 99) < (o.n ?? 99))) m.set(r, h); };
+  for (const [id, h] of S.hl) { const r = rep(id, T3.nodes); if (r) { put(r, h); continue; } for (const k of T3.nodes.keys()) if (k.startsWith(id + '.')) put(k, h); }
+  return m;
+}
+function guide(g) { stopPlay(); S.guide = g; S.info = false; guideHL(); if (S.sel) select(null); else draw(); $('#pbody').scrollTop = 0; $('#panel').scrollTop = 0; }
+function guideHL() {
+  const g = S.guide, H = new Map(), put = (id, t, n) => { if (id && N.has(id) && !H.has(id)) H.set(id, { t, n }); };
+  if (g?.k === 'walk') { const w = MODEL.walks.find(x => x.id === g.w); w.steps[g.i].parts.forEach(p => put(p, 'now', g.i + 1)); for (let j = g.i - 1; j >= 0; j--) w.steps[j].parts.forEach(p => put(p, 'past', j + 1)); }
+  if (g?.k === 'startup' && g.i >= 0) { const st = MODEL.startup; for (let j = g.i; j >= 0; j--) [st[j].part, ...(st[j].parts || [])].forEach(p => put(p, j === g.i ? 'now' : 'past', j + 1)); }
+  if (g?.k === 'trace' && g.fn) { const t = traceOf(g.fn, g.dir); t.list.forEach(x => put(owner(x.k), x.d ? (g.dir === 'up' ? 'a' : 'b') : 'now', x.d || undefined)); }
+  if (g?.k === 'data' && g.id) { put(g.id, 'now'); const d = dataOf(g.id); for (const [x, v] of d.from) put(x, 'a', v.n); for (const [x, v] of d.to) put(x, 'b', v.n); }
+  if (g?.k === 'health' && g.light) g.light.forEach(x => put(x, 'now'));
+  if (g?.k === 'compare') { const c = compareOf(g.a, g.b); c.rows.forEach(r => put(r.id, r.t === 'add' ? 'add' : r.t === 'del' ? 'del' : 'chg')); }
+  S.hl = H;
+}
+// -- tracing: the functions one function sets off (or that call it), level by level
+function callers() { if (V._callers) return V._callers; const m = new Map(); for (const [k, us] of Object.entries(V.st.du)) for (const u of us) (m.get(u) || m.set(u, []).get(u)).push(k); return (V._callers = m); }
+function traceOf(k, dir) {
+  const key = k + '|' + dir; if (V._tr?.key === key) return V._tr.res;
+  const next = dir === 'up' ? x => callers().get(x) || [] : x => V.st.du[x] || [];
+  const out = [{ k, d: 0, from: null }], seen = new Set([k]), helpers = new Set();
+  for (let i = 0; i < out.length && out.length < 150; i++) { const x = out[i]; if (x.d >= 4) continue;
+    for (const u of next(x.k)) { if (seen.has(u) || !(u in V.st.decls)) continue; seen.add(u); if (isHelp(owner(u)) && u !== k) { helpers.add(u); continue; } out.push({ k: u, d: x.d + 1, from: x.k }); } }
+  const res = { list: out, helpers: [...helpers].sort() }; V._tr = { key, res }; return res;
+}
+// -- data: where what a part holds comes from (following flows backwards) and where it goes (forwards)
+function dataOf(id) {
+  const mine = x => x === id || x.startsWith(id + '.'), fl = MODEL.flows.filter(f => V.ex.has(f.from) && V.ex.has(f.to));
+  const walk = back => { const d = new Map(), q = [];
+    const ends = f => back ? [f.to, f.from] : [f.from, f.to];
+    for (const f of fl) { const [a, b] = ends(f); if (mine(a) && !mine(b) && !d.has(b)) { d.set(b, { n: 1, f }); q.push(b); } }
+    while (q.length) { const x = q.shift(), n = d.get(x).n; if (n >= 2) continue;
+      for (const f of fl) { const [a, b] = ends(f); if (a === x && !mine(b) && !d.has(b)) { d.set(b, { n: n + 1, f, via: x }); q.push(b); } } }
+    return d; };
+  return { from: walk(true), to: walk(false) };
+}
+// -- health: most relied on, circles, largest, unused
+const l2 = id => id.split('.').slice(0, 2).join('.');
+function healthOf() {
+  if (V._health) return V._health;
+  const E = new Map(), inn = new Map();
+  for (const [k, n] of V.edges) { const [a, b] = k.split('>').map(l2); if (a === b) continue; E.set(a + '>' + b, (E.get(a + '>' + b) || 0) + n); (inn.get(b) || inn.set(b, new Set()).get(b)).add(a); }
+  const relied = [...inn].map(([b, s]) => [b, s.size]).sort((x, y) => y[1] - x[1]).slice(0, 15);
+  const pairs = []; for (const [k, n] of E) { const [a, b] = k.split('>'); if (a < b && E.has(b + '>' + a)) pairs.push([a, b, n + E.get(b + '>' + a)]); } pairs.sort((x, y) => y[2] - x[2]);
+  // circles: groups of parts that all reach one another (Tarjan)
+  const adj = new Map(); for (const k of E.keys()) { const [a, b] = k.split('>'); (adj.get(a) || adj.set(a, []).get(a)).push(b); if (!adj.has(b)) adj.set(b, []); }
+  let ix = 0; const idx = new Map(), low = new Map(), on = new Set(), st = [], comps = [];
+  const sc = v => { idx.set(v, ix); low.set(v, ix++); st.push(v); on.add(v);
+    for (const w of adj.get(v)) { if (!idx.has(w)) { sc(w); low.set(v, Math.min(low.get(v), low.get(w))); } else if (on.has(w)) low.set(v, Math.min(low.get(v), idx.get(w))); }
+    if (low.get(v) === idx.get(v)) { const c = []; let w; do { w = st.pop(); on.delete(w); c.push(w); } while (w !== v); if (c.length > 1) comps.push(c); } };
+  for (const v of adj.keys()) if (!idx.has(v)) sc(v);
+  comps.sort((a, b) => b.length - a.length);
+  const big = [...V.ex].filter(id => id.split('.').length === 2).map(id => [id, V.tot(id, V.code), V.tot(id, V.asset)]);
+  const code = big.slice().sort((a, b) => b[1] - a[1]).slice(0, 12), data = big.filter(x => x[2]).sort((a, b) => b[2] - a[2]).slice(0, 10);
+  const called = new Set(); for (const us of Object.values(V.st.du)) us.forEach(u => called.add(u));
+  const unused = Object.entries(V.st.decls).filter(([k]) => fnName(k) !== '(top level)' && !called.has(k)).sort((a, b) => a[0].localeCompare(b[0]));
+  return (V._health = { relied, pairs: pairs.slice(0, 14), comps, code, data, unused });
+}
+// -- comparing two versions
+function compareOf(a, b) {
+  if (a > b) [a, b] = [b, a]; const key = a + '-' + b; if (S._cmp?.key === key) return S._cmp.res;
+  const A = stateAt(a), B = stateAt(b);
+  const sum = st => { const m = new Map(), f = new Map(); for (const [k, s] of Object.entries(st.decls)) { const o = owner(k); if (!o) continue; const p = l2(o); m.set(p, (m.get(p) || 0) + s); (f.get(p) || f.set(p, new Set()).get(p)).add(k); } return [m, f]; };
+  const [ma, fa] = sum(A), [mb, fb] = sum(B), rows = [];
+  for (const p of new Set([...ma.keys(), ...mb.keys()])) { const x = ma.get(p) || 0, y = mb.get(p) || 0; if (x === y) continue;
+    const nf = [...(fb.get(p) || [])].filter(k => !(fa.get(p) || new Set()).has(k)), gf = [...(fa.get(p) || [])].filter(k => !(fb.get(p) || new Set()).has(k));
+    rows.push({ id: p, a: x, b: y, t: !x ? 'add' : !y ? 'del' : 'chg', nf, gf }); }
+  rows.sort((r, s) => Math.abs(s.b - s.a) - Math.abs(r.b - r.a));
+  const tot = st => Object.values(st.decls).reduce((s, x) => s + x, 0);
+  const res = { a, b, rows, ca: tot(A), cb: tot(B), commits: HIST.slice(a + 1, b + 1).map((c, i) => [a + 1 + i, c]).reverse() };
+  S._cmp = { key, res }; return res;
+}
+// -- one part's history: every version that changed its code
+function historyOf(id) {
+  const keys = new Set(); const coll = x => { (N.get(x).decls || []).forEach(k => keys.add(k)); N.get(x).children.forEach(coll); }; coll(id);
+  if (!keys.size) return [];
+  const st = {}, out = [];
+  HIST.forEach((c, i) => { let add = 0, del = 0, d = 0; for (const [k, x] of Object.entries(c.decls || {})) { if (!keys.has(k)) continue; const was = st[k] || 0; if (x === null) { if (was) { del++; d -= was; } delete st[k]; } else { if (!was) add++; d += x - was; st[k] = x; } }
+    if (add || del || d) out.push({ i, c, add, del, d }); });
+  return out.reverse();
+}
+const sgn = b => (b > 0 ? '+' : b < 0 ? '−' : '±') + fmtB(Math.abs(b));
+// -- the pages of the panel
+function renderGuide(P) {
+  const g = S.guide, crumb = t => `<div class="crumbs"><a data-g="menu">Explore</a>${t ? ' › ' + t : ''}</div>`;
+  if (g.k === 'menu') { P.innerHTML = `<h2>Explore Pult</h2><p>Ways into how Pult is built and how it works. The drawing lights up the parts each one is about; nothing moves unless you move it.</p>
+    <ul class="glist">
+    <li><a data-g="walks"><b>Guided walks</b><span>Step by step through what happens when you tap a word, open a text, write a gloss … (${MODEL.walks?.length || 0})</span></a></li>
+    <li><a data-g="startup"><b>Start-up</b><span>What runs, in which order, when Pult opens</span></a></li>
+    <li><a data-g="trace"><b>Trace a function</b><span>Everything one function sets off – or everything that calls it</span></a></li>
+    <li><a data-g="data"><b>Follow the data</b><span>Where what Pult stores comes from and where it goes</span></a></li>
+    <li><a data-g="health"><b>Health</b><span>Most relied on, circles, largest parts, code nothing calls</span></a></li>
+    <li><a data-g="compare"><b>Compare versions</b><span>What changed between any two versions, with the commits</span></a></li></ul>
+    <p class="hintp">Every part's panel also shows its functions with links into the code on GitHub (↗) and to trace them (⤳), a drawing of which of its functions call which, and its history.</p>`; return; }
+  if (g.k === 'walks') { P.innerHTML = crumb() + `<h2>Guided walks</h2><p>Each walk follows one thing you do in Pult through the parts that make it happen. The parts of the current step light up in blue, earlier steps in grey, numbered.</p>
+    <ul class="glist">${(MODEL.walks || []).map(w => `<li><a data-walk="${w.id}"><b>${esc(w.title)}</b><span>${esc(w.intro)} · ${w.steps.length} steps</span></a></li>`).join('')}</ul>`; return; }
+  if (g.k === 'walk') { const w = MODEL.walks.find(x => x.id === g.w), s = w.steps[g.i], n = w.steps.length;
+    P.innerHTML = crumb(`<a data-g="walks">Walks</a>`) + `<h2>${esc(w.title)}</h2>${g.i === 0 ? `<p>${esc(w.intro)}</p>` : ''}
+      <div class="steps" role="tablist">${w.steps.map((_, j) => `<button data-step="${j}" aria-current="${j === g.i}" class="${j < g.i ? 'done' : ''}" aria-label="Step ${j + 1}">${j + 1}</button>`).join('')}</div>
+      <div class="ghl"><div class="lab">Step ${g.i + 1} of ${n}</div><p>${esc(s.text)}</p></div>
+      <div class="stepnav"><button class="plain" data-step="${g.i - 1}" ${g.i ? '' : 'disabled'}>‹ Back</button><button class="plain" data-step="${g.i + 1}" ${g.i < n - 1 ? '' : 'disabled'}>Next ›</button>
+      <button class="plain" data-openall title="Open the main parts so the exact parts of this step show">Open the parts</button><button class="plain" data-fitall title="Turn the view to the lit parts">Show them</button></div>
+      <h3>Parts in this step</h3><ul class="list">${s.parts.map(p => `<li>${partLink(p)}<span class="k">${nm(N.get(p)?.l1)}</span></li>`).join('')}</ul>
+      ${(s.fns || []).length ? `<h3>In the code</h3><ul class="list">${s.fns.map(k => fnRow(k)).join('')}</ul>` : ''}`; return; }
+  if (g.k === 'startup') { const st = MODEL.startup || []; let cum = 0;
+    P.innerHTML = crumb() + `<h2>How Pult starts</h2><p>Read from Pult's own code: the scripts in the order the page loads them, then the start-up function <code>main()</code> in app.js, step by step. <b>waits</b>: nothing after it runs until it is done; <b>later</b>: started on a timer.</p>
+      <div class="stepnav"><button class="plain" data-sstep="${Math.max(0, g.i - 1)}">‹</button><button class="plain" id="splay">${S.play ? '❚❚ Pause' : '▶ Play'}</button><button class="plain" data-sstep="${Math.min(st.length - 1, g.i + 1)}">›</button><button class="plain" data-fitall>Show them</button></div>
+      <ol class="sup">${st.map((s, j) => { const cur = j === g.i ? ' class="on"' : '';
+        if (s.kind === 'script') { cum += s.bytes; return `<li${cur} data-sstep="${j}"><b><code>${esc(s.file)}</code></b> <span class="k">${fmtB(s.bytes)} · ${fmtB(cum)} loaded</span><br><span class="sub">${partLink(s.part)}${s.note ? ' – ' + esc(s.note) : ''}</span></li>`; }
+        if (s.kind === 'ready') return `<li${cur} data-sstep="${j}"><b>Page ready</b><br><span class="sub">${esc(s.note || '')} ${s.parts.map(partLink).join(', ')}</span></li>`;
+        return `<li${cur} data-sstep="${j}"><b><code>${esc(s.name)}</code></b>${s.wait ? '<span class="tag">waits</span>' : ''}${s.later ? `<span class="tag">later · ${s.later / 1000} s</span>` : ''}${s.cond ? '<span class="tag">if needed</span>' : ''}<br><span class="sub">${partLink(s.part)}${s.note ? ' – ' + esc(s.note) : ''}</span></li>`; }).join('')}</ol>`;
+    $('#splay').onclick = () => S.play ? stopPlay(true) : startPlay(); return; }
+  if (g.k === 'trace') { const head = crumb() + `<h2>Trace a function</h2><input type="search" id="tq" placeholder="Function name…" autocomplete="off" value="${esc(g.q || '')}"><ul class="list" id="tres"></ul>`;
+    if (!g.fn) { P.innerHTML = head + `<p>Pick a function – or tap ⤳ next to any function in a part's panel. The drawing then lights up every part it reaches, numbered by how many calls away.</p>`; wireTq(); return; }
+    const t = traceOf(g.fn, g.dir), kids = new Map(); t.list.forEach(x => { if (x.from) (kids.get(x.from) || kids.set(x.from, []).get(x.from)).push(x); });
+    const rows = []; const walk = (x, d) => { rows.push(fnRow(x.k, d ? `<span class="k">${nm(owner(x.k))}</span>` : '', d)); (kids.get(x.k) || []).forEach(y => walk(y, d + 1)); }; walk(t.list[0], 0);
+    const parts = new Set(t.list.slice(1).map(x => l2(owner(x.k) || '')).filter(Boolean));
+    P.innerHTML = head + `<p><b><code>${esc(fnName(g.fn))}</code></b> in ${partLink(owner(g.fn))}</p>
+      <div class="seg" id="tdir"><button data-dir="down" aria-pressed="${g.dir !== 'up'}">What it calls</button><button data-dir="up" aria-pressed="${g.dir === 'up'}">What calls it</button></div>
+      <p class="hintp">${t.list.length - 1} functions in ${parts.size} parts, up to four calls away${t.list.length >= 150 ? ' (the first 150)' : ''}. <a data-fitall>Show them</a></p>
+      <ul class="list tree">${rows.join('')}</ul>
+      ${t.helpers.length ? `<h3>Helpers it uses (not followed)</h3><p class="hintp">${t.helpers.map(k => `<code>${esc(fnName(k))}</code>`).join(', ')}</p>` : ''}`;
+    wireTq(); return; }
+  if (g.k === 'data') { if (!g.id) { const groups = ['storage', 'data', 'net'].map(l => [l, [...V.ex].filter(id => id.startsWith(l + '.') && id.split('.').length === 2).sort((a, b) => N.get(a).name.localeCompare(N.get(b).name))]);
+      P.innerHTML = crumb() + `<h2>Follow the data</h2><p>Pick a store or a source: you see what fills it and where its contents go, following the data flows two steps each way.</p>` +
+        groups.map(([l, ids]) => `<h3>${nm(l)}</h3><ul class="list">${ids.map(id => `<li><a data-store="${id}">${nm(id)}</a><span class="k">${fmtB(V.tot(id, V.code) + V.tot(id, V.asset)) || ''}</span></li>`).join('')}</ul>`).join(''); return; }
+    const d = dataOf(g.id), lv = (m, dir) => [1, 2].map(n => { const xs = [...m].filter(([, v]) => v.n === n); if (!xs.length) return '';
+      return `<h3>${dir ? ['Filled by', 'Before that'][n - 1] : ['Read by', 'Then'][n - 1]}</h3><ul class="list">${xs.map(([x, v]) => `<li><span>${partLink(x)}<br><small class="sub">${esc(v.f.label)}${v.via ? ' · via ' + nm(v.via) : ''}</small></span><span class="k">${nm(N.get(x)?.l1)}</span></li>`).join('')}</ul>`; }).join('');
+    P.innerHTML = crumb(`<a data-g="data">Data</a>`) + `<h2>${nm(g.id)}</h2><p>${esc(N.get(g.id).desc || '')}</p><p class="hintp"><span class="dirup">Blue</span>: where it comes from · <span class="dirdown">orange</span>: where it goes · numbers: steps away. <a data-fitall>Show them</a></p>` +
+      (d.from.size ? lv(d.from, true) : '<h3>Filled by</h3><p class="hintp">No flows lead into it.</p>') + (d.to.size ? lv(d.to, false) : '<h3>Read by</h3><p class="hintp">No flows lead out of it.</p>'); return; }
+  if (g.k === 'health') { const h = healthOf(), light = (ids, t) => `<button class="plain sm" data-light="${ids.join(',')}">${t || 'Light up'}</button>`;
+    P.innerHTML = crumb() + `<h2>Health of v${HIST[S.ver].v}</h2><p>Measured from the code: which parts call which (each main part's sections counted together).</p>
+      <h3>Most relied on ${light(h.relied.map(x => x[0]))}</h3><ul class="list">${h.relied.map(([id, n]) => `<li>${partLink(id)}<span class="k">${isHelp(id) ? 'helper · ' : ''}used by ${n} parts</span></li>`).join('')}</ul>
+      <h3>Circles ${light(h.comps[0] || [], 'Light up the largest')}</h3><p class="hintp">${h.comps.length ? `Parts that rely on each other, directly or round a circle. A change in one may reach all others of its circle. The largest has ${h.comps[0].length} parts.` : 'None: no part relies on itself through others.'}</p>
+      ${h.comps.slice(0, 6).map(c => `<p class="hintp"><b>${c.length} parts:</b> ${c.slice(0, 14).map(partLink).join(', ')}${c.length > 14 ? ` … and ${c.length - 14} more` : ''} ${light(c)}</p>`).join('')}
+      <h3>Pairs that call each other</h3><ul class="list">${h.pairs.map(([a, b, n]) => `<li><span>${partLink(a)} ⇄ ${partLink(b)}</span><span class="k">${n} uses ${light([a, b], '◎')}</span></li>`).join('')}</ul>
+      <h3>Largest code ${light(h.code.map(x => x[0]))}</h3><ul class="list">${h.code.map(([id, c]) => `<li>${partLink(id)}<span class="k">${fmtB(c)}</span></li>`).join('')}</ul>
+      <h3>Largest data ${light(h.data.map(x => x[0]))}</h3><ul class="list">${h.data.map(([id, , a]) => `<li>${partLink(id)}<span class="k">${fmtB(a)}</span></li>`).join('')}</ul>
+      <h3>Code nothing calls (${h.unused.length}, ${fmtB(h.unused.reduce((s, x) => s + x[1], 0))}) ${light([...new Set(h.unused.map(([k]) => owner(k)).filter(Boolean))])}</h3><p class="hintp">Functions and constants no other code names. Some may still be reached from the page's HTML or by name; check before removing.</p>
+      <ul class="list">${h.unused.map(([k, s]) => fnRow(k, `<span class="k">${fmtB(s)} · ${nm(owner(k))}</span>`)).join('')}</ul>`; return; }
+  if (g.k === 'compare') { const c = compareOf(g.a, g.b), va = HIST[c.a].v, vb = HIST[c.b].v, dd = c.cb - c.ca;
+    const sec = (t, rs, f) => rs.length ? `<h3>${t} (${rs.length})</h3><ul class="list">${rs.slice(0, 40).map(f).join('')}</ul>` : '';
+    P.innerHTML = crumb() + `<h2>Compare versions</h2>
+      <div class="cmp"><label>From <input type="range" id="cmpA" min="0" max="${HIST.length - 1}" value="${c.a}"> <b id="cmpAl">v${va}</b></label><label>To <input type="range" id="cmpB" min="0" max="${HIST.length - 1}" value="${c.b}"> <b id="cmpBl">v${vb}</b></label></div>
+      <p><b>v${va} → v${vb}</b>: ${c.commits.length} commits · code ${fmtB(c.ca)} → ${fmtB(c.cb)} (${sgn(dd)})${S.ver !== c.b ? ` · <a data-ver="${c.b}">show v${vb} in the drawing</a>` : ''}</p>
+      <p class="hintp"><span class="add">Green</span>: new parts · <span class="dirdown">orange</span>: removed · <span style="color:var(--flow)">violet</span>: changed.</p>
+      ${sec('New parts', c.rows.filter(r => r.t === 'add'), r => `<li>${partLink(r.id)}<span class="k add">+${fmtB(r.b)}</span></li>`)}
+      ${sec('Removed parts', c.rows.filter(r => r.t === 'del'), r => `<li>${partLink(r.id)}<span class="k">−${fmtB(r.a)}</span></li>`)}
+      ${sec('Changed parts', c.rows.filter(r => r.t === 'chg'), r => `<li><span>${partLink(r.id)}${r.nf.length || r.gf.length ? `<br><small class="sub">${r.nf.length ? `<span class="add">+${r.nf.length}</span> ${r.nf.slice(0, 4).map(k => `<code>${esc(fnName(k))}</code>`).join(' ')}${r.nf.length > 4 ? ' …' : ''}` : ''}${r.gf.length ? ` <span class="dirdown">−${r.gf.length}</span> ${r.gf.slice(0, 3).map(k => `<code>${esc(fnName(k))}</code>`).join(' ')}${r.gf.length > 3 ? ' …' : ''}` : ''}</small>` : ''}</span><span class="k">${sgn(r.b - r.a)}</span></li>`)}
+      <h3>Commits</h3><ul class="list">${c.commits.slice(0, 150).map(([i, h]) => `<li><span><a data-ver="${i}"><b>v${h.v ?? '?'}</b></a> ${esc(h.m)}</span><span class="k">${new Date(h.d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span></li>`).join('')}</ul>`;
+    const lab = (el, l) => { el.oninput = () => { $(l).textContent = 'v' + (HIST[+el.value].v ?? '?'); }; el.onchange = () => guide({ k: 'compare', a: +$('#cmpA').value, b: +$('#cmpB').value }); };
+    lab($('#cmpA'), '#cmpAl'); lab($('#cmpB'), '#cmpBl'); return; }
+}
+function wireTq() {
+  const q = $('#tq'), res = $('#tres');
+  const run = () => { const s = q.value.trim().toLowerCase(); S.guide.q = q.value; if (!s) { res.innerHTML = ''; return; }
+    const hits = Object.keys(V.st.decls).filter(k => fnName(k).toLowerCase().includes(s) && fnName(k) !== '(top level)').sort((a, b) => (fnName(a).toLowerCase().startsWith(s) ? 0 : 1) - (fnName(b).toLowerCase().startsWith(s) ? 0 : 1) || fnName(a).length - fnName(b).length).slice(0, 10);
+    res.innerHTML = hits.map(k => `<li><a data-trace="${esc(k)}"><code>${esc(fnName(k))}</code></a><span class="k">${nm(owner(k))}</span></li>`).join('') || '<li><span class="k">nothing found</span></li>'; };
+  q.oninput = run; if (q.value && !S.guide.fn) run();
+}
+// the inside of a part: which of its own functions call which (a small drawing)
+function insideGraph(id) {
+  const ks = (V.fdecl.get(id) || []).map(x => x[0]).filter(k => fnName(k) !== '(top level)'), set = new Set(ks);
+  if (ks.length < 2 || ks.length > 80) return null;
+  const links = []; for (const k of ks) for (const u of V.st.du[k] || []) if (set.has(u) && u !== k) links.push({ source: k, target: u });
+  return links.length ? { nodes: ks.map(k => ({ id: k, s: V.st.decls[k] })), links } : null;
+}
+function drawInside(gr) {
+  const sv = d3.select('#inside'); if (sv.empty()) return;
+  const w = sv.node().clientWidth || 320, h = Math.min(420, 150 + gr.nodes.length * 7); sv.attr('viewBox', `0 0 ${w} ${h}`).style('height', h + 'px');
+  const r = d => 3 + Math.sqrt(d.s) / 14;
+  const sim = d3.forceSimulation(gr.nodes).force('link', d3.forceLink(gr.links).id(d => d.id).distance(46)).force('charge', d3.forceManyBody().strength(-120)).force('x', d3.forceX(w * 0.42).strength(0.06)).force('y', d3.forceY(h / 2).strength(0.09)).force('c', d3.forceCollide(d => r(d) + 8)).stop();
+  for (let i = 0; i < 300; i++) sim.tick();
+  gr.nodes.forEach(d => { d.x = Math.max(10, Math.min(w - 10, d.x)); d.y = Math.max(10, Math.min(h - 10, d.y)); });
+  sv.append('defs').append('marker').attr('id', 'iar').attr('viewBox', '0 0 10 10').attr('refX', 10).attr('refY', 5).attr('markerWidth', 6).attr('markerHeight', 6).attr('orient', 'auto').append('path').attr('d', 'M0 0L10 5L0 10z').style('fill', css('--mut'));
+  sv.append('g').selectAll('line').data(gr.links).join('line').each(function (l) { const dx = l.target.x - l.source.x, dy = l.target.y - l.source.y, L = Math.hypot(dx, dy) || 1, k = (L - r(l.target) - 2) / L;
+    d3.select(this).attr('x1', l.source.x).attr('y1', l.source.y).attr('x2', l.source.x + dx * k).attr('y2', l.source.y + dy * k); }).style('stroke', css('--mut')).style('stroke-opacity', 0.55).attr('marker-end', 'url(#iar)');
+  const nd = sv.append('g').selectAll('g').data(gr.nodes).join('g').attr('transform', d => `translate(${d.x},${d.y})`).style('cursor', 'pointer').attr('data-trace', d => d.id);
+  nd.append('circle').attr('r', r).style('fill', css('--acc')).style('fill-opacity', 0.85);
+  nd.append('text').text(d => fnName(d.id)).attr('x', d => r(d) + 3).attr('y', 4).style('font', '11px "IBM Plex Mono", monospace').style('fill', css('--ink')).style('paint-order', 'stroke').style('stroke', css('--surface')).style('stroke-width', 3);
+}
+// start-up: playing through the steps
+function startPlay() { stopPlay(); if (S.guide?.k !== 'startup') return; if (S.guide.i >= MODEL.startup.length - 1) S.guide.i = -1;
+  S.play = setInterval(() => { const g = S.guide; if (g?.k !== 'startup' || g.i >= MODEL.startup.length - 1) { stopPlay(true); return; } g.i++; guideHL(); draw(); const el = document.querySelector('.sup li.on'); el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 1100);
+  renderPanel(); }
+function stopPlay(redraw) { if (S.play) { clearInterval(S.play); S.play = 0; if (redraw) renderPanel(); } }
+// the camera to the lit parts (asked for, never by itself)
+function fitHL() {
+  const ids = [...visHL().keys()].map(id => T3.nodes.get(id)).filter(Boolean); if (!ids.length) return;
+  const cx = ids.reduce((a, p) => a + p.x, 0) / ids.length, cy = ids.reduce((a, p) => a + p.y, 0) / ids.length, cz = ids.reduce((a, p) => a + p.z, 0) / ids.length;
+  const R = Math.max(250, ...ids.map(p => Math.hypot(p.x - cx, p.y - cy, p.z - cz)));
+  T3.camTo = { tx: cx, ty: cy, tz: cz, dist: R * 1.7 + 600 }; run3d();
+}
+function openHL() { for (const [id, h] of S.hl) { if (h.t === 'past') continue; let p = N.get(id)?.parent; while (p) { S.exp.add(p); p = N.get(p).parent; } } draw(); }
+// ---------------------------------------------------------------- the overview map: the main parts by floor; where you are
+let MINI = [];
+function drawMini() {
+  const cv = $('#mini'); if (!cv || cv.hidden || !MODEL || !V) return;
+  const dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight; if (!W) return;
+  if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, W, H);
+  const sw = cv3.clientWidth, sh = cv3.clientHeight, onScr = new Set();
+  for (const d of T3.drawn) if (d.x > -20 && d.x < sw + 20 && d.y > -20 && d.y < sh + 20) onScr.add(N.get(d.id)?.l1);
+  const selL1 = S.sel && N.get(S.sel)?.l1, hlL1 = new Set([...(S.hl || new Map()).keys()].map(id => N.get(id)?.l1));
+  const rows = []; MODEL.tiers.forEach(t => { const ls = MODEL.l1.filter(l => l.tier === t.id && V.ex.has(l.id)), n = Math.ceil(ls.length / 4); for (let i = 0; i < n; i++) rows.push(ls.slice(Math.round(i * ls.length / n), Math.round((i + 1) * ls.length / n))); });
+  const rh = (H - 6) / rows.length; MINI = [];
+  rows.forEach((ls, r) => { const bw = (W - 8) / ls.length;
+    ls.forEach((l, i) => { const bx = 4 + i * bw, by = 3 + r * rh, w = bw - 3, h = rh - 3;
+      x.globalAlpha = onScr.has(l.id) ? 1 : 0.35; x.fillStyle = `hsl(${l.hue} 40% ${document.documentElement.dataset.theme === 'dark' || (matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light') ? 32 : 78}%)`;
+      x.beginPath(); rrect(x, bx, by, w, h, 3); x.fill(); x.globalAlpha = 1;
+      if (l.id === selL1 || hlL1.has(l.id)) { x.lineWidth = 2; x.strokeStyle = l.id === selL1 ? css('--acc') : css('--ink'); x.stroke(); }
+      if (w > 22) { x.fillStyle = css('--ink'); x.font = '600 9px "Source Sans 3", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; let s = N.get(l.id).name; while (s.length > 2 && x.measureText(s).width > w - 4) s = s.slice(0, -1); x.fillText(s, bx + w / 2, by + h / 2); }
+      MINI.push({ id: l.id, x: bx, y: by, w, h }); }); });
+}
+
 // ---------------------------------------------------------------- versions
 function setVer(i, quiet) {
   S.ver = i; V = computeVersion(i); const c = HIST[i];
@@ -540,6 +819,7 @@ function setVer(i, quiet) {
   $('#hdrVer').textContent = i === HIST.length - 1 ? `v${c.v}, current` : `showing v${c.v}`;
   drawSpark(d3.select('#spark'), HIST.map(h => h._bytes), i);
   if (S.sel && !V.ex.has(S.sel)) S.sel = null;
+  if (S.guide) guideHL();
   draw(!quiet);
 }
 let playT = 0;
@@ -571,9 +851,15 @@ if (S.flat) Object.assign(T3.cam, { yaw: 0, pitch: 0, roll: 0 });
 function note2(t) { const h = $('#hint'), o = h.textContent; h.textContent = t; setTimeout(() => { h.textContent = o; }, 1800); }
 $('#spread').value = S.spread;
 $('#spread').oninput = e => { S.spread = +e.target.value; keep(); T3.alpha = Math.max(T3.alpha, 0.6); run3d(); };
-function closePanel() { S.info = false; if (S.sel) select(null); else renderPanel(); }
+function closePanel() { stopPlay(); S.info = false; S.guide = null; S.hl = new Map(); if (S.sel) select(null); else draw(); }
+$('#guideBtn').onclick = () => { if (S.guide && !S.sel) closePanel(); else guide(S.guide || { k: 'menu' }); };
+$('#miniChk').checked = S.mini; $('#mini').hidden = !S.mini; $('#miniChk').onchange = e => { S.mini = e.target.checked; $('#mini').hidden = !S.mini; drawMini(); };
+$('#mini').onclick = e => { const r = $('#mini').getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, b = MINI.find(m => x >= m.x && x <= m.x + m.w && y >= m.y && y <= m.y + m.h); if (b) { select(b.id); setTimeout(() => fit(b.id), 40); } };
+addEventListener('keydown', e => { const g = S.guide; if (!g || S.sel || e.target.closest?.('input') || e.altKey) return; const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return;
+  if (g.k === 'walk') { const n = MODEL.walks.find(w => w.id === g.w).steps.length; if (g.i + d >= 0 && g.i + d < n) guide({ ...g, i: g.i + d }); }
+  if (g.k === 'startup') { const n = MODEL.startup.length; if (g.i + d >= 0 && g.i + d < n) guide({ ...g, i: g.i + d }); } });
 $('#pclose').onclick = closePanel;
-$('#infoBtn').onclick = () => { if (!S.sel && S.info) closePanel(); else { S.info = true; if (S.sel) select(null); else renderPanel(); } };
+$('#infoBtn').onclick = () => { if (!S.sel && S.info) { S.info = false; if (S.guide) draw(); else closePanel(); } else { S.info = true; if (S.sel) select(null); else renderPanel(); } };
 addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('open') && !e.target.closest('input')) closePanel(); });
 $('#optBtn').onclick = () => { const m = $('#opts'), open = m.hidden; m.hidden = !open; $('#optBtn').setAttribute('aria-expanded', open); if (open) m.style.top = ($('header').getBoundingClientRect().bottom + 6) + 'px'; };
 document.addEventListener('pointerdown', e => { if (!$('#opts').hidden && !e.target.closest('#opts, #optBtn')) { $('#opts').hidden = true; $('#optBtn').setAttribute('aria-expanded', false); } });
@@ -583,7 +869,21 @@ $('#lbl').onchange = e => { S.lbl = e.target.checked; draw(); };
 $('#chain').onchange = e => { S.depth = e.target.checked ? 99 : 1; draw(); };
 $('#expAll').onclick = () => { for (const c of N.values()) if (c.children.length) S.exp.add(c.id); draw(true); };
 $('#colAll').onclick = () => { S.exp.clear(); draw(true); };
-$('#panel').onclick = e => { const g = e.target.closest('[data-go]'); if (g) { select(g.dataset.go); setTimeout(() => fit(g.dataset.go), 50); return; } const t = e.target.closest('[data-tog]'); if (t) toggle(t.dataset.tog); };
+$('#panel').onclick = e => { const a = e.target.closest('[data-g],[data-walk],[data-step],[data-sstep],[data-trace],[data-dir],[data-store],[data-light],[data-ver],[data-openall],[data-fitall],[data-gback]');
+  if (a) { const d = a.dataset, g = S.guide;
+    if (d.g) return guide(d.g === 'startup' ? { k: 'startup', i: 0 } : d.g === 'compare' ? { k: 'compare', a: Math.max(0, S.ver - 20), b: S.ver } : { k: d.g });
+    if (d.walk) return guide({ k: 'walk', w: d.walk, i: 0 });
+    if (d.step != null && !a.disabled) return guide({ ...g, i: +d.step });
+    if (d.sstep != null) { stopPlay(); return guide({ ...g, i: +d.sstep }); }
+    if (d.trace) return guide({ k: 'trace', fn: d.trace, dir: g?.k === 'trace' ? g.dir : 'down', q: g?.q });
+    if (d.dir) return guide({ ...g, dir: d.dir });
+    if (d.store) return guide({ k: 'data', id: d.store });
+    if (d.light != null) { S.guide = { ...g, light: d.light.split(',').filter(Boolean) }; guideHL(); return draw(); }
+    if (d.ver != null) { $('#ver').value = +d.ver; return setVer(+d.ver, true); }
+    if (d.openall != null) return openHL();
+    if (d.fitall != null) return fitHL();
+    if (d.gback != null) return select(null); }
+  const g = e.target.closest('[data-go]'); if (g) { select(g.dataset.go); setTimeout(() => fit(g.dataset.go), 50); return; } const t = e.target.closest('[data-tog]'); if (t) toggle(t.dataset.tog); };
 // search: parts by name, and functions by name
 let hits = [], hi = 0;
 $('#q').oninput = () => { const q = $('#q').value.trim().toLowerCase(); if (!q) { $('#res').hidden = true; return; }

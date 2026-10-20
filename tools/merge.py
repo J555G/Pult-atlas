@@ -114,6 +114,37 @@ def main(parts_dir, inv_path, out):
              'tiers': TIERS, 'l1': [{'id': l[0], 'tier': l[2], 'hue': l[3]} for l in L1],
              'components': sorted(comps.values(), key=lambda c: c['id']), 'flows': fl,
              'fileDefault': file_default, 'declLine': {k: d['line'] for k, d in cur.items()}}
+    # how Pult starts (tools/startup.py): each step joined to its part
+    sp = os.path.join(os.path.dirname(inv_path), 'startup.json')
+    walks_path = os.path.join(parts_dir, '..', 'walks.json')
+    walks = json.load(open(walks_path)) if os.path.exists(walks_path) else {}
+    if os.path.exists(sp):
+        notes = walks.get('startup', {}); st = []
+        for s in json.load(open(sp))['steps']:
+            if s['kind'] == 'ready': s['parts'] = sorted({file_default.get(f) for f in s['files']} - {None})
+            elif s['kind'] == 'script': s['part'] = file_default.get(s['file'])
+            else:
+                f = s.get('file') or (s['decl'] or '').split('|')[0]
+                s['part'] = owner.get(s['decl']) if s.get('decl') else None
+                s['part'] = s['part'] or file_default.get(f) or ('offline.sw' if f == 'sw.js' and 'offline.sw' in comps else None)
+                if s.get('part') and s['part'] not in comps: s['part'] = fix(s['part'])
+            n = notes.get(s.get('name') or s.get('file') or s['kind'])
+            if n: s['note'] = n
+            st.append(s)
+        model['startup'] = st
+    # Pult's numbered decisions (decisions.json, optional): {"475": {"text": "…", "parts": ["map.relief"]}, …}
+    dp = os.path.join(parts_dir, '..', 'decisions.json')
+    if os.path.exists(dp):
+        model['decisions'] = [{'n': n, 'text': d['text'], 'parts': [x for x in (fix(q) for q in d.get('parts', [])) if x]} for n, d in json.load(open(dp)).items()]
+    # guided walks (walks.json, written by hand): every part they name must exist
+    if walks.get('walks'):
+        for w in walks['walks']:
+            for stp in w['steps']:
+                stp['parts'] = [x for x in (fix(p) for p in stp.get('parts', [])) if x]
+                for k in stp.get('fns', []):
+                    if k not in cur: report.append(f"walk {w['id']}: unknown function {k}")
+                stp['fns'] = [k for k in stp.get('fns', []) if k in cur]
+        model['walks'] = walks['walks']
     json.dump(model, open(out, 'w'), separators=(',', ':'))
     gen = sum(1 for f in fl if f['from'].count('.') == 0 or f['to'].count('.') == 0)
     seen_f = set(); fl2 = []
