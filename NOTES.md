@@ -48,6 +48,14 @@
   Home Screen app. The compensation for shrinking stays until the owner decides.
 - 21 Oct 01:14: the owner reset Safari's settings (page zoom back to 100 %).
 
+## Decided 21 Oct (01:17)
+- Top bar fixed at 44 px buttons whatever the Size (Size scales pane, menus and the writing in the drawing).
+- Version bar slim (about 38 px).
+- Divider between drawing and pane, draggable (remembered on the device; double-tap for the usual width).
+- The overview moved from the drawing into the top bar: one strip of the main parts, floor by floor (hidden on phones).
+- The app never zooms as a whole: no pinch, double-tap or ctrl+wheel page zoom (Safari gestures stopped, touch-action,
+  viewport maximum-scale=1); the drawing keeps its own pinch zoom.
+
 ## Open
 - Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
 - "First in vN" counts from where a function's file was created: code moved between files (v160 split of app.js) looks
