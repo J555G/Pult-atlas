@@ -66,6 +66,8 @@
 - Flow tidied (01:44, the owner chose 1–3 of six): lines within one column only for the selected part (↕ n on the card
   otherwise); an opened group's lines bundled into one ribbon per partner until a part is selected; zoomed out, cards show
   only their name, large. Not chosen: accordion opening, sticky column heads, quiet colours.
+- Map: inside a region its own parts first, then each opened part as a framed group (▾ name · n parts, bar on the
+  left, one step in per level); with a part selected only its own lines are drawn.
 - Flow: an opened group has a header band (▾ name · n parts) and a bar down its left; its parts indented one step per
   level (right edges in line), a part opened inside it under its own ▾ sub-heading, its parts kept together.
 
