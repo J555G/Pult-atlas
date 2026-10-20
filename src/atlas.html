@@ -62,9 +62,9 @@ main { flex: 1; display: flex; min-height: 0; position: relative; }
 #stage { flex: 1; min-width: 0; position: relative; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 #cv3 { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 #cv3:active { cursor: grabbing; }
-#panel { position: absolute; top: 0; right: 0; bottom: 0; z-index: 6; width: 380px; max-width: 88vw; border-left: 1px solid var(--line); background: var(--surface); overflow: auto; padding: 16px 18px; box-shadow: -10px 0 30px rgba(0,0,0,.18); transform: translateX(105%); visibility: hidden; transition: transform .22s ease, visibility 0s .22s; padding-right: max(18px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }
+#panel { flex: none; width: 380px; max-width: 46vw; border-left: 1px solid var(--line); background: var(--surface); overflow: auto; padding: 16px 18px; padding-right: max(18px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }   /* a fixed pane beside the drawing */
 #panel h2 { font: 700 22px/1.15 var(--display); margin: 0 0 4px; padding-right: 30px; text-wrap: balance; }
-body.open #panel { transform: none; visibility: visible; transition: transform .22s ease; }
+body:not(.open) #pclose { display: none; }
 #pclose { position: sticky; top: 0; float: right; margin: -6px -6px 0 0; z-index: 1; background: var(--surface); }
 #panel h3 { font: 600 11px var(--ui); text-transform: uppercase; letter-spacing: .07em; color: var(--mut); margin: 18px 0 6px; }
 #panel p { margin: 6px 0; max-width: 65ch; }
@@ -143,7 +143,9 @@ footer input[type=range] { accent-color: var(--acc); }
 .hint { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: var(--mut); background: color-mix(in srgb, var(--bg) 85%, transparent); padding: 4px 8px; border-radius: 6px; pointer-events: none; }
 .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; font-size: 12.5px; max-width: 280px; box-shadow: 0 6px 18px rgba(0,0,0,.15); z-index: 5; }
 @media (max-width: 760px) {
-  #panel { top: auto; left: 0; width: auto; max-width: none; height: 48%; border-left: 0; border-top: 1px solid var(--line); border-radius: 12px 12px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.18); transform: translateY(105%); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  main { flex-direction: column; }
+  #panel { width: auto; max-width: none; height: 44%; border-left: 0; border-top: 1px solid var(--line); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  .touch #panel { width: auto; }
   h1 small { display: none; }
 }
 /* touch screens: finger-sized controls; --k is the Size setting (Normal 1 = 44 px, Large 1.25, Extra large 1.5) */
@@ -157,7 +159,7 @@ footer input[type=range] { accent-color: var(--acc); }
 .touch .rng input { width: calc(110px * var(--k)); }
 .touch footer { padding-top: 4px; } .touch footer #play { min-height: calc(44px * var(--k)); min-width: calc(52px * var(--k)); } .touch .track { height: calc(44px * var(--k)); }
 .touch #verInfo { font-size: calc(12px * var(--k)); } .touch .hint { font-size: calc(12px * var(--k)); }
-.touch #panel { width: calc(380px * var(--k)); font-size: calc(14px * var(--k)); }
+.touch #panel { width: calc(380px * var(--k)); max-width: 46vw; font-size: calc(14px * var(--k)); }
 .touch #panel h2 { font-size: calc(22px * var(--k)); } .touch #panel h3 { font-size: calc(11px * var(--k)); }
 .touch .list { font-size: calc(13px * var(--k)); } .touch .list code, .touch .mono { font-size: calc(12px * var(--k)); }
 .touch .pill, .touch .crumbs, .touch .hintp, .touch .sub, .touch .legend { font-size: calc(12.5px * var(--k)); }
@@ -175,6 +177,10 @@ footer input[type=range] { accent-color: var(--acc); }
 .touch button.sm { min-height: calc(36px * var(--k)); font-size: calc(13px * var(--k)); }
 .touch #mini { width: calc(196px * var(--k)); height: calc(112px * var(--k)); bottom: calc(30px + 10px * var(--k)); }
 .touch .res { font-size: calc(13px * var(--k)); } .touch .res .bar i { width: calc(16px * var(--k)); height: calc(8px * var(--k)); } .touch .res .note { font-size: calc(12.5px * var(--k)); }
+.touch .res { grid-template-columns: calc(74px * var(--k)) 1fr; } .touch .res b { font-size: calc(13px * var(--k)); }
+.touch h1 { font-size: calc(17px * var(--k)); } .touch h1 small { font-size: calc(12px * var(--k)); } .touch .rng { font-size: calc(12.5px * var(--k)); }
+.touch .tip { font-size: calc(12.5px * var(--k)); max-width: calc(280px * var(--k)); }
+@media (max-width: 760px) { .touch #panel { width: auto; max-width: none; } }
 .sizes { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 @media (max-width: 560px) { .touch .seg button, .touch button.plain { padding: 0 9px; } .touch .rng input { width: 64px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
@@ -459,14 +465,14 @@ function frame3d(now) {
     const an = Math.atan2(ey - a.y, ex - a.x), ah = 5 + w * 2; x.fillStyle = col; x.beginPath(); x.moveTo(ex, ey); x.lineTo(ex - ah * Math.cos(an - 0.4), ey - ah * Math.sin(an - 0.4)); x.lineTo(ex - ah * Math.cos(an + 0.4), ey - ah * Math.sin(an + 0.4)); x.fill();
     if (sel && e.kind === 'flow' && (e.a === sel || e.b === sel)) { moving = true;   // what flows along the selected part's strings
       for (let k = 0; k < 3; k++) { const t = ((now / 2600) + k / 3) % 1; x.globalAlpha = 1; x.beginPath(); x.arc(a.x + (ex - a.x) * t, a.y + (ey - a.y) * t, 2.5, 0, 7); x.fill(); } }
-    if (lab3.has(e) && al > 0.3) { x.globalAlpha = 1; x.font = '11px "Source Sans 3", sans-serif'; x.textAlign = 'center'; x.lineWidth = 3; x.strokeStyle = css('--bg'); const tx = (a.x + ex) / 2, ty = (a.y + ey) / 2, lab = e.labels[0] + (e.n > 1 ? ` (+${e.n - 1})` : ''); x.strokeText(lab, tx, ty); x.fillStyle = css('--ink'); x.fillText(lab, tx, ty); }
+    if (lab3.has(e) && al > 0.3) { x.globalAlpha = 1; x.font = `${Math.round(11 * KZ())}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.lineWidth = 3; x.strokeStyle = css('--bg'); const tx = (a.x + ex) / 2, ty = (a.y + ey) / 2, lab = e.labels[0] + (e.n > 1 ? ` (+${e.n - 1})` : ''); x.strokeText(lab, tx, ty); x.fillStyle = css('--ink'); x.fillText(lab, tx, ty); }
   }
   // the cards, far ones first
   if (S.arr === 'layers') {   // the names of the floors, at their left
     const xs = [...T3.nodes.values()].map(p => p.x), x0 = Math.min(...xs) - 340;
     MODEL.tiers.forEach((t, ti) => { if (!MODEL.l1.some(l => l.tier === t.id && T3.nodes.has(l.id) || [...T3.nodes.keys()].some(k => N.get(k).l1 === l.id && l.tier === t.id))) return;
       const q = proj(B, { x: x0, y: tierY(ti), z: 0 }, W, H, f); if (!q) return;
-      x.globalAlpha = 0.85; x.fillStyle = css('--mut'); x.font = `italic ${Math.max(11, Math.min(30, 30 * q.s))}px "Gentium Book Plus", Georgia, serif`; x.textAlign = 'right'; x.fillText(t.name, q.x, q.y); });
+      x.globalAlpha = 0.85; x.fillStyle = css('--mut'); x.font = `italic ${Math.round(Math.max(11, Math.min(30, 30 * q.s)) * KZ())}px "Gentium Book Plus", Georgia, serif`; x.textAlign = 'right'; x.fillText(t.name, q.x, q.y); });
     x.globalAlpha = 1; }
   const order = [...P.entries()].sort((a, b) => b[1].z - a[1].z); T3.drawn = [];
   for (const [id, q] of order) { const p = T3.nodes.get(id), cn = N.get(id);
@@ -537,7 +543,7 @@ cv3.addEventListener('pointerleave', () => { $('#tip').hidden = true; });
 function bars(v) { return `<div class="bar">${[1, 2, 3, 4, 5].map(i => `<i style="background:${i <= v ? css('--h' + v) : ''}"></i>`).join('')}</div>`; }
 function renderPanel() {
   const P = $('#pbody'); const id = S.sel; if (id) S.info = false; const open = !!id || S.info || !!S.guide;
-  document.body.classList.toggle('open', open); $('#panel').inert = !open; $('#infoBtn').setAttribute('aria-pressed', !id && S.info); $('#guideBtn').setAttribute('aria-pressed', !!S.guide && !id);
+  document.body.classList.toggle('open', open); $('#infoBtn').setAttribute('aria-pressed', !id && S.info); $('#guideBtn').setAttribute('aria-pressed', !!S.guide && !id);
   if (!id && S.guide && !S.info) { renderGuide(P); return; }
   if (!id) {
     const vs = HIST[S.ver], kinds = MODEL.l1.filter(l => V.ex.has(l.id));
@@ -925,6 +931,7 @@ if (innerWidth <= 560) $('#q').placeholder = 'Find…';
 const TOUCH = navigator.maxTouchPoints > 0 || matchMedia('(any-pointer: coarse)').matches; if (TOUCH) document.documentElement.classList.add('touch');   // (finger-sized controls)
 // Safari can draw the page wider than the screen and shrink it (Request Desktop Website, page zoom below 100 %):
 // the shrinking is measured against the screen's own width and made up for, so a 44 px button stays 44 points
+const KZ = () => (S.size || 1) * (TOUCH ? shrink() : 1);   // how much the writing in the drawing is enlarged
 function shrink() { const sw = innerWidth > innerHeight ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height); const f = sw ? innerWidth / sw : 1; return f > 1.04 && f < 3 ? f : 1; }
 function setSize(v) { S.size = v; document.documentElement.style.setProperty('--k', TOUCH ? v * shrink() : v); [...$('#segSize').children].forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === v)); keep(); if (MODEL && V) draw(); }
 if (!TOUCH) $('.sizes').hidden = true;
@@ -944,5 +951,5 @@ addEventListener('resize', () => { if (TOUCH) document.documentElement.style.set
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => draw());
 
 load().then(() => { $('#ver').max = HIST.length - 1; $('#ver').value = S.ver; setVer(S.ver); })
-  .catch(e => { $('#pbody').innerHTML = `<h2>Could not load</h2><p>${esc(e.message)}</p>`; document.body.classList.add('open'); $('#panel').inert = false; });
+  .catch(e => { $('#pbody').innerHTML = `<h2>Could not load</h2><p>${esc(e.message)}</p>`; document.body.classList.add('open'); });
 </script>

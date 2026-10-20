@@ -40,6 +40,13 @@
 - The owner's Safari draws the page ~1,280 px wide on a ~1,030 pt screen (Request Desktop Website or page zoom < 100 %),
   shrinking everything to ~80 %: the atlas measures innerWidth against screen.width and enlarges itself to make up for it.
 
+## Decided 21 Oct (01:09)
+- The information has a fixed pane on the right (below the drawing on phones), the web the pane to its left; nothing
+  slides over the drawing any more. Without a selection the pane shows the overview and how to read the drawing; ✕
+  returns to it. The pane grows with Size but leaves the drawing at least about half the width.
+- Safari's page zoom was the cause of the tiny page (80 %, shared by all of j555g.github.io); recommended: 100 % or the
+  Home Screen app. The compensation for shrinking stays until the owner decides.
+
 ## Open
 - Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
 - "First in vN" counts from where a function's file was created: code moved between files (v160 split of app.js) looks
