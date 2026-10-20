@@ -4,7 +4,7 @@ Every part of **Pult** (the reader for Greek and Latin texts, https://github.com
 each part does, what it relies on, how data moves between them, whether it works offline, and an estimate of what it costs
 the device (memory, storage, CPU, GPU) – drawn in space as cards on strings, with a slider through every version of Pult.
 
-**Web app:** https://j555g.github.io/pult-atlas/ – installable (Add to Home Screen), works offline.
+**Web app:** https://j555g.github.io/Pult-atlas/ – installable (Add to Home Screen), works offline.
 
 ## How it is made
 - `parts/*.json` – the hand-written description of Pult's parts: id (`map.relief.contours`), name, what it does, how it

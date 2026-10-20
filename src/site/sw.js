@@ -1,5 +1,5 @@
 // Pult Atlas · offline helper: everything from the network first (so a rebuilt atlas shows at once), the stored copy when
-// offline or slow. Its own site (/pult-atlas/), apart from Pult's.
+// offline or slow. Its own site (/Pult-atlas/), apart from Pult's.
 const CACHE = 'pult-atlas';
 const FILES = ['./', 'index.html', 'model.json', 'history.json', 'd3.min.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-180.png',
   'fonts.css', ...['latin', 'latin-ext', 'greek', 'greek-ext'].map(x => `fonts/source-sans-3-${x}-wght-normal.woff2`), ...['greek', 'greek-ext', 'latin', 'latin-ext'].flatMap(s => ['400-normal', '700-normal', '400-italic', '700-italic'].map(w => `fonts/gentium-book-plus-${s}-${w}.woff2`))];
