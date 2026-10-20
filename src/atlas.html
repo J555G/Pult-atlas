@@ -48,7 +48,10 @@ header .seg.nb { display: inline-flex !important; }
 .seg.nb button { font-size: 17px; padding: 1px 10px; }
 .seg.nb button:disabled { color: var(--line); cursor: default; }
 @media (max-width: 1440px) { h1 { display: none; } .rng input { width: 80px; } .rng span, #optBtn .t { display: none; } .search { flex-basis: 130px; max-width: 160px; } }
-@media (max-width: 560px) { .rng span { display: none; } .rng input { width: 56px; } #optBtn .t { display: none; } header { gap: 5px 6px; } }
+.seg .s, button .s { display: none; }
+@media (max-width: 560px) { .rng span { display: none; } .rng input { width: 48px; } #optBtn .t { display: none; } header { gap: 4px 5px; padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+  .seg .l, button .l { display: none; } .seg .s, button .s { display: inline; } .seg button { padding: 2px 6px; } .search { flex: 1 1 60px; min-width: 56px; }
+  .seg.nb button { padding: 1px 6px; } button.plain { padding: 2px 7px; } .rng input { width: 44px; } }
 
 .search input { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 7px; padding: 3px 9px; background: var(--bg); color: var(--ink); font: 14px var(--ui); }
 .results { position: fixed; width: 300px; z-index: 20; top: 100%; left: 0; right: 0; margin-top: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.18); max-height: 50vh; overflow: auto; }
@@ -143,6 +146,27 @@ footer input[type=range] { accent-color: var(--acc); }
   #panel { top: auto; left: 0; width: auto; max-width: none; height: 48%; border-left: 0; border-top: 1px solid var(--line); border-radius: 12px 12px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.18); transform: translateY(105%); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
   h1 small { display: none; }
 }
+/* touch screens: every control at least 44 px (Apple's guideline), set when the device has touch (see the script) */
+.touch header { gap: 6px 8px; padding-bottom: 5px; }
+.touch .seg button, .touch button.plain { min-height: 44px; min-width: 44px; padding: 0 12px; font-size: 15px; }
+.touch .seg.nb button { font-size: 20px; padding: 0 12px; }
+.touch .search input, .touch #tq { min-height: 44px; font-size: 16px; }
+.touch input[type=range] { height: 44px; }
+.touch .rng input { width: 110px; }
+.touch footer { padding-top: 4px; } .touch footer #play { min-height: 44px; min-width: 52px; } .touch .track { height: 44px; }
+.touch #pclose { min-height: 44px; min-width: 44px; font-size: 17px; }
+.touch .list li { min-height: 44px; align-items: center; padding: 2px 0; }
+.touch .list a, .touch .crumbs a, .touch .hintp a { display: inline-block; padding: 8px 0; }
+.touch a.ic { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; font-size: 17px; }
+.touch .steps button { min-width: 44px; height: 44px; border-radius: 22px; font-size: 15px; }
+.touch .glist a { padding: 13px 2px; }
+.touch .sup li { padding: 10px 6px; }
+.touch .chk { min-height: 44px; font-size: 15px; } .touch .chk input { width: 22px; height: 22px; }
+.touch .menu .row button { min-height: 44px; }
+.touch .results button { min-height: 44px; }
+.touch .backg { padding: 10px 0; font-size: 14px; }
+.touch button.sm { min-height: 36px; font-size: 13px; }
+@media (max-width: 560px) { .touch .seg button, .touch button.plain { padding: 0 9px; } .touch .rng input { width: 64px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 
@@ -150,13 +174,13 @@ footer input[type=range] { accent-color: var(--acc); }
   <h1>Pult Atlas<small id="hdrVer"></small></h1>
   <div class="seg nb" id="navBtns"><button id="back" title="Back to the previous part (Alt + ←)" aria-label="Back" disabled>‹</button><button id="fwd" title="Forward (Alt + →)" aria-label="Forward" disabled>›</button><button id="home" title="Show everything" aria-label="Show everything">⌂</button></div>
   <div class="search"><input id="q" type="search" placeholder="Find a part or function…" autocomplete="off" aria-label="Find a part"><div class="results" id="res" hidden></div></div>
-  <div class="seg" id="segArr" title="Arrangement"><button data-v="web" aria-pressed="true">Web</button><button data-v="layers" aria-pressed="false">Layers</button></div>
+  <div class="seg" id="segArr" title="Arrangement"><button data-v="web" aria-pressed="true">Web</button><button data-v="layers" aria-pressed="false" aria-label="Layers"><span class="l">Layers</span><span class="s">Lay</span></button></div>
   <button class="plain" id="flatBtn" aria-pressed="false" title="Flatten the view onto a plane">Flat</button>
-  <div class="seg" id="segMetric" title="Colour by"><button data-v="part" aria-pressed="true">Part</button><button data-v="mem" aria-pressed="false" title="Memory">Mem</button><button data-v="store" aria-pressed="false" title="Storage">Store</button><button data-v="cpu" aria-pressed="false">CPU</button><button data-v="gpu" aria-pressed="false">GPU</button></div>
-  <div class="seg" id="segFocus" title="With a part selected, show only…"><button data-v="all" aria-pressed="true">All</button><button data-v="up" aria-pressed="false" title="only what the selected part relies on">Relies on</button><button data-v="down" aria-pressed="false" title="only what relies on the selected part">Relied on by</button><button data-v="both" aria-pressed="false" title="only the selected part's connections">Both</button></div>
+  <div class="seg" id="segMetric" title="Colour by"><button data-v="part" aria-pressed="true">Part</button><button data-v="mem" aria-pressed="false" title="Memory">Mem</button><button data-v="store" aria-pressed="false" title="Storage" aria-label="Storage"><span class="l">Store</span><span class="s">Sto</span></button><button data-v="cpu" aria-pressed="false">CPU</button><button data-v="gpu" aria-pressed="false">GPU</button></div>
+  <div class="seg" id="segFocus" title="With a part selected, show only…"><button data-v="all" aria-pressed="true">All</button><button data-v="up" aria-pressed="false" title="only what the selected part relies on" aria-label="Relies on"><span class="l">Relies on</span><span class="s">↑</span></button><button data-v="down" aria-pressed="false" title="only what relies on the selected part" aria-label="Relied on by"><span class="l">Relied on by</span><span class="s">↓</span></button><button data-v="both" aria-label="Both" aria-pressed="false" title="only the selected part's connections"><span class="l">Both</span><span class="s">↕</span></button></div>
   <label class="rng" title="How far apart the parts are"><span>Spacing</span> <input type="range" id="spread" min="0.4" max="3" step="0.05" value="1" aria-label="Spacing"></label>
   <button class="plain" id="optBtn" aria-expanded="false" title="Options"><span class="t">Options </span>▾</button>
-  <button class="plain" id="guideBtn" aria-pressed="false" title="Guided walks, start-up, traces, data, health, versions">Explore</button>
+  <button class="plain" id="guideBtn" aria-pressed="false" title="Guided walks, start-up, traces, data, health, versions" aria-label="Explore"><span class="l">Explore</span><span class="s">✦</span></button>
   <button class="plain" id="infoBtn" title="How to read the drawing" aria-label="How to read the drawing">ⓘ</button>
 </header>
 <div class="menu" id="opts" hidden>
@@ -264,16 +288,16 @@ function badge(x, b, hv, al) {   // the number of a lit part (its step, or how m
   const r = Math.max(9, x.measureText(t).width / 2 + 5); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fillStyle = hlCol(hv.t); x.fill();
   x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, cx, cy + 0.5); x.restore(); }
 function farLabel(x, id, q, al, isSel, chg) {   // isSel: the colour it is marked in, if any   // a distant part: its name in large letters, a bar of its colour beneath; returns its hit box
-  const fs = Math.round(15 + 6 * Math.min(1, BW * q.s / FAR1)), maxW = 200, words = N.get(id).name.split(' '), ln = [''];
+  const fs = Math.round(11 + 4 * Math.min(1, BW * q.s / FAR1)), maxW = 150, words = N.get(id).name.split(' '), ln = [''];
   x.font = `700 ${fs}px "Source Sans 3", sans-serif`;
   for (const w of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + w : w; if (x.measureText(t).width > maxW && ln[ln.length - 1] && ln.length < 2) ln.push(w); else ln[ln.length - 1] = t; }
   if (x.measureText(ln[ln.length - 1]).width > maxW) { let t = ln[ln.length - 1]; while (t.length > 3 && x.measureText(t + '…').width > maxW) t = t.slice(0, -1); ln[ln.length - 1] = t + '…'; }
   const lh = fs * 1.08, top = q.y - (ln.length * lh) / 2, wd = Math.max(...ln.map(t => x.measureText(t).width));
   x.save(); x.globalAlpha = al; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
-  x.lineWidth = 4; x.strokeStyle = css('--bg'); x.fillStyle = isSel || css('--ink');
+  x.lineWidth = 3; x.strokeStyle = css('--bg'); x.fillStyle = isSel || css('--ink');
   ln.forEach((t, i) => { const y = top + lh * (i + 0.5); x.strokeText(t, q.x, y); x.fillText(t, q.x, y); });
-  const by = top + ln.length * lh + 2; x.fillStyle = fill(id); x.fillRect(q.x - wd / 2, by, wd, 4);
-  if (isSel || chg) { x.strokeStyle = isSel || css('--flow'); x.lineWidth = 1.5; x.setLineDash(chg && !isSel ? [4, 3] : []); x.strokeRect(q.x - wd / 2 - 0.5, by - 0.5, wd + 1, 5); x.setLineDash([]); }
+  const by = top + ln.length * lh + 1; x.fillStyle = fill(id); x.fillRect(q.x - wd / 2, by, wd, 3);
+  if (isSel || chg) { x.strokeStyle = isSel || css('--flow'); x.lineWidth = 1.5; x.setLineDash(chg && !isSel ? [4, 3] : []); x.strokeRect(q.x - wd / 2 - 0.5, by - 0.5, wd + 1, 4); x.setLineDash([]); }
   x.restore(); return { id, x: q.x, y: q.y + 3, w: wd / 2 + 6, h: (ln.length * lh) / 2 + 8 };
 }
 function draw(refit) {
@@ -886,6 +910,8 @@ $('#panel').onclick = e => { const a = e.target.closest('[data-g],[data-walk],[d
   const g = e.target.closest('[data-go]'); if (g) { select(g.dataset.go); setTimeout(() => fit(g.dataset.go), 50); return; } const t = e.target.closest('[data-tog]'); if (t) toggle(t.dataset.tog); };
 // search: parts by name, and functions by name
 let hits = [], hi = 0;
+if (innerWidth <= 560) $('#q').placeholder = 'Find…';
+if (navigator.maxTouchPoints > 0 || matchMedia('(any-pointer: coarse)').matches) document.documentElement.classList.add('touch');   // (finger-sized controls)
 $('#q').oninput = () => { const q = $('#q').value.trim().toLowerCase(); if (!q) { $('#res').hidden = true; return; }
   hits = [];
   for (const c of N.values()) if (V.ex.has(c.id) && (c.name.toLowerCase().includes(q) || c.id.includes(q))) hits.push({ id: c.id, t: c.name, s: N.get(c.parent)?.name || 'Pult' });
