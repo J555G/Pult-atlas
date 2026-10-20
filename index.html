@@ -163,26 +163,36 @@ footer input[type=range] { accent-color: var(--acc); }
   #panel { top: auto; left: 0; width: auto; max-width: none; height: 48%; border-left: 0; border-top: 1px solid var(--line); border-radius: 12px 12px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.18); transform: translateY(105%); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
   h1 small { display: none; }
 }
-/* touch screens: every control at least 44 px (Apple's guideline), set when the device has touch (see the script) */
-.touch header { gap: 6px 8px; padding-bottom: 5px; }
-.touch .seg button, .touch button.plain { min-height: 44px; min-width: 44px; padding: 0 12px; font-size: 15px; }
-.touch .seg.nb button { font-size: 20px; padding: 0 12px; }
-.touch .search input, .touch #tq { min-height: 44px; font-size: 16px; }
-.touch input[type=range] { height: 44px; }
-.touch .rng input { width: 110px; }
-.touch footer { padding-top: 4px; } .touch footer #play { min-height: 44px; min-width: 52px; } .touch .track { height: 44px; }
-.touch #pclose { min-height: 44px; min-width: 44px; font-size: 17px; }
-.touch .list li { min-height: 44px; align-items: center; padding: 2px 0; }
-.touch .list a, .touch .crumbs a, .touch .hintp a { display: inline-block; padding: 8px 0; }
-.touch a.ic { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; font-size: 17px; }
-.touch .steps button { min-width: 44px; height: 44px; border-radius: 22px; font-size: 15px; }
-.touch .glist a { padding: 13px 2px; }
-.touch .sup li { padding: 10px 6px; }
-.touch .chk { min-height: 44px; font-size: 15px; } .touch .chk input { width: 22px; height: 22px; }
-.touch .menu .row button { min-height: 44px; }
-.touch .results button { min-height: 44px; }
-.touch .backg { padding: 10px 0; font-size: 14px; }
-.touch button.sm { min-height: 36px; font-size: 13px; }
+/* touch screens: finger-sized controls; --k is the Size setting (Normal 1 = 44 px, Large 1.25, Extra large 1.5) */
+:root { --k: 1; }
+.touch header { gap: calc(6px * var(--k)) calc(8px * var(--k)); padding-bottom: 5px; }
+.touch .seg button, .touch button.plain { min-height: calc(44px * var(--k)); min-width: calc(44px * var(--k)); padding: 0 calc(12px * var(--k)); font-size: calc(15px * var(--k)); }
+.touch .seg.nb button { font-size: calc(20px * var(--k)); }
+.touch .search input, .touch #tq { min-height: calc(44px * var(--k)); font-size: calc(16px * var(--k)); }
+.touch .search { max-width: calc(280px * var(--k)); }
+.touch input[type=range] { height: calc(44px * var(--k)); }
+.touch .rng input { width: calc(110px * var(--k)); }
+.touch footer { padding-top: 4px; } .touch footer #play { min-height: calc(44px * var(--k)); min-width: calc(52px * var(--k)); } .touch .track { height: calc(44px * var(--k)); }
+.touch #verInfo { font-size: calc(12px * var(--k)); } .touch .hint { font-size: calc(12px * var(--k)); }
+.touch #panel { width: calc(380px * var(--k)); font-size: calc(14px * var(--k)); }
+.touch #panel h2 { font-size: calc(22px * var(--k)); } .touch #panel h3 { font-size: calc(11px * var(--k)); }
+.touch .list { font-size: calc(13px * var(--k)); } .touch .list code, .touch .mono { font-size: calc(12px * var(--k)); }
+.touch .pill, .touch .crumbs, .touch .hintp, .touch .sub, .touch .legend { font-size: calc(12.5px * var(--k)); }
+.touch #pclose { min-height: calc(44px * var(--k)); min-width: calc(44px * var(--k)); font-size: calc(17px * var(--k)); }
+.touch .list li { min-height: calc(44px * var(--k)); align-items: center; padding: 2px 0; }
+.touch .list a, .touch .crumbs a, .touch .hintp a { display: inline-block; padding: calc(8px * var(--k)) 0; }
+.touch a.ic { display: inline-flex; align-items: center; justify-content: center; min-width: calc(40px * var(--k)); min-height: calc(40px * var(--k)); font-size: calc(17px * var(--k)); }
+.touch .steps button { min-width: calc(44px * var(--k)); height: calc(44px * var(--k)); border-radius: 99px; font-size: calc(15px * var(--k)); }
+.touch .glist a { padding: calc(13px * var(--k)) 2px; } .touch .glist b { font-size: calc(15px * var(--k)); } .touch .glist span { font-size: calc(12.5px * var(--k)); }
+.touch .sup { font-size: calc(13px * var(--k)); } .touch .sup li { padding: calc(10px * var(--k)) 6px; }
+.touch .menu { font-size: calc(14px * var(--k)); } .touch .chk { min-height: calc(44px * var(--k)); font-size: calc(15px * var(--k)); } .touch .chk input { width: calc(22px * var(--k)); height: calc(22px * var(--k)); }
+.touch .menu .row button { min-height: calc(44px * var(--k)); }
+.touch .results { width: calc(300px * var(--k)); } .touch .results button { min-height: calc(44px * var(--k)); font-size: calc(14px * var(--k)); }
+.touch .backg { padding: calc(10px * var(--k)) 0; font-size: calc(14px * var(--k)); }
+.touch button.sm { min-height: calc(36px * var(--k)); font-size: calc(13px * var(--k)); }
+.touch #mini { width: calc(196px * var(--k)); height: calc(112px * var(--k)); bottom: calc(30px + 10px * var(--k)); }
+.touch .res { font-size: calc(13px * var(--k)); } .touch .res .bar i { width: calc(16px * var(--k)); height: calc(8px * var(--k)); } .touch .res .note { font-size: calc(12.5px * var(--k)); }
+.sizes { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 @media (max-width: 560px) { .touch .seg button, .touch button.plain { padding: 0 9px; } .touch .rng input { width: 64px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -209,6 +219,7 @@ footer input[type=range] { accent-color: var(--acc); }
   <label class="chk"><input type="checkbox" id="lbl"> Flow labels</label>
   <label class="chk"><input type="checkbox" id="chain"> Whole chains</label>
   <label class="chk"><input type="checkbox" id="miniChk"> Overview map</label>
+  <div class="sizes">Size <div class="seg" id="segSize"><button data-v="1">Normal</button><button data-v="1.25">Large</button><button data-v="1.5">Extra large</button></div></div>
   <div class="row"><button class="plain" id="expAll">Expand all</button><button class="plain" id="colAll">Collapse</button></div>
 </div>
 <main>
@@ -228,8 +239,8 @@ addEventListener('unhandledrejection', e => { const h = document.getElementById(
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const METRICS = { mem: 'Memory', store: 'Storage', cpu: 'CPU', gpu: 'GPU' };
 const S = { guide: null, hl: new Map(), play: 0, mini: innerWidth >= 560, info: false, arr: 'web', flat: false, metric: 'part', ind: true, offv: false, lbl: false, exp: new Set(), sel: null, ver: 0, depth: 1, focus: 'all', spread: 1, rot: 0 };
-try { const k = JSON.parse(localStorage.getItem('atlas') || '{}'); Object.assign(S, { spread: k.spread || 1, arr: k.arr === 'layers' ? 'layers' : 'web', flat: !!k.flat, metric: k.metric || 'part', ind: k.ind ?? true }); } catch (_) {}
-const keep = () => { try { localStorage.setItem('atlas', JSON.stringify({ arr: S.arr, flat: S.flat, metric: S.metric, ind: S.ind, spread: S.spread })); } catch (_) {} };
+try { const k = JSON.parse(localStorage.getItem('atlas') || '{}'); Object.assign(S, { spread: k.spread || 1, arr: k.arr === 'layers' ? 'layers' : 'web', flat: !!k.flat, metric: k.metric || 'part', ind: k.ind ?? true, size: k.size || null }); } catch (_) {}
+const keep = () => { try { localStorage.setItem('atlas', JSON.stringify({ arr: S.arr, flat: S.flat, metric: S.metric, ind: S.ind, spread: S.spread, size: S.size })); } catch (_) {} };
 let MODEL, HIST, N = new Map(), OWN = new Map(), V = null, CK = [];
 
 // ---------------------------------------------------------------- data
@@ -308,7 +319,7 @@ function badge(x, b, hv, al) {   // the number of a lit part (its step, or how m
   const r = Math.max(9, x.measureText(t).width / 2 + 5); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fillStyle = hlCol(hv.t); x.fill();
   x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, cx, cy + 0.5); x.restore(); }
 function farLabel(x, id, q, al, isSel, chg) {   // isSel: the colour it is marked in, if any   // a distant part: its name in large letters, a bar of its colour beneath; returns its hit box
-  const fs = Math.round(11 + 4 * Math.min(1, BW * q.s / FAR1)), maxW = 150, words = N.get(id).name.split(' '), ln = [''];
+  const kz = S.size || 1, fs = Math.round((11 + 4 * Math.min(1, BW * q.s / FAR1)) * kz), maxW = 150 * kz, words = N.get(id).name.split(' '), ln = [''];
   x.font = `700 ${fs}px "Source Sans 3", sans-serif`;
   for (const w of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + w : w; if (x.measureText(t).width > maxW && ln[ln.length - 1] && ln.length < 2) ln.push(w); else ln[ln.length - 1] = t; }
   if (x.measureText(ln[ln.length - 1]).width > maxW) { let t = ln[ln.length - 1]; while (t.length > 3 && x.measureText(t + '…').width > maxW) t = t.slice(0, -1); ln[ln.length - 1] = t + '…'; }
@@ -852,7 +863,7 @@ function drawMini() {
       x.globalAlpha = onScr.has(l.id) ? 1 : 0.35; x.fillStyle = `hsl(${l.hue} 40% ${document.documentElement.dataset.theme === 'dark' || (matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light') ? 32 : 78}%)`;
       x.beginPath(); rrect(x, bx, by, w, h, 3); x.fill(); x.globalAlpha = 1;
       if (l.id === selL1 || hlL1.has(l.id)) { x.lineWidth = 2; x.strokeStyle = l.id === selL1 ? css('--acc') : css('--ink'); x.stroke(); }
-      if (w > 22) { x.fillStyle = css('--ink'); x.font = '600 9px "Source Sans 3", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; let s = N.get(l.id).name; while (s.length > 2 && x.measureText(s).width > w - 4) s = s.slice(0, -1); x.fillText(s, bx + w / 2, by + h / 2); }
+      if (w > 22) { x.fillStyle = css('--ink'); x.font = `600 ${Math.round(9 * (S.size || 1))}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; let s = N.get(l.id).name; while (s.length > 2 && x.measureText(s).width > w - 4) s = s.slice(0, -1); x.fillText(s, bx + w / 2, by + h / 2); }
       MINI.push({ id: l.id, x: bx, y: by, w, h }); }); });
 }
 
@@ -931,7 +942,12 @@ $('#panel').onclick = e => { const a = e.target.closest('[data-g],[data-walk],[d
 // search: parts by name, and functions by name
 let hits = [], hi = 0;
 if (innerWidth <= 560) $('#q').placeholder = 'Find…';
-if (navigator.maxTouchPoints > 0 || matchMedia('(any-pointer: coarse)').matches) document.documentElement.classList.add('touch');   // (finger-sized controls)
+const TOUCH = navigator.maxTouchPoints > 0 || matchMedia('(any-pointer: coarse)').matches; if (TOUCH) document.documentElement.classList.add('touch');   // (finger-sized controls)
+function setSize(v) { S.size = v; document.documentElement.style.setProperty('--k', v); [...$('#segSize').children].forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === v)); keep(); if (MODEL && V) draw(); }
+if (!TOUCH) $('.sizes').hidden = true;
+$('#segSize').onclick = e => { const b = e.target.closest('button'); if (b) setSize(+b.dataset.v); };
+setSize(S.size || (TOUCH ? 1.25 : 1));   // (on touch screens Large unless chosen otherwise)
+
 $('#q').oninput = () => { const q = $('#q').value.trim().toLowerCase(); if (!q) { $('#res').hidden = true; return; }
   hits = [];
   for (const c of N.values()) if (V.ex.has(c.id) && (c.name.toLowerCase().includes(q) || c.id.includes(q))) hits.push({ id: c.id, t: c.name, s: N.get(c.parent)?.name || 'Pult' });
