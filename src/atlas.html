@@ -291,18 +291,24 @@ function anchor3(l1) {
   return [Math.cos(a) * r * 900 * sp, y * 700 * sp, Math.sin(a) * r * 900 * sp];
 }
 function draw3d(vis, edges, refit) {
-  const old = T3.nodes, nn = new Map();
+  const old = T3.nodes, nn = new Map(), groups = new Map();   // groups: parts that take the place of an opened or closed part
   for (const id of vis) {
     let o = old.get(id);
-    if (!o) { let p = N.get(id).parent, from = null; while (p && !from) { from = old.get(p); p = N.get(p).parent; }
-      // a part opened: its parts start where it was; others in their own region of space
-      if (!from) { for (const [k, v] of old) if (k.startsWith(id + '.')) { from = v; break; } }
-      const a = from ? [from.x, from.y, from.z] : anchor3(N.get(id).l1), j = from ? 60 : 260;
-      o = { id, x: a[0] + (Math.random() - .5) * j, y: a[1] + (Math.random() - .5) * j, z: a[2] + (Math.random() - .5) * j, vx: 0, vy: 0, vz: 0, th: 0, om: 0, sc: 1, sv: 0, px: null, py: null }; }
+    if (!o) { let p = N.get(id).parent, key = null, at = null; while (p && !at) { if (old.has(p)) { key = p; const f = old.get(p); at = [f.x, f.y, f.z]; } p = N.get(p).parent; }
+      if (!at) { const ks = [...old.values()].filter(v => v.id.startsWith(id + '.')); if (ks.length) { key = id; at = [0, 1, 2].map(i => ks.reduce((t, v) => t + [v.x, v.y, v.z][i], 0) / ks.length); } }   // a part closed: where its parts were
+      const a = at || anchor3(N.get(id).l1), j = at ? 0 : 260;
+      o = { id, x: a[0] + (Math.random() - .5) * j, y: a[1] + (Math.random() - .5) * j, z: a[2] + (Math.random() - .5) * j, vx: 0, vy: 0, vz: 0, th: 0, om: 0, sc: 1, sv: 0, px: null, py: null };
+      if (at) (groups.get(key) || groups.set(key, { at, ids: [] }).get(key)).ids.push(o); }
     nn.set(id, o);
   }
+  // the new parts start side by side, facing the viewer, centred where the part was – nothing to burst apart
+  if (groups.size) { const B = camBasis(), gx = BW * 1.3, gy = BH * 2.1;
+    for (const g of groups.values()) { const n = g.ids.length, cols = Math.ceil(Math.sqrt(n * 1.5)), rows = Math.ceil(n / cols);
+      g.ids.forEach((o, i) => { const c = i % cols - (cols - 1) / 2, r = (rows - 1) / 2 - Math.floor(i / cols);
+        o.x = g.at[0] + B.right[0] * c * gx + B.up[0] * r * gy; o.y = g.at[1] + B.right[1] * c * gx + B.up[1] * r * gy; o.z = g.at[2] + B.right[2] * c * gx + B.up[2] * r * gy; }); }
+    T3.holds = [...groups.values()].map(g => ({ at: g.at, ids: g.ids.map(o => o.id) })); }
   const changed = nn.size !== old.size || [...nn.keys()].some(k => !old.has(k));
-  T3.nodes = nn; T3.edges = edges; if (changed) T3.alpha = Math.max(T3.alpha, old.size ? 0.5 : 1);   // (a new selection only redraws)
+  T3.nodes = nn; T3.edges = edges; if (changed) T3.alpha = Math.max(T3.alpha, old.size ? (groups.size ? 0.15 : 0.5) : 1);   // (a new selection only redraws; opening or closing a part only makes room)
   if (refit || !old.size) T3.fitNext = true;
   run3d();
 }
@@ -330,7 +336,12 @@ function tick3d() {   // the forces: parts push each other apart, strings pull c
     for (let j = i + 1; j < n; j++) { const q = ns[j]; if (!S.flat && Math.abs(p.z - q.z) > 140) continue;
       const dx = q.x - p.x, dy = q.y - p.y, ox = BW * 1.12 - Math.abs(dx), oy = BH * 1.6 - Math.abs(dy); if (ox <= 0 || oy <= 0) continue;
       if (ox / BW < oy / BH && !(S.arr === 'layers' && false)) { const m = (dx < 0 ? -1 : 1) * ox * 0.25; p.x -= m; q.x += m; } else { const m = (dy < 0 ? -1 : 1) * oy * 0.25; p.y -= m; q.y += m; } } }
+  // an opened (or closed) part stays where it was: its group is kept centred on that spot while the drawing settles
+  for (const h of T3.holds || []) { const gs = h.ids.map(i => T3.nodes.get(i)).filter(Boolean); if (!gs.length || gs.some(g => T3.drag?.id === g.id)) continue;
+    const d = [0, 1, 2].map(i => h.at[i] - gs.reduce((t, g) => t + [g.x, g.y, g.z][i], 0) / gs.length);
+    for (const g of gs) { g.x += d[0]; g.y += d[1]; g.z += d[2]; } }
   T3.alpha = Math.max(0, a * 0.985 - 0.0005);
+  if (T3.alpha < 0.003) T3.holds = null;
   if (S.flat && T3.alpha < 0.003 && ns.some(p => Math.abs(p.z) > 2)) T3.alpha = 0.01;   // (until all lie on the plane)
 }
 function camBasis() { const c = T3.cam, cy = Math.cos(c.yaw), sy = Math.sin(c.yaw), cp = Math.cos(c.pitch), sp = Math.sin(c.pitch), cr = Math.cos(c.roll || 0), sr = Math.sin(c.roll || 0);
