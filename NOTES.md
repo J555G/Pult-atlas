@@ -83,6 +83,10 @@
   has proved itself.
 
 ## Open
+- Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
+  finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
+  separate 'any' and 'maskable' icons with safe margins). Never advise clearing site data for j555g.github.io – Pult's
+  offline data lives there too.
 - Walks are hand-written: when Pult changes, the build reports functions they name that no longer exist.
 - "First in vN" counts from where a function's file was created: code moved between files (v160 split of app.js) looks
   new there.
