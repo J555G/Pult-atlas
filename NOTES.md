@@ -199,6 +199,11 @@
   tile on the screen – never squashed, mirrored or upside down, from any side –, nearest first; a name that would cover
   one already written is left out, its tile stays. Tapping a name = tapping its tile. (Replaces the turning flat cards.)
 
+## Decided 21 Oct (20:56)
+- A part's name is written flat on its tile (not upright over it): along the tile whichever way reads left to right on
+  the screen (never upside down), never mirrored – from below too –, in up to two lines as large as fits (15–22 units),
+  cut short with … beyond that. Names too small to read on the screen (under about 6.5 px) are left out; the tile stays.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
