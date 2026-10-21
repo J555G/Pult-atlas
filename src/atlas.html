@@ -590,8 +590,8 @@ const towerAxis = () => { const L = TW3.lay; if (!L?.floors.length) return { x: 
   return { x: L.floors.reduce((s, f) => s + (f.x0 + f.x1) / 2, 0) / L.floors.length, z: L.floors.reduce((s, f) => s + (f.z0 + f.z1) / 2, 0) / L.floors.length, y0: Math.min(...L.floors.map(f => f.y)), y1: Math.max(...L.floors.map(f => f.y)) + CH }; };
 function onAxis() { const a = towerAxis(), c = T3.cam, L = TW3.lay, R = L ? Math.max(400, ...L.floors.map(f => Math.max(f.x1 - f.x0, f.z1 - f.z0))) : 2000;
   c.ty = Math.max(a.y0 - R * 0.5, Math.min(a.y1 + R * 0.5, c.ty)); const dx = c.tx - a.x, dz = c.tz - a.z, r = Math.hypot(dx, dz); if (r > R) { c.tx = a.x + dx * R / r; c.tz = a.z + dz * R / r; } }   // (never further than about a floor's width from the tower)
-function slide3(dx, dy) {   // two fingers: the tower moves with them, in the plane facing the viewer
-  const B = camBasis(), k = 1 / scale3(); for (let i = 0; i < 3; i++) T3.cam[['tx', 'ty', 'tz'][i]] -= (B.right[i] * dx - B.up[i] * dy) * k; onAxis(); T3.camTo = null; run3d(); }
+function slide3(dx, dy, sc) {   // two fingers: the tower moves with them, in the plane facing the viewer (sc: pixels per unit at the spot that should follow)
+  const B = camBasis(), k = 1 / (sc || scale3()); for (let i = 0; i < 3; i++) T3.cam[['tx', 'ty', 'tz'][i]] -= (B.right[i] * dx - B.up[i] * dy) * k; onAxis(); T3.camTo = null; run3d(); }
 function spinAxis(da) {   // turn the view round the tower's own axis (not round wherever the view was slid to)
   const a = towerAxis(), c = T3.cam, x = c.tx - a.x, z = c.tz - a.z, cs = Math.cos(da), sn = Math.sin(da); c.yaw += da; c.tx = a.x + x * cs + z * sn; c.tz = a.z - x * sn + z * cs; }
 const scale3 = () => cv3.clientHeight * 0.95 / T3.cam.dist;   // (screen pixels per world unit at the pivot)
@@ -616,14 +616,18 @@ function zoomAt(f, mx, my) {   // closer or further by f, towards the height of 
 cv3.addEventListener('contextmenu', e => { if (S.view === 'space') e.preventDefault(); });
 cv3.addEventListener('pointerdown', e => { if (S.view !== 'space') return down2(e);
   cv3.setPointerCapture(e.pointerId); T3.ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY }); T3.spin = null;
-  if (T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()]; T3.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), ang: Math.atan2(b.y - a.y, b.x - a.x), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, start: new Map([...T3.ptrs].map(([k, v]) => [k, { ...v }])), mode: null }; T3.drag = null; return; }
+  if (T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()]; T3.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), ang: Math.atan2(b.y - a.y, b.x - a.x), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, start: new Map([...T3.ptrs].map(([k, v]) => [k, { ...v }])), mode: null }; T3.drag = null;
+    const p = T3.pinch; p.ref = refAt(p.mx, p.my, hit3d(p.mx, p.my)); const q = p.ref && screenOf(p.ref); if (q) { p.qx = q.x; p.qy = q.y; } else p.ref = null; return; }   // (the part between the fingers – else the tower's axis there – stays exactly under them)
   const id = hit3d(e.offsetX, e.offsetY); T3.drag = { id, x: e.offsetX, y: e.offsetY, x0: e.offsetX, y0: e.offsetY, moved: false, axis: null, tilt: e.shiftKey, v: 0 }; $('#tip').hidden = true;
 });
 cv3.addEventListener('pointermove', e => { if (S.view !== 'space') return move2(e);
   if (T3.ptrs.has(e.pointerId)) T3.ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
   if (T3.pinch && T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()], p = T3.pinch, d = Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), ang = Math.atan2(b.y - a.y, b.x - a.x), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
     let da = ang - p.ang; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
-    slide3(mx - p.mx, my - p.my); zoomAt(p.d / d, mx, my); if (Math.abs(da) > 0.0005) { spinAxis(da); run3d(); }   // (slide, pinch and twist at once, as with a photo)
+    zoomAt(p.d / d, mx, my); if (Math.abs(da) > 0.0005) { spinAxis(da); run3d(); }   // (slide, pinch and twist at once, as with a photo)
+    const q = p.ref && screenOf(p.ref);
+    if (q) { const wx = mx + (p.qx - p.mx) * d / p.d, wy = my + (p.qy - p.my) * d / p.d; slide3(wx - q.x, wy - q.y, q.s); const q2 = screenOf(p.ref) || q; p.qx = q2.x; p.qy = q2.y; }
+    else slide3(mx - p.mx, my - p.my);
     Object.assign(p, { d, ang, mx, my }); return; }
   const d = T3.drag;
   if (!d) { const id = hit3d(e.offsetX, e.offsetY); if (id) tip(e, id); else $('#tip').hidden = true; return; }

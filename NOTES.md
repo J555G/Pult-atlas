@@ -142,6 +142,11 @@
 - Measured: a two-finger slide moves a part by the fingers' distance (within ~10 %, parts nearer than the pivot a little
   more); twist turns the parts the fingers' way; a one-finger turn after sliding aside keeps the axis in place.
 
+## Decided 21 Oct (11:58)
+- Two fingers: the spot between them when they touch down (the part there, else the tower's axis at that floor) now
+  follows them exactly – slid with them, spread or drawn in with the pinch like a photo (measured: offset to the fingers
+  unchanged by a slide, scaled exactly by the pinch). Other parts, nearer or further, move by their own perspective.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
