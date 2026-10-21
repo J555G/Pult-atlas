@@ -181,9 +181,17 @@
   never tinted the cards behind them. Now drawn back to front: the floors are parallel, so from the camera's height
   outwards – floors below it bottom-up, above it top-down, each floor before or after the cards standing on it, the
   camera's own storey last. Lines are drawn after the farthest step, so nearer floors tint them too.
-- Proposed, awaiting the owner: how to make cards tappable from below (floors blocking only from above; a card's own
-  floor never blocking it; only cards and names blocking; cards hanging under their floor from below; tap again for
-  the next thing behind).
+
+## Decided 21 Oct (18:34)
+- Space: the cards lie flat on their plot (no longer upright facing the camera), each turned on the spot so its
+  writing faces the viewer; from below read the right way round (never mirrored). Spaced by their diagonal (230 × 230)
+  so that, turning, they never touch – opened parts' cards never overlap their group's. Seen nearly edge-on: a sliver
+  in its colour with the name written above it; far: the outline in its colour.
+- A card is never hidden by its own floor, plot or group – neither in the drawing (each floor drawn just before its
+  own cards) nor for tapping; other floors hide it (above the camera drawn top-down, below it bottom-up). Measured:
+  from below 74 of 109 card centres now tappable (before: none), from the corner 90.
+- Floors keep their spacing (the owner: the point is seeing how the parts relate, not a flat stack).
+- Lines start and end on the flat cards.
 
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
