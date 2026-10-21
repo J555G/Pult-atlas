@@ -595,30 +595,42 @@ function fit3d(id, now) {   // the camera to a part, or to all
     const R = Math.max(400, ...ns.map(p => Math.hypot(p.x - cx, p.y - cy, p.z - cz))); t = { tx: cx, ty: cy, tz: cz, dist: R * 1.55 + 450 }; }
   if (now) Object.assign(T3.cam, t); else T3.camTo = t; run3d();
 }
+// Space: one finger turns (the tilt stays above the floors), two fingers slide and zoom towards the fingers – no
+// twisting; with a mouse, shift- or right-drag slides, the wheel zooms at the pointer. A tap is a tap up to 8 px.
+const PITCH = [-1.48, -0.08];
+function zoomAt(f, mx, my) {   // zoom by factor f (distance × f) keeping the point under (mx, my) where it is
+  const B = camBasis(), W = cv3.clientWidth, H = cv3.clientHeight, d0 = T3.cam.dist, d1 = Math.max(250, Math.min(20000, d0 * f)), u = d0 / (H * 0.95), k = 1 - d1 / d0;
+  const wx = (mx - W / 2) * u, wy = -(my - H / 2) * u;
+  for (let i = 0; i < 3; i++) T3.cam[['tx', 'ty', 'tz'][i]] += (B.right[i] * wx + B.up[i] * wy) * k;
+  T3.cam.dist = d1; T3.camTo = null; T3.spin = null; run3d();
+}
+cv3.addEventListener('contextmenu', e => { if (S.view === 'space') e.preventDefault(); });
 cv3.addEventListener('pointerdown', e => { if (S.view !== 'space') return down2(e);
-  cv3.setPointerCapture(e.pointerId); T3.ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
-  if (T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()]; T3.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), dist: T3.cam.dist, ang: Math.atan2(b.y - a.y, b.x - a.x), roll: T3.cam.roll || 0 }; T3.drag = null; return; }
-  const id = hit3d(e.offsetX, e.offsetY); T3.drag = { id, x: e.offsetX, y: e.offsetY, x0: e.offsetX, y0: e.offsetY, moved: false }; $('#tip').hidden = true;
+  cv3.setPointerCapture(e.pointerId); T3.ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY }); T3.spin = null;
+  if (T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()]; T3.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; T3.drag = null; return; }
+  const id = hit3d(e.offsetX, e.offsetY); T3.drag = { id, x: e.offsetX, y: e.offsetY, x0: e.offsetX, y0: e.offsetY, moved: false, pan: e.shiftKey || e.button === 2, v: [0, 0] }; $('#tip').hidden = true;
 });
 cv3.addEventListener('pointermove', e => { if (S.view !== 'space') return move2(e);
   if (T3.ptrs.has(e.pointerId)) T3.ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
-  if (T3.pinch && T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()]; T3.cam.dist = Math.max(300, Math.min(20000, T3.pinch.dist * T3.pinch.d / Math.max(10, Math.hypot(a.x - b.x, a.y - b.y))));
-    T3.cam.roll = T3.pinch.roll + (Math.atan2(b.y - a.y, b.x - a.x) - T3.pinch.ang); T3.camTo = null; run3d(); return; }   // (pinch to zoom, twirl to turn)
+  if (T3.pinch && T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()], p = T3.pinch, d = Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    pan3d(mx - p.mx, my - p.my); zoomAt(p.d / d, mx, my); p.d = d; p.mx = mx; p.my = my; return; }   // (slide with the fingers, zoom towards them)
   const d = T3.drag;
   if (!d) { const id = hit3d(e.offsetX, e.offsetY); if (id) tip(e, id); else $('#tip').hidden = true; return; }
-  const dx = e.offsetX - d.x, dy = e.offsetY - d.y; d.x = e.offsetX; d.y = e.offsetY; if (Math.hypot(e.offsetX - d.x0, e.offsetY - d.y0) > 4) d.moved = true;
-  if (false) {   // (parts are never pulled: in the tower everything stays where it is placed)
-    const p = T3.nodes.get(d.id), B = camBasis(), H = cv3.clientHeight, q = proj(B, p, cv3.clientWidth, H, H * 0.95); if (!q) return; const u = 1 / q.s;
-    p.x += (B.right[0] * dx - B.up[0] * dy) * u; p.y += (B.right[1] * dx - B.up[1] * dy) * u; p.z += (B.right[2] * dx - B.up[2] * dy) * u; T3.alpha = Math.max(T3.alpha, 0.25);
-  } else if (e.shiftKey) { T3.cam.roll = (T3.cam.roll || 0) + dx * 0.006; } else if (S.flat) { pan3d(dx, dy); } else { T3.cam.yaw -= dx * 0.006; T3.cam.pitch = Math.max(-1.45, Math.min(1.45, T3.cam.pitch + dy * 0.006)); }
+  if (!d.moved && Math.hypot(e.offsetX - d.x0, e.offsetY - d.y0) <= 8) return;   // (a tap, not a turn)
+  if (!d.moved) { d.moved = true; d.x = e.offsetX; d.y = e.offsetY; return; }
+  const dx = e.offsetX - d.x, dy = e.offsetY - d.y; d.x = e.offsetX; d.y = e.offsetY;
+  if (d.pan || e.shiftKey) pan3d(dx, dy);
+  else { T3.cam.yaw -= dx * 0.005; T3.cam.pitch = Math.max(PITCH[0], Math.min(PITCH[1], T3.cam.pitch + dy * 0.005)); T3.cam.roll = 0; T3.camTo = null; d.v = [dx * 0.005, dy * 0.005]; }
   run3d();
 });
-const up3 = e => { T3.ptrs.delete(e.pointerId); if (T3.ptrs.size < 2) { T3.pinch = null; T2.pinch = null; } const d = T3.drag; T3.drag = null; if (!d || d.moved) { run3d(); return; }
+const up3 = e => { T3.ptrs.delete(e.pointerId); if (T3.ptrs.size < 2) { T3.pinch = null; T2.pinch = null; } const d = T3.drag; T3.drag = null;
+  if (d?.moved && S.view === 'space' && !d.pan && Math.hypot(...d.v) > 0.002) T3.spin = d.v.slice();   // (a little glide after letting go)
+  if (!d || d.moved) { run3d(); return; }
   const now = Date.now(), id = d.id;
   if (id && T3.lastTap?.id === id && now - T3.lastTap.t < 350) { T3.lastTap = null; toggle(id); return; }
   T3.lastTap = { id, t: now }; if (!id) S.info = false; select(id && S.sel !== id ? id : null); };
 cv3.addEventListener('pointerup', up3); cv3.addEventListener('pointercancel', e => { T3.ptrs.delete(e.pointerId); T3.drag = null; T3.pinch = null; T2.pinch = null; });
-cv3.addEventListener('wheel', e => { e.preventDefault(); if (S.view !== 'space') return wheel2(e); T3.cam.dist = Math.max(300, Math.min(20000, T3.cam.dist * Math.exp(e.deltaY * 0.0012))); T3.camTo = null; run3d(); }, { passive: false });
+cv3.addEventListener('wheel', e => { e.preventDefault(); if (S.view !== 'space') return wheel2(e); zoomAt(Math.exp(e.deltaY * 0.0012), e.offsetX, e.offsetY); }, { passive: false });
 cv3.addEventListener('pointerleave', () => { $('#tip').hidden = true; });
 
 // ---------------------------------------------------------------- the panel
@@ -640,7 +652,7 @@ function renderPanel() {
       <div class="heat">${[0, 1, 2, 3, 4, 5].map(i => `<i style="background:var(--h${i})" title="${i}"></i>`).join('')}<span style="margin-left:6px">none … very high</span></div>
       <div><span class="sw" style="border-top:2px dashed var(--flow);background:none;height:0"></span>dashed outline: changed in the version shown</div>
       <div>Selecting a part shows its direct links; <i>Whole chains</i> (Options) follows them further. <i>Relies on / Relied on by / Both</i> then hides everything else.</div>
-      <div>In <i>Space</i>, drag to turn the tower, pinch or scroll to zoom; <i>Front</i>, <i>Top</i> and <i>Corner</i> turn it for you, <i>Floors</i> sets the height between the floors. Far away, parts are chips in their colour; nearer, their names; near, the whole card. ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
+      <div>In <i>Space</i>, one finger turns the tower (always seen from above), two fingers slide it and pinch to zoom towards them (with a mouse: drag to turn, shift- or right-drag to slide, wheel to zoom at the pointer); names never cover each other – where one would, the part shows as a chip; <i>Front</i>, <i>Top</i> and <i>Corner</i> turn it for you, <i>Floors</i> sets the height between the floors. Far away, parts are chips in their colour; nearer, their names; near, the whole card. ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
       <div>Four views of the same parts, the selection kept between them: <b>Flow</b> – columns from the sources on the left to the screen on the right; <b>Map</b> – each main part as a region with its parts, ribbons for how much they connect; <b>Focus</b> – the selected part in the middle, data coming in on the left and going out on the right, the code it calls above and the code calling it below; <b>Space</b> – a tower of four floors, the sources at the bottom and the screen on top: every main part a plot on its floor with its parts standing on it, lines between floors running straight up or down a shaft; Front, Top and Corner turn it, Floors sets their height. <b>Data</b>, <b>Code</b> and <b>Selected only</b> choose the lines, in any combination.</div>
       <div>In Flow, lines between parts of the same column are drawn only for the selected part (↕ on a card counts them), and the lines of an opened group are bundled into one ribbon per partner until a part is selected. Zoomed out, cards show only their names.</div>
       <div><b>Explore</b> opens guided walks through Pult, its start-up, traces of functions, where data comes from and goes, its health and comparisons between versions; the parts concerned light up, numbered by step.</div>
@@ -957,7 +969,7 @@ function layTower(vis) {
     if (its.length === 1 && its[0] === l.id) its = openedUnder(l.id);   // (a closed main part: its parts, and inside them what is opened)
     if (its.length) items.set(l.id, its); }
   const all = new Set([...items.values()].flat()), edges = visEdges(all).filter(lineOn);
-  const TX = CW + 40, TZ = 150, PM = 50, FH = 560 * S.spread, pos = new Map(), plots = [], floors = [], groups = [];
+  const TX = CW + 40, TZ = 170, PM = 50, pos = new Map(), plots = [], floors = [], groups = []; let FH = 560 * S.spread;
   FLOORS.forEach((t, fi) => {
     const ls = MODEL.l1.filter(l => l.tier === t && items.has(l.id)); if (!ls.length) return;
     const y = fi * FH;
@@ -982,6 +994,9 @@ function layTower(vis) {
       put(p.top, 0); r += Math.ceil(p.top.length / p.cols);
       p.gs.forEach(([par, ids]) => { const zA = p.z + PM / 2 + 40 + (r + 0.3) * TZ - TZ / 2, n = Math.ceil(ids.length / p.cols);
         r += 0.3; put(ids, 0); groups.push({ id: par, y, x0: p.x + 12, x1: p.x + p.w - 12, z0: zA - 10, z1: zA + n * TZ + 6 }); r += n + 0.3; }); }); });
+  // the height between floors: at least the depth a floor shows from the corner view, so the floors never cover each other
+  const deep = Math.max(...floors.map(fl => fl.z1 - fl.z0)), want = Math.max(560, deep * 0.42 + 260) * S.spread;
+  if (want > FH) { const k = want / FH; floors.forEach(fl => fl.y *= k); plots.forEach(p => p.y *= k); groups.forEach(g => g.y *= k); pos.forEach(v => v.y = (v.y - CH / 2 - 8) * k + CH / 2 + 8); FH = want; }
   const bundles = new Map(); edges.forEach(e => { const a = N.get(e.a).l1, b = N.get(e.b).l1; if (a === b) return; const k = a + '>' + b + '>' + e.kind; const o = bundles.get(k) || bundles.set(k, { a, b, kind: e.kind, n: 0 }).get(k); o.n += e.n; });
   return { pos, edges, plots, floors, groups, bundles: [...bundles.values()], FH };
 }
@@ -1001,6 +1016,8 @@ function frameTower(now) {
   if (T3.fitAll) { T3.fitAll = false; fitTower(null, true); }
   const c = T3.cam; let moving = false;
   if (T3.camTo) { const t = T3.camTo; let done = true; for (const k of ['tx', 'ty', 'tz', 'dist', 'yaw', 'pitch', 'roll']) { if (t[k] == null) continue; c[k] = (c[k] || 0) + (t[k] - (c[k] || 0)) * 0.14; if (Math.abs(t[k] - c[k]) > (k[0] === 't' ? 0.5 : k === 'dist' ? 1 : 1e-3)) done = false; } if (done) { Object.assign(c, t); T3.camTo = null; } else moving = true; }
+  if (T3.spin) { c.yaw -= T3.spin[0]; c.pitch = Math.max(PITCH[0], Math.min(PITCH[1], c.pitch + T3.spin[1])); T3.spin = T3.spin.map(v => v * 0.88); if (Math.hypot(...T3.spin) < 0.0004) T3.spin = null; else moving = true; }
+  c.roll = 0;
   const f = H * 0.95, B = camBasis(), P = pt => proj(B, pt, W, H, f);
   const quad = (y, x0, x1, z0, z1) => { const ps = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([a, b]) => P({ x: a, y, z: b })); return ps.every(Boolean) ? ps : null; };
   const sel = S.sel && lay.pos.has(S.sel) ? S.sel : null, r = sel ? reach(sel, lay.edges) : null, HV = visHL(lay.pos);
@@ -1009,7 +1026,7 @@ function frameTower(now) {
   for (const fl of lay.floors) { const q = quad(fl.y, fl.x0, fl.x1, fl.z0, fl.z1); if (!q) continue;
     x.beginPath(); q.forEach((p, i) => i ? x.lineTo(p.x, p.y) : x.moveTo(p.x, p.y)); x.closePath();
     x.globalAlpha = dk ? 0.35 : 0.5; x.fillStyle = css('--soft'); x.fill(); x.globalAlpha = 0.8; x.lineWidth = 1.2; x.strokeStyle = css('--line'); x.stroke();
-    const lp = P({ x: fl.x0 + 20, y: fl.y, z: fl.z1 }); if (lp) { x.globalAlpha = 0.9; x.fillStyle = css('--mut'); x.font = `italic ${Math.round(16 * KZ())}px "Gentium Book Plus", Georgia, serif`; x.textAlign = 'left'; x.textBaseline = 'top'; x.fillText(FLOORNAME[fl.t], lp.x + 4, lp.y + 4); } }
+    x.globalAlpha = 1; }
   // plots of the main parts, and the framed areas of opened parts
   for (const p of lay.plots) { const q = quad(p.y + 2, p.x0, p.x1, p.z0, p.z1); if (!q) continue;
     x.beginPath(); q.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath();
@@ -1018,7 +1035,6 @@ function frameTower(now) {
     x.globalAlpha = 1; }
   for (const g of lay.groups) { const q = quad(g.y + 3, g.x0, g.x1, g.z0, g.z1); if (!q) continue;
     x.beginPath(); q.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath(); x.globalAlpha = 0.9; x.lineWidth = 2; x.strokeStyle = `hsl(${HUE(g.id)} 45% ${dk ? 55 : 45}%)`; x.setLineDash([6, 4]); x.stroke(); x.setLineDash([]);
-    const lp = P({ x: g.x0 + 10, y: g.y + 3, z: g.z0 + 14 }); if (lp) { x.fillStyle = S.sel === g.id ? css('--acc') : css('--ink'); x.font = `700 ${Math.round(Math.max(11, Math.min(17, 46 * lp.s)) * KZ())}px "Source Sans 3", sans-serif`; x.textAlign = 'left'; x.textBaseline = 'middle'; x.fillText('▾ ' + N.get(g.id).name, lp.x, lp.y); T3.drawn.push({ id: g.id, x: lp.x + 40, y: lp.y, w: 50, h: 10 }); }
     x.globalAlpha = 1; }
   // lines: with nothing selected one bundle per pair of main parts on different floors; with a part selected its own lines
   const dep = e => e.kind === 'code' ? [e.a, e.b] : [e.b, e.a];
@@ -1039,25 +1055,41 @@ function frameTower(now) {
     else if (HV.size && HV.has(e.a) && HV.has(e.b)) col = e.kind === 'flow' ? css('--flow') : css('--ink');
     if (!col) continue;
     drawPath(shaft(a, b, lay.FH, true, true), col, al, Math.min(4, 1.2 + Math.log2(1 + e.n) * 0.6), e.kind === 'flow'); }
-  // the cards, upright and facing the viewer, far ones first
-  const cards = [...lay.pos].map(([id, p]) => [id, P(p)]).filter(v => v[1]).sort((a, b) => b[1].z - a[1].z);
+  // what is written, in order of priority: the selected part, the names of the plots, the names of opened groups, then the
+  // cards from the nearest back; whatever would cover something already placed is left out (a card then shows as a chip)
+  const over = (a, b) => Math.abs(a.x - b.x) < a.w + b.w + 2 && Math.abs(a.y - b.y) < a.h + b.h + 2, taken = [];
+  const kz = KZ(), plotLab = [], groupLab = [];
+  for (const p of lay.plots) { const cx = (p.x0 + p.x1) / 2, cz = (p.z0 + p.z1) / 2;
+    const lp = [{ x: cx, y: p.y, z: p.z0 }, { x: cx, y: p.y, z: p.z1 }, { x: p.x0, y: p.y, z: cz }, { x: p.x1, y: p.y, z: cz }].map(P).filter(Boolean).sort((a, b) => a.z - b.z)[0]; if (!lp) continue;
+    const fs = Math.round(Math.max(14, Math.min(24, 70 * lp.s)) * kz); x.font = `700 ${fs}px "Source Sans 3", sans-serif`; const w = x.measureText(N.get(p.id).name).width;
+    const b = { id: p.id, x: lp.x, y: lp.y + 12, w: w / 2 + 4, h: fs * 0.6, fs }; if (p.id === S.sel || !taken.some(o => over(o, b))) { taken.push(b); plotLab.push(b); } }
+  for (const g of lay.groups) { const lp = P({ x: g.x0 + 10, y: g.y + 3, z: g.z0 + 14 }); if (!lp) continue;
+    const fs = Math.round(Math.max(11, Math.min(17, 46 * lp.s)) * kz); x.font = `700 ${fs}px "Source Sans 3", sans-serif`; const w = x.measureText('▾ ' + N.get(g.id).name).width;
+    const b = { id: g.id, x: lp.x + w / 2, y: lp.y, w: w / 2 + 3, h: fs * 0.6, fs }; if (!taken.some(o => over(o, b))) { taken.push(b); groupLab.push(b); } }
+  const floorLab = []; { const fl = lay.floors.map(fl => { const q = P({ x: fl.x0, y: fl.y, z: (fl.z0 + fl.z1) / 2 }) || P({ x: (fl.x0 + fl.x1) / 2, y: fl.y, z: (fl.z0 + fl.z1) / 2 }); return q && { t: fl.t, y: q.y }; }).filter(Boolean).sort((a, b) => a.y - b.y);
+    const fs = Math.round(14 * kz), gap = fs + 14; let last = -1e9; x.font = `italic ${fs}px "Gentium Book Plus", Georgia, serif`;
+    for (const f of fl) { const y = Math.max(f.y, last + gap, 14); last = y; const w = x.measureText(FLOORNAME[f.t]).width; const b = { t: f.t, x: 6 + (w + 16) / 2, y, w: (w + 16) / 2, h: fs * 0.8, fs }; floorLab.push(b); taken.push(b); } }
+  const cards = [...lay.pos].map(([id, p]) => [id, P(p)]).filter(v => v[1]).sort((a, b) => b[1].z - a[1].z), chip = new Set();
+  for (const [id, q] of [...cards].reverse()) { if (CW * q.s < 74 * kz) { chip.add(id); continue; }
+    const b = { x: q.x, y: q.y, w: CW / 2 * q.s, h: CH / 2 * q.s }; if (id !== S.sel && taken.some(o => over(o, b))) chip.add(id); else taken.push(b); }
   const kSave = T2.k;
   for (const [id, q] of cards) { let al = 1; if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al = 0.3; const hv = HV.get(id); if (!sel && HV.size && !hv) al = 0.25; if (S.offv && netOf(id) === 'online') al *= 0.35;
     const mk = id === sel ? css('--acc') : hv ? hlCol(hv.t) : null;
-    if (CW * q.s < 74 * KZ()) {   // far: a chip in the part's colour, the plot's name says what is there
-      const w = Math.max(8, CW * q.s), h = Math.max(5, CH * q.s); x.globalAlpha = al; x.beginPath(); rrect(x, q.x - w / 2, q.y - h / 2, w, h, Math.min(4, h / 2)); x.fillStyle = fill(id); x.fill();
+    if (chip.has(id)) {   // far, or behind another: a chip in the part's colour (the plot's name says what is there)
+      const w = Math.max(8, Math.min(CW * q.s, 34)), h = Math.max(5, Math.min(CH * q.s, 11)); x.globalAlpha = al; x.beginPath(); rrect(x, q.x - w / 2, q.y - h / 2, w, h, Math.min(4, h / 2)); x.fillStyle = fill(id); x.fill();
       x.lineWidth = mk ? 2.5 : 0.8; x.strokeStyle = mk || css('--line'); x.stroke(); x.globalAlpha = 1; }
     else { x.save(); x.translate(q.x, q.y); x.scale(q.s, q.s); T2.k = q.s;
     paintCard2(x, id, { x: 0, y: 0, w: CW / 2, h: CH / 2 }, mk, al);
-    x.restore(); } const sb = { id, x: q.x, y: q.y, w: CW / 2 * q.s, h: CH / 2 * q.s }; T3.drawn.push(sb); if (hv?.n) badge(x, sb, hv, 1); }
+    x.restore(); } const sb = chip.has(id) ? { id, x: q.x, y: q.y, w: Math.max(10, Math.min(CW * q.s, 34) / 2), h: Math.max(8, Math.min(CH * q.s, 11) / 2) } : { id, x: q.x, y: q.y, w: CW / 2 * q.s, h: CH / 2 * q.s }; T3.drawn.push(sb); if (hv?.n) badge(x, sb, hv, 1); }
   T2.k = kSave; x.globalAlpha = 1;
-  // the names of the plots, last, on the edge facing the viewer, with a halo so cards never hide them
-  for (const p of lay.plots) { const cx = (p.x0 + p.x1) / 2, cz = (p.z0 + p.z1) / 2;
-    const lp = [{ x: cx, y: p.y, z: p.z0 }, { x: cx, y: p.y, z: p.z1 }, { x: p.x0, y: p.y, z: cz }, { x: p.x1, y: p.y, z: cz }].map(P).filter(Boolean).sort((a, b) => a.z - b.z)[0]; if (!lp) continue;
-    const lit = !HV.size || [...HV.keys()].some(k => N.get(k).l1 === p.id) || p.id === selPlot || p.id === S.sel;
-    x.globalAlpha = lit ? 1 : 0.45; x.font = `700 ${Math.round(Math.max(14, Math.min(24, 70 * lp.s)) * KZ())}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.lineJoin = 'round'; x.lineWidth = 5; x.strokeStyle = css('--bg'); x.strokeText(N.get(p.id).name, lp.x, lp.y + 12); x.fillStyle = S.sel === p.id ? css('--acc') : css('--ink'); x.fillText(N.get(p.id).name, lp.x, lp.y + 12);
-    const tw = x.measureText(N.get(p.id).name).width; T3.drawn.push({ id: p.id, x: lp.x, y: lp.y + 12, w: tw / 2 + 4, h: 12 }); }
+  // the names last, where they were placed, with a halo
+  x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
+  for (const b of groupLab) { x.globalAlpha = 1; x.font = `700 ${b.fs}px "Source Sans 3", sans-serif`; x.lineWidth = 4; x.strokeStyle = css('--bg'); x.strokeText('▾ ' + N.get(b.id).name, b.x, b.y); x.fillStyle = S.sel === b.id ? css('--acc') : css('--ink'); x.fillText('▾ ' + N.get(b.id).name, b.x, b.y); T3.drawn.push({ id: b.id, x: b.x, y: b.y, w: b.w, h: b.h + 3 }); }
+  for (const b of plotLab) { const lit = !HV.size || [...HV.keys()].some(k => N.get(k).l1 === b.id) || b.id === selPlot || b.id === S.sel;
+    x.globalAlpha = lit ? 1 : 0.45; x.font = `700 ${b.fs}px "Source Sans 3", sans-serif`; x.lineWidth = 5; x.strokeStyle = css('--bg'); x.strokeText(N.get(b.id).name, b.x, b.y); x.fillStyle = S.sel === b.id ? css('--acc') : css('--ink'); x.fillText(N.get(b.id).name, b.x, b.y); T3.drawn.push({ id: b.id, x: b.x, y: b.y, w: b.w, h: b.h + 3 }); }
+  x.globalAlpha = 1;
+  x.textAlign = 'left'; x.textBaseline = 'middle';
+  for (const b of floorLab) { x.font = `italic ${b.fs}px "Gentium Book Plus", Georgia, serif`; x.globalAlpha = 0.9; x.fillStyle = css('--surface'); x.beginPath(); rrect(x, b.x - b.w, b.y - b.h, b.w * 2, b.h * 2, b.h); x.fill(); x.globalAlpha = 1; x.fillStyle = css('--mut'); x.fillText(FLOORNAME[b.t], b.x - b.w + 8, b.y); }
   x.globalAlpha = 1;
   drawMini();
   if (moving) run3d();
@@ -1072,7 +1104,7 @@ function fitTower(id, now) {   // the camera to one part, some, or the whole tow
   const R = Math.max(400, ...pts.map(p => Math.hypot(p.x - cx, p.y - cy, p.z - cz)));
   const t = { tx: cx, ty: cy, tz: cz, dist: R * 1.75 + 300 }; if (now) Object.assign(T3.cam, t); else T3.camTo = Object.assign(T3.camTo || {}, t); run3d();
 }
-const SNAPS = { front: { yaw: 0, pitch: -0.12, roll: 0 }, top: { yaw: 0, pitch: -1.45, roll: 0 }, corner: { yaw: 0.55, pitch: -0.38, roll: 0 } };
+const SNAPS = { front: { yaw: 0, pitch: -0.1, roll: 0 }, top: { yaw: 0, pitch: -1.47, roll: 0 }, corner: { yaw: 0.55, pitch: -0.38, roll: 0 } };
 
 // ---------------------------------------------------------------- explore: walks, start-up, traces, data, health, versions
 const GH = 'https://github.com/J555G/lesepult/blob/';
@@ -1335,7 +1367,7 @@ const HINTS = { space: 'Four floors, the sources at the bottom and the screen on
   focus: 'The selected part in the middle · tap a neighbour to move to it · double-tap to open it' };
 function viewChanged() { document.body.classList.toggle('v-space', S.view === 'space'); $('#hint').textContent = ''; T2.fit = true; if (S.view === 'space') { T3.fitAll = true; Object.assign(T3.cam, SNAPS.corner); } }
 seg('#segView', 'view', viewChanged); viewChanged();
-$('#segSnap').onclick = e => { const b = e.target.closest('button'); if (!b) return; T3.camTo = Object.assign({}, SNAPS[b.dataset.snap]); run3d(); };
+$('#segSnap').onclick = e => { const b = e.target.closest('button'); if (!b) return; T3.spin = null; T3.camTo = Object.assign({}, SNAPS[b.dataset.snap]); run3d(); };
 { const paint = () => [...$('#segLines').children].forEach(b => b.setAttribute('aria-pressed', !!S[b.dataset.l]));
   $('#segLines').onclick = e => { const b = e.target.closest('button'); if (!b) return; S[b.dataset.l] = !S[b.dataset.l]; paint(); keep(); draw(); }; paint(); }
 seg('#segArr', 'arr', () => { T3.alpha = 1; T3.fitNext = true; }); seg('#segMetric', 'metric'); seg('#segFocus', 'focus', () => { if (S.focus !== 'all' && !S.sel) note2('Select a part first'); T3.fitNext = true; });
