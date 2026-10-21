@@ -100,6 +100,15 @@
   Explore page that was open (walk and step, trace, data, health, comparison …). Also at the top of the pane beside ✕
   (hidden when there is nowhere to go), and the browser's / phone's back gesture.
 
+## Decided 21 Oct (09:49)
+- Space controls calmed (owner chose 1 and 3 of four; not chosen: speed work, focus helpers): one finger turns with a
+  little glide, the tilt kept above the floors (pitch −1.48 … −0.08), no twisting; two fingers slide and zoom towards
+  the fingers; mouse: shift/right-drag slides, wheel zooms at the pointer; a tap stays a tap up to 8 px.
+- Space labels never overlap: placed by priority – selected part, plot names, floor names (now in the left margin at
+  their floor's height), opened-group names, then cards from the nearest back; whatever would cover something already
+  placed is left out and its card becomes a small chip. Floors spaced by their depth so they do not cover each other.
+- Measured, not yet acted on: 200–600 style look-ups per frame in Space (3–5 ms a frame on a desktop, more on phones).
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
