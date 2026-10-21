@@ -91,6 +91,10 @@
   the version bar – the canvas is now absolute inside its area.
 - Lines on phones: same as elsewhere (the owner declined 'Selected only' by default).
 
+## Decided 21 Oct (08:08)
+- Opening or closing a part keeps its top edge where it was on the screen (Flow, Map, Space; the view moves by what the
+  layout moved). Map and Space now also open parts inside a main part that is itself closed.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
