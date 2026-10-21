@@ -1102,12 +1102,13 @@ function frameTower(now) {
     if (mid < 1) flat({ x: (p.x0 + p.x1) / 2, y: p.y + 2, z: (p.z0 + p.z1) / 2 }, k => { const f = fitF(nm, font, p.x1 - p.x0 - 60, Math.min(260, (p.z1 - p.z0) * 0.42), 40); if (f * k < 5) return;   // (far: across the whole plot)
       x.font = font.replace('#', f * k); x.textAlign = 'center'; x.textBaseline = 'middle'; x.globalAlpha = (1 - mid) * (lit ? 1 : 0.45); x.lineWidth = Math.max(2, f * k * 0.12); x.lineJoin = 'round'; x.strokeStyle = `hsl(${HUE(p.id)} 40% ${dk ? 26 : 86}%)`; x.strokeText(nm, 0, 0); x.fillStyle = col; x.fillText(nm, 0, 0); x.globalAlpha = 1; });
   } };
+  const LN = []; let drawPathNow = null;   // (the lines, cut at the floors and drawn piece by piece in their place between the floors – see below)
   const drawLines = () => {
   // lines: with nothing selected one bundle per pair of main parts on different floors; with a part selected its own lines
   const dep = e => e.kind === 'code' ? [e.a, e.b] : [e.b, e.a];
-  const drawPath = (pts, col, al, w, dash) => { const ps = pts.map(P); if (ps.some(v => !v)) return; x.globalAlpha = al; x.strokeStyle = col; x.fillStyle = col; x.lineWidth = w; x.lineJoin = 'round'; x.setLineDash(dash ? [7, 5] : []);
+  const drawPath = (pts, col, al, w, dash) => { LN.push({ pts, col, al, w, dash }); }; drawPathNow = (pts, col, al, w, dash, head) => { const ps = pts.map(P); if (ps.length < 2 || ps.some(v => !v)) return; x.globalAlpha = al; x.strokeStyle = col; x.fillStyle = col; x.lineWidth = w; x.lineJoin = 'round'; x.setLineDash(dash ? [7, 5] : []);
     x.beginPath(); ps.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.stroke(); x.setLineDash([]);
-    const a = ps[ps.length - 2], b = ps[ps.length - 1], an = Math.atan2(b.y - a.y, b.x - a.x), h = 5 + w * 1.5; x.beginPath(); x.moveTo(b.x, b.y); x.lineTo(b.x - h * Math.cos(an - 0.4), b.y - h * Math.sin(an - 0.4)); x.lineTo(b.x - h * Math.cos(an + 0.4), b.y - h * Math.sin(an + 0.4)); x.fill(); };
+    if (!head) { x.globalAlpha = 1; return; } const a = ps[ps.length - 2], b = ps[ps.length - 1], an = Math.atan2(b.y - a.y, b.x - a.x), h = 5 + w * 1.5; x.beginPath(); x.moveTo(b.x, b.y); x.lineTo(b.x - h * Math.cos(an - 0.4), b.y - h * Math.sin(an - 0.4)); x.lineTo(b.x - h * Math.cos(an + 0.4), b.y - h * Math.sin(an + 0.4)); x.fill(); };
   const selP = !sel && S.sel && lay.plots.some(p => p.id === S.sel) ? S.sel : null;
   if (selP) for (const o of lay.bundles) { if (o.a !== selP && o.b !== selP) continue; const a = plotC(lay, o.a), b = plotC(lay, o.b); if (!a || !b) continue;
     const relies = o.kind === 'code' ? o.a === selP : o.b === selP;   // (uses the other's code, or takes its data)
@@ -1157,10 +1158,21 @@ function frameTower(now) {
   const fls = [...lay.floors].sort((a, b) => a.y - b.y), camY = c.ty + B.fwd[1] * c.dist, storey = new Map(fls.map((_, i) => [i, []]));
   for (const [id, q] of cards) { const y = lay.pos.get(id).y; let k = 0; for (let i = 0; i < fls.length; i++) if (fls[i].y <= y) k = i; storey.get(k)?.push([id, q]); }
   let m = -1; fls.forEach((fl, i) => { if (fl.y < camY) m = i; });
-  const steps = []; for (let i = fls.length - 1; i > m; i--) steps.push(['L', i], ['S', i]); for (let i = 0; i <= m; i++) steps.push(['L', i], ['S', i]);   // (above the camera top-down, below it bottom-up; each floor just before its own cards, which it never hides)
-  let linesDone = false;
-  for (const [t, i] of steps) { if (t === 'L') drawLayer(fls[i]); else { for (const [id, q] of storey.get(i)) drawCard(id, q); drawOver(fls[i]); } if (!linesDone) { drawLines(); linesDone = true; } }   // (the lines after the farthest step: nearer floors tint them)
-  if (!linesDone) drawLines();
+     // (above the camera top-down, below it bottom-up; each floor just before its own cards, which it never hides)
+  drawLines();
+  const piece = k => {   // the lines' pieces between floor k and the one above it (k = -1: below the lowest floor)
+    const lo = k < 0 ? -Infinity : fls[k].y + 0.5, hi = k + 1 < fls.length ? fls[k + 1].y + 0.5 : Infinity;
+    for (const o of LN) { let run = [];
+      const flush = head => { if (run.length > 1) drawPathNow(run, o.col, o.al, o.w, o.dash, head); run = []; };
+      for (let i = 0; i + 1 < o.pts.length; i++) { const a = o.pts[i], b = o.pts[i + 1], dy = b.y - a.y;
+        let t0 = 0, t1 = 1; if (Math.abs(dy) < 1e-9) { if (a.y < lo || a.y >= hi) { flush(false); continue; } }
+        else { const ta = (lo - a.y) / dy, tb = (hi - a.y) / dy; t0 = Math.max(0, Math.min(ta, tb)); t1 = Math.min(1, Math.max(ta, tb)); if (t0 >= t1) { flush(false); continue; } }
+        const at = t => ({ x: a.x + (b.x - a.x) * t, y: a.y + dy * t, z: a.z + (b.z - a.z) * t });
+        if (!run.length || t0 > 1e-6) { flush(false); run.push(at(t0)); } run.push(at(t1)); if (t1 < 1 - 1e-6) flush(false); }
+      flush((() => { const e = o.pts[o.pts.length - 1]; return e.y >= lo && e.y < hi; })()); } };
+  // floors above the camera, top down: the pieces above a floor are behind it; floors below, bottom up: in front of it
+  const order = []; for (let i = fls.length - 1; i > m; i--) order.push(['G', i], ['L', i], ['S', i]); order.push(['G', -1]); for (let i = 0; i <= m; i++) order.push(['L', i], ['S', i], ['G', i]);
+  for (const [t, i] of order) { if (t === 'L') drawLayer(fls[i]); else if (t === 'S') { for (const [id, q] of storey.get(i)) drawCard(id, q); drawOver(fls[i]); } else piece(i); }
   T2.k = kSave; x.globalAlpha = 1;
   x.globalAlpha = 1; T3.floorHits = [];   // (all names are written on what they name, fixed to it)
   drawMini();

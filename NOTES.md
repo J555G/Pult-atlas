@@ -215,6 +215,11 @@
 - Writing on a surface is drawn at its true size on the screen and laid on with a near-unit transform (a huge font
   shrunk by the transform comes out garbled in the browser).
 
+## Decided 22 Oct (00:45)
+- Bug fixed (owner's screenshot): lines above the plots were dimmed – all lines were drawn in one go before the nearer
+  floors and plots. Now each line is cut at the floor heights and each piece drawn in its place among the floors, back
+  to front (floors above the camera top-down: the pieces above a floor before it; below the camera bottom-up: after it).
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
