@@ -205,6 +205,16 @@
   (owner, 20:59: "the name should be fixed to the tile" – a first version that turned the writing was wrong). Up to two
   lines as large as fits (15–22 units), cut short with … beyond that. Names too small to read on the screen (under about 6.5 px) are left out; the tile stays.
 
+## Decided 21 Oct (21:39)
+- Every name in Space is written on what it names and fixed to it (owner): plot names in a heading band along the plot's
+  top edge, opened parts' names (▾) in a band at the top of their dashed area, floor names along the floor plate's front
+  edge (the margin labels and their tap-to-glide are gone, owner's choice 3a). From below flipped, never mirrored.
+- Far away, like a map: three levels by the tiles' width on the screen – far (< ~55 px): plain tiles and the main
+  part's name large across its whole plot, over the tiles; middle: the parts' names in one large line; near (> ~127 px):
+  up to two lines. Short crossfades between them.
+- Writing on a surface is drawn at its true size on the screen and laid on with a near-unit transform (a huge font
+  shrunk by the transform comes out garbled in the browser).
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
