@@ -382,7 +382,19 @@ function draw(refit) {
   run3d(); renderPanel();
 }
 function fit(id) { return S.view === 'space' ? fitTower(id) : fit2d(id); }
-function toggle(id) { if (!N.get(id).children.some(x => V.ex.has(x))) { select(id); return; } if (S.exp.has(id)) S.exp.delete(id); else S.exp.add(id); draw(); }
+function toggle(id) { if (!N.get(id).children.some(x => V.ex.has(x))) { select(id); return; }
+  const a0 = anchorOf(id); if (S.exp.has(id)) S.exp.delete(id); else S.exp.add(id); draw(); keepAnchor(id, a0); }
+// opening or closing a part: its top edge stays where it was on the screen (the view moves by what the layout moved)
+function anchorOf(id) {
+  if (S.view === 'space') { const L = TW3.lay; if (!L) return null; const g = L.groups.find(g => g.id === id); if (g) return { x: g.x0, y: g.y, z: g.z0 };
+    const pl = L.plots.find(p => p.id === id); if (pl) return { x: pl.x0, y: pl.y, z: pl.z0 }; const c = L.pos.get(id); return c ? { x: c.x - CW / 2, y: c.y, z: c.z - 40 } : null; }
+  if (S.view === 'focus') return null;
+  const L = T2.lay; if (!L) return null; const f = L.frames.find(f => f.id === id); if (f) return { x: f.x, y: f.y }; const b = L.pos.get(id); return b ? { x: b.x - b.w, y: b.y - b.h } : null;
+}
+function keepAnchor(id, a0) { const a1 = anchorOf(id); if (!a0 || !a1) return;
+  if (S.view === 'space') { T3.cam.tx += a1.x - a0.x; T3.cam.ty += a1.y - a0.y; T3.cam.tz += a1.z - a0.z; if (T3.camTo) { delete T3.camTo.tx; delete T3.camTo.ty; delete T3.camTo.tz; } }
+  else { T2.x += (a0.x - a1.x) * T2.k; T2.y += (a0.y - a1.y) * T2.k; T2.to = null; }
+  run3d(); }
 // the way back and forward through the parts looked at (and nothing selected – the whole view – counts as a stop too)
 const NAV = { list: [null], pos: 0 };
 function navPush(id) {
@@ -691,6 +703,9 @@ function drawSpark(sv, ys, cur) {
 // viewpoint only changes when asked (switching view, Show them, ⌂) or in Focus when the part in the middle changes.
 const T2 = { k: 1, x: 0, y: 0, to: null, lay: null, fit: true, focusOf: null, pinch: null };
 const IND = 18, CW = 200, CH = 56, COLS = [['sources', 'Sources'], ['behind', 'Stored and behind the scenes'], ['engines', 'Engines'], ['screen', 'On screen']];
+function openedUnder(top) {   // the parts under a main part as if it were opened, following whatever is opened inside it
+  const out = [], walk = id => { const kids = N.get(id).children.filter(x => V.ex.has(x)); if ((id === top || S.exp.has(id)) && kids.length) kids.forEach(walk); else out.push(id); };
+  walk(top); return out.length ? out : [top]; }
 const tierOf = id => MODEL.l1.find(l => l.id === N.get(id).l1)?.tier || 'screen';
 const lineOn = e => e.kind === 'flow' ? S.ldata : S.lcode;
 function lay2d() {
@@ -739,7 +754,7 @@ function layMap(vis) {
   const visSet = new Set(vis), items = new Map();
   for (const l of MODEL.l1) { if (!V.ex.has(l.id)) continue;
     let its = vis.filter(id => N.get(id).l1 === l.id);
-    if (its.length === 1 && its[0] === l.id) { const kids = N.get(l.id).children.filter(c => V.ex.has(c)); if (kids.length) its = kids; }
+    if (its.length === 1 && its[0] === l.id) its = openedUnder(l.id);   // (a closed main part: its parts, and inside them what is opened)
     items.set(l.id, its); }
   const all = new Set([...items.values()].flat()), edges = visEdges(all).filter(lineOn);
   const pos = new Map(), frames = [], IW = CW, IH = CH, G = 10, P = 14, HD = 34;
@@ -932,7 +947,7 @@ function layTower(vis) {
   const items = new Map();
   for (const l of MODEL.l1) { if (!V.ex.has(l.id)) continue;
     let its = vis.filter(id => N.get(id).l1 === l.id);
-    if (its.length === 1 && its[0] === l.id) { const kids = N.get(l.id).children.filter(c => V.ex.has(c)); if (kids.length) its = kids; }
+    if (its.length === 1 && its[0] === l.id) its = openedUnder(l.id);   // (a closed main part: its parts, and inside them what is opened)
     if (its.length) items.set(l.id, its); }
   const all = new Set([...items.values()].flat()), edges = visEdges(all).filter(lineOn);
   const TX = CW + 40, TZ = 150, PM = 50, FH = 560 * S.spread, pos = new Map(), plots = [], floors = [], groups = [];
