@@ -592,6 +592,7 @@ function pan3d(dx, dy) {   // the view moved across the screen by dx, dy pixels
 }
 function rrect(x, a, b, w, h, r) { if (x.roundRect) return x.roundRect(a, b, w, h, r); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
 function hit3d(ex, ey) { if (S.view === 'space' && TW3.lay) return hitTower(ex, ey); for (let i = T3.drawn.length - 1; i >= 0; i--) { const d = T3.drawn[i]; if (Math.abs(ex - d.x) <= d.w && Math.abs(ey - d.y) <= d.h) return d.id; } return null; }
+function fitLine(x, t, w) { if (x.measureText(t).width <= w) return t; while (t.length > 2 && x.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; }   // (one line of width w, cut short with … if need be)
 function tileName(x, name, w) {   // a part's name in at most two lines of width w (the current font), cut short with … if need be
   const words = name.split(' '), ln = ['']; for (const wd of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + wd : wd; if (x.measureText(t).width > w && ln[ln.length - 1]) ln.push(wd); else ln[ln.length - 1] = t; }
   const out = ln.slice(0, 2); if (ln.length > 2) out[1] += ' ' + ln.slice(2).join(' '); return out.map(t => { if (x.measureText(t).width <= w) return t; while (t.length > 2 && x.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; }); }
@@ -1024,7 +1025,7 @@ function wheel2(e) { const k = Math.max(0.12, Math.min(4, T2.k * Math.exp(-e.del
 // ---------------------------------------------------------------- Space: a tower of four floors (sources at the bottom, the screen on top)
 // Every main part is a plot on its floor, its parts upright cards in rows on the plot; lines between floors run straight
 // up or down a shaft and across, never diagonally. Everything is placed by rule: nothing moves but the camera.
-const TW3 = { lay: null }, TILE = { w: 200, d: 92 };   // (a part: a flat tile on its plot, its name written upright over it)
+const TW3 = { lay: null }, TILE = { w: 200, d: 92 }, HB = 100, GB = 50, FB = 120;   // (heading bands: plot, opened part, floor)   // (a part: a flat tile on its plot, its name written upright over it)
 const FLOORS = ['sources', 'engines', 'behind', 'screen'], FLOORNAME = { sources: 'Sources', engines: 'Engines', behind: 'Stored and behind the scenes', screen: 'On screen' };
 function layTower(vis) {
   const items = new Map();
@@ -1041,8 +1042,8 @@ function layTower(vis) {
     const ps = ls.map(l => { const its = items.get(l.id), top = [], subs = new Map();
       its.forEach(id => { const par = N.get(id).parent; if (!par || par === l.id) top.push(id); else (subs.get(par) || subs.set(par, []).get(par)).push(id); });
       const cols = Math.max(1, Math.min(4, Math.ceil(Math.sqrt(its.length * 1.3)))), gs = [...subs].sort((a, b) => a[0].localeCompare(b[0]));
-      const rows = Math.ceil(top.length / cols) + gs.reduce((s, [, ids]) => s + Math.ceil(ids.length / cols) + 0.6, 0);
-      return { l, top, gs, cols, w: cols * TX + 2 * PM, d: Math.max(1, rows) * TZ + 2 * PM + 40 }; });
+      const rows = Math.ceil(top.length / cols) + gs.reduce((s, [, ids]) => s + Math.ceil(ids.length / cols) + 0.3 + (GB + 14) / TZ, 0);
+      return { l, top, gs, cols, w: cols * TX + 2 * PM, d: Math.max(1, rows) * TZ + 2 * PM + HB }; });
     // plots side by side, wrapping into rows about this wide; the floor centred under the tower's axis
     const WRAP = 2400, lines = [[]]; let lw = 0;
     ps.forEach(p => { if (lw && lw + 80 + p.w > WRAP) { lines.push([]); lw = 0; } lines[lines.length - 1].push(p); lw += (lw ? 80 : 0) + p.w; });
@@ -1050,14 +1051,14 @@ function layTower(vis) {
     lines.forEach(ln => { const tw = ln.reduce((s, p) => s + p.w, 0) + (ln.length - 1) * 80; let x = -tw / 2, dz = 0;
       ln.forEach(p => { p.x = x; p.z = z; x += p.w + 80; dz = Math.max(dz, p.d); placed.push(p); }); z += dz + 80; });
     const zoff = -(z - 80) / 2; placed.forEach(p => p.z += zoff);
-    const x0 = Math.min(...placed.map(p => p.x)) - 70, x1 = Math.max(...placed.map(p => p.x + p.w)) + 70, z0 = Math.min(...placed.map(p => p.z)) - 70, z1 = Math.max(...placed.map(p => p.z + p.d)) + 70;
+    const x0 = Math.min(...placed.map(p => p.x)) - 70, x1 = Math.max(...placed.map(p => p.x + p.w)) + 70, z0 = Math.min(...placed.map(p => p.z)) - 70, z1 = Math.max(...placed.map(p => p.z + p.d)) + 70 + FB;
     floors.push({ t, y, x0, x1, z0, z1 });
     placed.forEach(p => { plots.push({ id: p.l.id, y, x0: p.x, x1: p.x + p.w, z0: p.z, z1: p.z + p.d });
       let r = 0; const put = (ids, ind) => ids.forEach((id, i) => { const c = i % p.cols, rr = Math.floor(i / p.cols);
-        pos.set(id, { x: p.x + PM + TX / 2 + ind + c * TX, y: y + 5, z: rowZ(r + rr), fl: fi, plot: p.l.id }); }), rowZ = k => p.z + PM + 40 + TZ / 2 + k * TZ;   // (lying flat, just above the plot)
+        pos.set(id, { x: p.x + PM + TX / 2 + ind + c * TX, y: y + 5, z: rowZ(r + rr), fl: fi, plot: p.l.id }); }), rowZ = k => p.z + PM + HB + TZ / 2 + k * TZ;   // (lying flat, just above the plot)
       put(p.top, 0); r += Math.ceil(p.top.length / p.cols);
-      p.gs.forEach(([par, ids]) => { const n = Math.ceil(ids.length / p.cols); r += 0.3;
-        put(ids, 0); groups.push({ id: par, y, x0: p.x + PM - 8, x1: p.x + p.w - PM + 8, z0: rowZ(r) - TZ / 2 - 4, z1: rowZ(r + n - 1) + TZ / 2 + 4 }); r += n + 0.3; }); }); });
+      p.gs.forEach(([par, ids]) => { const n = Math.ceil(ids.length / p.cols); r += (GB + 14) / TZ;
+        put(ids, 0); groups.push({ id: par, y, x0: p.x + PM - 8, x1: p.x + p.w - PM + 8, z0: rowZ(r) - TZ / 2 - GB, z1: rowZ(r + n - 1) + TZ / 2 + 4 }); r += n + 0.3; }); }); });
   // the height between floors: at least the depth a floor shows from the corner view, so the floors never cover each other
   const deep = Math.max(...floors.map(fl => fl.z1 - fl.z0)), want = Math.max(420, deep * 0.21 + 200) * S.spread;
   if (want > FH) { const k = want / FH; floors.forEach(fl => fl.y *= k); plots.forEach(p => p.y *= k); groups.forEach(g => g.y *= k); pos.forEach(v => v.y = (v.y - 5) * k + 5); FH = want; }
@@ -1086,21 +1087,41 @@ function frameTower(now) {
   const sel = S.sel && lay.pos.has(S.sel) ? S.sel : null, r = sel ? reach(sel, lay.edges) : null, HV = visHL(lay.pos);
   const selPlot = sel && lay.pos.get(sel).plot, dk = dark2();
   // a floor with its plots and the framed areas of opened parts: drawn in turn with the cards, back to front (below)
+  const flat = (pt, fn) => { const q = P(pt), ex = P({ x: pt.x + 100, y: pt.y, z: pt.z }), ez = P({ x: pt.x, y: pt.y, z: pt.z + 100 }); if (!q || !ex || !ez) return;
+    const A = { x: (ex.x - q.x) / 100, y: (ex.y - q.y) / 100 }; let Bz = { x: (ez.x - q.x) / 100, y: (ez.y - q.y) / 100 }; if (A.x * Bz.y - A.y * Bz.x < 0) Bz = { x: -Bz.x, y: -Bz.y };
+    const k = Math.max(1e-4, Math.sqrt(Math.abs(A.x * Bz.y - A.y * Bz.x))); x.save(); x.transform(A.x / k, A.y / k, Bz.x / k, Bz.y / k, q.x, q.y); fn(k); x.restore(); };   // (fn gets k, screen pixels per unit: it writes at its true size on the screen – a huge font shrunk by the transform comes out garbled)
+  const fitF = (t, font, w, f0, f1) => { x.font = font.replace('#', f0); const m = x.measureText(t).width; return Math.max(f1, Math.min(f0, f0 * w / Math.max(1, m))); };
+  // how near each plot is: far – only the plot's name, across the whole plot; middle – the parts' names in one line;
+  // near – in up to two; crossfading briefly in between (tile width on the screen: 52–62 px, 120–134 px)
+  const near3 = new Map(); for (const p of lay.plots) { const q = P({ x: (p.x0 + p.x1) / 2, y: p.y, z: (p.z0 + p.z1) / 2 }); const w = q ? TILE.w * q.s : 0, cl = v => Math.max(0, Math.min(1, v));
+    near3.set(p.id, { mid: cl((w - 52) / 10), near: cl((w - 120) / 14) }); }   // (short crossfades: a still picture hardly ever shows both)
   const drawLayer = fl => {
   for (const q of [quad(fl.y, fl.x0, fl.x1, fl.z0, fl.z1)]) { if (!q) continue;   // (the glass plate)
     x.beginPath(); q.forEach((p, i) => i ? x.lineTo(p.x, p.y) : x.moveTo(p.x, p.y)); x.closePath();
     x.globalAlpha = dk ? 0.35 : 0.5; x.fillStyle = css('--soft'); x.fill(); x.globalAlpha = 0.8; x.lineWidth = 1.2; x.strokeStyle = css('--line'); x.stroke();
-    x.globalAlpha = 1; }
+    x.globalAlpha = 1;
+    flat({ x: fl.x0 + 40, y: fl.y, z: fl.z1 - FB / 2 - 10 }, k => { const font = 'italic #px "Gentium Book Plus", Georgia, serif', f = fitF(FLOORNAME[fl.t], font, fl.x1 - fl.x0 - 80, 72, 30);
+      if (f * k < 5) return; x.font = font.replace('#', f * k); x.textAlign = 'left'; x.textBaseline = 'middle'; x.globalAlpha = 0.85; x.fillStyle = css('--mut'); x.fillText(FLOORNAME[fl.t], 0, 0); x.globalAlpha = 1; }); }   // (the floor's name along its front edge)
   // plots of the main parts, and the framed areas of opened parts
   for (const p of lay.plots) { if (Math.abs(p.y - fl.y) > 1) continue; const q = quad(p.y + 2, p.x0, p.x1, p.z0, p.z1); if (!q) continue;
     x.beginPath(); q.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath();
     const lit = !HV.size || [...HV.keys()].some(k => N.get(k).l1 === p.id) || p.id === selPlot;
     x.globalAlpha = lit ? 0.75 : 0.3; x.fillStyle = `hsl(${HUE(p.id)} 40% ${dk ? 26 : 82}%)`; x.fill(); x.globalAlpha = lit ? 1 : 0.4; x.lineWidth = S.sel === p.id ? 3 : 1.4; x.strokeStyle = S.sel === p.id ? css('--acc') : `hsl(${HUE(p.id)} 40% ${dk ? 48 : 58}%)`; x.stroke();
-    x.globalAlpha = 1; }
+    x.globalAlpha = 1; const nm = N.get(p.id).name, mid = near3.get(p.id).mid, col = S.sel === p.id ? css('--acc') : css('--ink'), font = '700 #px "Source Sans 3", sans-serif';
+    if (mid > 0) flat({ x: p.x0 + 24, y: p.y + 2, z: p.z0 + 20 + HB / 2 }, k => { const f = fitF(nm, font, p.x1 - p.x0 - 48, 64, 30); if (f * k < 5) return;   // (nearer: in its heading band)
+      x.font = font.replace('#', f * k); x.textAlign = 'left'; x.textBaseline = 'middle'; x.globalAlpha = mid * (lit ? 1 : 0.45); x.fillStyle = col; x.fillText(nm, 0, 0); x.globalAlpha = 1; }); }
   for (const g of lay.groups) { if (Math.abs(g.y - fl.y) > 1) continue; const q = quad(g.y + 3, g.x0, g.x1, g.z0, g.z1); if (!q) continue;
     x.beginPath(); q.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath(); x.globalAlpha = 0.9; x.lineWidth = 2; x.strokeStyle = `hsl(${HUE(g.id)} 45% ${dk ? 55 : 45}%)`; x.setLineDash([6, 4]); x.stroke(); x.setLineDash([]);
-    x.globalAlpha = 1; }
+    x.globalAlpha = 1; const mid = near3.get(lay.plots.find(p => Math.abs(p.y - g.y) < 1 && g.x0 >= p.x0 - 1 && g.x1 <= p.x1 + 1 && g.z0 >= p.z0 - 1 && g.z1 <= p.z1 + 1)?.id)?.mid ?? 1;
+    if (mid > 0) flat({ x: g.x0 + 16, y: g.y + 3, z: g.z0 + GB / 2 + 2 }, k => { const font = '700 #px "Source Sans 3", sans-serif', t = '▾ ' + N.get(g.id).name, f = fitF(t, font, g.x1 - g.x0 - 32, 34, 18); if (f * k < 5) return;
+      x.font = font.replace('#', f * k); x.textAlign = 'left'; x.textBaseline = 'middle'; x.globalAlpha = mid; x.fillStyle = S.sel === g.id ? css('--acc') : `hsl(${HUE(g.id)} 45% ${dk ? 62 : 35}%)`; x.fillText(t, 0, 0); x.globalAlpha = 1; }); }
   };
+  const drawOver = fl => {   // far: the main part's name across its whole plot, over its plain tiles
+  for (const p of lay.plots) { if (Math.abs(p.y - fl.y) > 1) continue; const lit = !HV.size || [...HV.keys()].some(k => N.get(k).l1 === p.id) || p.id === selPlot;
+    const nm = N.get(p.id).name, mid = near3.get(p.id).mid, col = S.sel === p.id ? css('--acc') : css('--ink'), font = '700 #px "Source Sans 3", sans-serif';
+    if (mid < 1) flat({ x: (p.x0 + p.x1) / 2, y: p.y + 2, z: (p.z0 + p.z1) / 2 }, k => { const f = fitF(nm, font, p.x1 - p.x0 - 60, Math.min(260, (p.z1 - p.z0) * 0.42), 40); if (f * k < 5) return;   // (far: across the whole plot)
+      x.font = font.replace('#', f * k); x.textAlign = 'center'; x.textBaseline = 'middle'; x.globalAlpha = (1 - mid) * (lit ? 1 : 0.45); x.lineWidth = Math.max(2, f * k * 0.12); x.lineJoin = 'round'; x.strokeStyle = `hsl(${HUE(p.id)} 40% ${dk ? 26 : 86}%)`; x.strokeText(nm, 0, 0); x.fillStyle = col; x.fillText(nm, 0, 0); x.globalAlpha = 1; });
+  } };
   const drawLines = () => {
   // lines: with nothing selected one bundle per pair of main parts on different floors; with a part selected its own lines
   const dep = e => e.kind === 'code' ? [e.a, e.b] : [e.b, e.a];
@@ -1125,17 +1146,7 @@ function frameTower(now) {
   // what is written, in order of priority: the selected part, the names of the plots, the names of opened groups, then the
   // names of the parts from the nearest back; whatever would cover something already placed is left out (its tile stays)
   const over = (a, b) => Math.abs(a.x - b.x) < a.w + b.w + 2 && Math.abs(a.y - b.y) < a.h + b.h + 2, taken = [];
-  const kz = KZ(), plotLab = [], groupLab = [];
-  for (const p of lay.plots) { const cx = (p.x0 + p.x1) / 2, cz = (p.z0 + p.z1) / 2;
-    const lp = [{ x: cx, y: p.y, z: p.z0 }, { x: cx, y: p.y, z: p.z1 }, { x: p.x0, y: p.y, z: cz }, { x: p.x1, y: p.y, z: cz }].map(P).filter(Boolean).sort((a, b) => a.z - b.z)[0]; if (!lp) continue;
-    const fs = Math.round(Math.max(14, Math.min(24, 70 * lp.s)) * kz); x.font = `700 ${fs}px "Source Sans 3", sans-serif`; const w = x.measureText(N.get(p.id).name).width;
-    const b = { id: p.id, x: lp.x, y: lp.y + 12, w: w / 2 + 4, h: fs * 0.6, fs }; if (p.id === S.sel || !taken.some(o => over(o, b))) { taken.push(b); plotLab.push(b); } }
-  for (const g of lay.groups) { const lp = P({ x: g.x0 + 10, y: g.y + 3, z: g.z0 + 14 }); if (!lp) continue;
-    const fs = Math.round(Math.max(11, Math.min(17, 46 * lp.s)) * kz); x.font = `700 ${fs}px "Source Sans 3", sans-serif`; const w = x.measureText('▾ ' + N.get(g.id).name).width;
-    const b = { id: g.id, x: lp.x + w / 2, y: lp.y, w: w / 2 + 3, h: fs * 0.6, fs }; if (!taken.some(o => over(o, b))) { taken.push(b); groupLab.push(b); } }
-  const floorLab = []; { const fl = lay.floors.map(fl => { const q = P({ x: fl.x0, y: fl.y, z: (fl.z0 + fl.z1) / 2 }) || P({ x: (fl.x0 + fl.x1) / 2, y: fl.y, z: (fl.z0 + fl.z1) / 2 }); return q && { t: fl.t, y: q.y }; }).filter(Boolean).sort((a, b) => a.y - b.y);
-    const fs = Math.round(14 * kz), gap = fs + 14; let last = -1e9; x.font = `italic ${fs}px "Gentium Book Plus", Georgia, serif`;
-    for (const f of fl) { const y = Math.max(f.y, last + gap, 14); last = y; const w = x.measureText(FLOORNAME[f.t]).width; const b = { t: f.t, x: 6 + (w + 16) / 2, y, w: (w + 16) / 2, h: fs * 0.8, fs }; floorLab.push(b); taken.push(b); } }
+  const kz = KZ();
   // the parts: flat tiles in tidy rows on their plot, each name written on its tile and fixed to it (it turns with the
   // tower like writing on a table); from below flipped across the tile's long side so that it is not mirrored
   const geo = new Map(), tw = TILE.w / 2, td = TILE.d / 2;
@@ -1152,10 +1163,12 @@ function frameTower(now) {
       if (ex && ez) { let A = { x: ex.x - q.x, y: ex.y - q.y }, Bv = { x: ez.x - q.x, y: ez.y - q.y };
         if (A.x * Bv.y - A.y * Bv.x < 0) Bv = { x: -Bv.x, y: -Bv.y };   // (written on the tile, fixed to it; seen from below flipped across its long side, so not mirrored)
         const sc = Math.min(Math.hypot(A.x, A.y) / tw, Math.hypot(Bv.x, Bv.y) / td);
-        let f = 22, lines; for (;;) { x.font = `600 ${f}px "Source Sans 3", sans-serif`; lines = tileName(x, N.get(id).name, TILE.w - 20); if (f <= 15 || !lines.some(t => t.endsWith('…'))) break; f--; }   // (as large as fits in two lines)
-        if (f * sc * kz >= 6.5) { x.save(); x.transform(A.x / tw, A.y / tw, Bv.x / td, Bv.y / td, q.x, q.y);   // (the tile's own plane)
-          x.font = `600 ${f}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.globalAlpha = Math.max(al, 0.45); x.fillStyle = mk || css('--ink');
-          lines.forEach((t, k) => x.fillText(t, 0, (k - (lines.length - 1) / 2) * f * 1.1)); x.restore(); x.globalAlpha = 1; } } }
+        const nr = near3.get(p.plot) || { mid: 1, near: 1 }, nm = N.get(id).name, put = (lines, f, a2) => { if (a2 <= 0.01 || f * sc < 6.5) return;
+          flat(p, k => { x.font = `600 ${f * k}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.globalAlpha = Math.max(al, 0.45) * a2; x.fillStyle = mk || css('--ink');
+            lines.forEach((t, i) => x.fillText(t, 0, (i - (lines.length - 1) / 2) * f * 1.1 * k)); x.globalAlpha = 1; }); };
+        if (nr.mid > 0 && nr.near < 1) { const f = fitF(nm, '600 #px "Source Sans 3", sans-serif', TILE.w - 16, 44, 24); x.font = `600 ${f}px "Source Sans 3", sans-serif`; put([fitLine(x, nm, TILE.w - 16)], f, nr.mid * (1 - nr.near)); }   // (middle: one line, large)
+        if (nr.near > 0) { let f = 22, lines; for (;;) { x.font = `600 ${f}px "Source Sans 3", sans-serif`; lines = tileName(x, nm, TILE.w - 20); if (f <= 15 || !lines.some(t => t.endsWith('…'))) break; f--; } put(lines, f, nr.near); }   // (near: up to two lines)
+      } }
     const sb = { id, x: g.bb.x, y: g.bb.y, w: g.bb.w, h: g.bb.h, z: q.z, card: { c: p, u: [1, 0, 0], v: [0, 0, 1], hw: tw, hd: td, fy: lay.plots.find(t => t.id === p.plot)?.y ?? p.y - 5 } }; T3.drawn.push(sb);
     if (hv?.n) badge(x, { id, x: g.bb.x, y: g.bb.y, w: Math.min(g.bb.w, 60), h: Math.min(g.bb.h, 14) }, hv, 1); };
   // back to front, so that a see-through floor or area in front tints what lies behind it: the floors are parallel, so
@@ -1166,19 +1179,10 @@ function frameTower(now) {
   let m = -1; fls.forEach((fl, i) => { if (fl.y < camY) m = i; });
   const steps = []; for (let i = fls.length - 1; i > m; i--) steps.push(['L', i], ['S', i]); for (let i = 0; i <= m; i++) steps.push(['L', i], ['S', i]);   // (above the camera top-down, below it bottom-up; each floor just before its own cards, which it never hides)
   let linesDone = false;
-  for (const [t, i] of steps) { if (t === 'L') drawLayer(fls[i]); else for (const [id, q] of storey.get(i)) drawCard(id, q); if (!linesDone) { drawLines(); linesDone = true; } }   // (the lines after the farthest step: nearer floors tint them)
+  for (const [t, i] of steps) { if (t === 'L') drawLayer(fls[i]); else { for (const [id, q] of storey.get(i)) drawCard(id, q); drawOver(fls[i]); } if (!linesDone) { drawLines(); linesDone = true; } }   // (the lines after the farthest step: nearer floors tint them)
   if (!linesDone) drawLines();
   T2.k = kSave; x.globalAlpha = 1;
-  // the names last, where they were placed, with a halo
-  x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
-  for (const b of groupLab) { x.globalAlpha = 1; x.font = `700 ${b.fs}px "Source Sans 3", sans-serif`; x.lineWidth = 4; x.strokeStyle = css('--bg'); x.strokeText('▾ ' + N.get(b.id).name, b.x, b.y); x.fillStyle = S.sel === b.id ? css('--acc') : css('--ink'); x.fillText('▾ ' + N.get(b.id).name, b.x, b.y); T3.drawn.push({ id: b.id, x: b.x, y: b.y, w: b.w, h: b.h + 3, lab: true }); }
-  for (const b of plotLab) { const lit = !HV.size || [...HV.keys()].some(k => N.get(k).l1 === b.id) || b.id === selPlot || b.id === S.sel;
-    x.globalAlpha = lit ? 1 : 0.45; x.font = `700 ${b.fs}px "Source Sans 3", sans-serif`; x.lineWidth = 5; x.strokeStyle = css('--bg'); x.strokeText(N.get(b.id).name, b.x, b.y); x.fillStyle = S.sel === b.id ? css('--acc') : css('--ink'); x.fillText(N.get(b.id).name, b.x, b.y); T3.drawn.push({ id: b.id, x: b.x, y: b.y, w: b.w, h: b.h + 3, lab: true }); }
-  x.globalAlpha = 1;
-  x.textAlign = 'left'; x.textBaseline = 'middle';
-  T3.floorHits = floorLab;
-  for (const b of floorLab) { x.font = `italic ${b.fs}px "Gentium Book Plus", Georgia, serif`; x.globalAlpha = 0.9; x.fillStyle = css('--surface'); x.beginPath(); rrect(x, b.x - b.w, b.y - b.h, b.w * 2, b.h * 2, b.h); x.fill(); x.globalAlpha = 1; x.fillStyle = css('--mut'); x.fillText(FLOORNAME[b.t], b.x - b.w + 8, b.y); }
-  x.globalAlpha = 1;
+  x.globalAlpha = 1; T3.floorHits = [];   // (all names are written on what they name, fixed to it)
   drawMini();
   if (moving) run3d();
 }
