@@ -176,6 +176,15 @@
   card (7); from below none (the floors are in front).
 - Questions to the owner go in writing in the reply, not as tappable choices (he wants to comment on every point).
 
+## Decided 21 Oct (18:20)
+- Bug fixed: in Space every card was drawn after all floors, plots and group areas, so see-through surfaces in front
+  never tinted the cards behind them. Now drawn back to front: the floors are parallel, so from the camera's height
+  outwards – floors below it bottom-up, above it top-down, each floor before or after the cards standing on it, the
+  camera's own storey last. Lines are drawn after the farthest step, so nearer floors tint them too.
+- Proposed, awaiting the owner: how to make cards tappable from below (floors blocking only from above; a card's own
+  floor never blocking it; only cards and names blocking; cards hanging under their floor from below; tap again for
+  the next thing behind).
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,

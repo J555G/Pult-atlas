@@ -1059,20 +1059,23 @@ function frameTower(now) {
   const quad = (y, x0, x1, z0, z1) => { const ps = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([a, b]) => P({ x: a, y, z: b })); return ps.every(Boolean) ? ps : null; };
   const sel = S.sel && lay.pos.has(S.sel) ? S.sel : null, r = sel ? reach(sel, lay.edges) : null, HV = visHL(lay.pos);
   const selPlot = sel && lay.pos.get(sel).plot, dk = dark2();
-  // floors: glass plates with their names
-  for (const fl of lay.floors) { const q = quad(fl.y, fl.x0, fl.x1, fl.z0, fl.z1); if (!q) continue;
+  // a floor with its plots and the framed areas of opened parts: drawn in turn with the cards, back to front (below)
+  const drawLayer = fl => {
+  for (const q of [quad(fl.y, fl.x0, fl.x1, fl.z0, fl.z1)]) { if (!q) continue;   // (the glass plate)
     x.beginPath(); q.forEach((p, i) => i ? x.lineTo(p.x, p.y) : x.moveTo(p.x, p.y)); x.closePath();
     x.globalAlpha = dk ? 0.35 : 0.5; x.fillStyle = css('--soft'); x.fill(); x.globalAlpha = 0.8; x.lineWidth = 1.2; x.strokeStyle = css('--line'); x.stroke();
     x.globalAlpha = 1; }
   // plots of the main parts, and the framed areas of opened parts
-  for (const p of lay.plots) { const q = quad(p.y + 2, p.x0, p.x1, p.z0, p.z1); if (!q) continue;
+  for (const p of lay.plots) { if (Math.abs(p.y - fl.y) > 1) continue; const q = quad(p.y + 2, p.x0, p.x1, p.z0, p.z1); if (!q) continue;
     x.beginPath(); q.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath();
     const lit = !HV.size || [...HV.keys()].some(k => N.get(k).l1 === p.id) || p.id === selPlot;
     x.globalAlpha = lit ? 0.75 : 0.3; x.fillStyle = `hsl(${HUE(p.id)} 40% ${dk ? 26 : 82}%)`; x.fill(); x.globalAlpha = lit ? 1 : 0.4; x.lineWidth = S.sel === p.id ? 3 : 1.4; x.strokeStyle = S.sel === p.id ? css('--acc') : `hsl(${HUE(p.id)} 40% ${dk ? 48 : 58}%)`; x.stroke();
     x.globalAlpha = 1; }
-  for (const g of lay.groups) { const q = quad(g.y + 3, g.x0, g.x1, g.z0, g.z1); if (!q) continue;
+  for (const g of lay.groups) { if (Math.abs(g.y - fl.y) > 1) continue; const q = quad(g.y + 3, g.x0, g.x1, g.z0, g.z1); if (!q) continue;
     x.beginPath(); q.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath(); x.globalAlpha = 0.9; x.lineWidth = 2; x.strokeStyle = `hsl(${HUE(g.id)} 45% ${dk ? 55 : 45}%)`; x.setLineDash([6, 4]); x.stroke(); x.setLineDash([]);
     x.globalAlpha = 1; }
+  };
+  const drawLines = () => {
   // lines: with nothing selected one bundle per pair of main parts on different floors; with a part selected its own lines
   const dep = e => e.kind === 'code' ? [e.a, e.b] : [e.b, e.a];
   const drawPath = (pts, col, al, w, dash) => { const ps = pts.map(P); if (ps.some(v => !v)) return; x.globalAlpha = al; x.strokeStyle = col; x.fillStyle = col; x.lineWidth = w; x.lineJoin = 'round'; x.setLineDash(dash ? [7, 5] : []);
@@ -1092,6 +1095,7 @@ function frameTower(now) {
     else if (HV.size && HV.has(e.a) && HV.has(e.b)) col = e.kind === 'flow' ? css('--flow') : css('--ink');
     if (!col) continue;
     drawPath(shaft(a, b, lay.FH, true, true), col, al, Math.min(4, 1.2 + Math.log2(1 + e.n) * 0.6), e.kind === 'flow'); }
+  };
   // what is written, in order of priority: the selected part, the names of the plots, the names of opened groups, then the
   // cards from the nearest back; whatever would cover something already placed is left out (a card then shows as a chip)
   const over = (a, b) => Math.abs(a.x - b.x) < a.w + b.w + 2 && Math.abs(a.y - b.y) < a.h + b.h + 2, taken = [];
@@ -1110,14 +1114,25 @@ function frameTower(now) {
   for (const [id, q] of [...cards].reverse()) { if (CW * q.s < 74 * kz) { chip.add(id); continue; }
     const b = { x: q.x, y: q.y, w: CW / 2 * q.s, h: CH / 2 * q.s }; if (id !== S.sel && taken.some(o => over(o, b))) chip.add(id); else taken.push(b); }
   const kSave = T2.k;
-  for (const [id, q] of cards) { let al = 1; if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al = 0.3; const hv = HV.get(id); if (!sel && HV.size && !hv) al = 0.25; if (S.offv && netOf(id) === 'online') al *= 0.35;
+  const drawCard = (id, q) => { let al = 1; if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al = 0.3; const hv = HV.get(id); if (!sel && HV.size && !hv) al = 0.25; if (S.offv && netOf(id) === 'online') al *= 0.35;
     const mk = id === sel ? css('--acc') : hv ? hlCol(hv.t) : null;
     if (chip.has(id)) {   // far, or behind another: a chip in the part's colour (the plot's name says what is there)
       const w = Math.max(8, Math.min(CW * q.s, 34)), h = Math.max(5, Math.min(CH * q.s, 11)); x.globalAlpha = al; x.beginPath(); rrect(x, q.x - w / 2, q.y - h / 2, w, h, Math.min(4, h / 2)); x.fillStyle = fill(id); x.fill();
       x.lineWidth = mk ? 2.5 : 0.8; x.strokeStyle = mk || css('--line'); x.stroke(); x.globalAlpha = 1; }
     else { x.save(); x.translate(q.x, q.y); x.scale(q.s, q.s); T2.k = q.s;
     paintCard2(x, id, { x: 0, y: 0, w: CW / 2, h: CH / 2 }, mk, al);
-    x.restore(); } const sb = chip.has(id) ? { id, x: q.x, y: q.y, w: Math.max(10, Math.min(CW * q.s, 34) / 2), h: Math.max(8, Math.min(CH * q.s, 11) / 2) } : { id, x: q.x, y: q.y, w: CW / 2 * q.s, h: CH / 2 * q.s }; sb.z = q.z; T3.drawn.push(sb); if (hv?.n) badge(x, sb, hv, 1); }
+    x.restore(); } const sb = chip.has(id) ? { id, x: q.x, y: q.y, w: Math.max(10, Math.min(CW * q.s, 34) / 2), h: Math.max(8, Math.min(CH * q.s, 11) / 2) } : { id, x: q.x, y: q.y, w: CW / 2 * q.s, h: CH / 2 * q.s }; sb.z = q.z; T3.drawn.push(sb); if (hv?.n) badge(x, sb, hv, 1); };
+  // back to front, so that a see-through floor or area in front tints what lies behind it: the floors are parallel, so
+  // from the camera's height outwards – the floors below it from the bottom up, those above it from the top down, each
+  // floor before the cards standing on it (those below the camera) or after them (above), the camera's own storey last
+  const fls = [...lay.floors].sort((a, b) => a.y - b.y), camY = c.ty + B.fwd[1] * c.dist, storey = new Map(fls.map((_, i) => [i, []]));
+  for (const [id, q] of cards) { const y = lay.pos.get(id).y; let k = 0; for (let i = 0; i < fls.length; i++) if (fls[i].y <= y) k = i; storey.get(k)?.push([id, q]); }
+  let m = -1; fls.forEach((fl, i) => { if (fl.y < camY) m = i; });
+  const steps = []; for (let i = 0; i < m; i++) steps.push(['L', i], ['S', i]); if (m >= 0) steps.push(['L', m]);
+  for (let i = fls.length - 1; i > m; i--) steps.push(['S', i], ['L', i]); if (m >= 0) steps.push(['S', m]);
+  let linesDone = false;
+  for (const [t, i] of steps) { if (t === 'L') drawLayer(fls[i]); else for (const [id, q] of storey.get(i)) drawCard(id, q); if (!linesDone) { drawLines(); linesDone = true; } }   // (the lines after the farthest step: nearer floors tint them)
+  if (!linesDone) drawLines();
   T2.k = kSave; x.globalAlpha = 1;
   // the names last, where they were placed, with a halo
   x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
