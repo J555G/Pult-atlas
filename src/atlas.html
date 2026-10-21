@@ -1116,8 +1116,8 @@ function frameTower(now) {
   const floorLab = []; { const fl = lay.floors.map(fl => { const q = P({ x: fl.x0, y: fl.y, z: (fl.z0 + fl.z1) / 2 }) || P({ x: (fl.x0 + fl.x1) / 2, y: fl.y, z: (fl.z0 + fl.z1) / 2 }); return q && { t: fl.t, y: q.y }; }).filter(Boolean).sort((a, b) => a.y - b.y);
     const fs = Math.round(14 * kz), gap = fs + 14; let last = -1e9; x.font = `italic ${fs}px "Gentium Book Plus", Georgia, serif`;
     for (const f of fl) { const y = Math.max(f.y, last + gap, 14); last = y; const w = x.measureText(FLOORNAME[f.t]).width; const b = { t: f.t, x: 6 + (w + 16) / 2, y, w: (w + 16) / 2, h: fs * 0.8, fs }; floorLab.push(b); taken.push(b); } }
-  // the parts: flat tiles in tidy rows on their plot, each name written flat on its tile – along it whichever way reads left
-  // to right on the screen, so never upside down, and never mirrored (from below too)
+  // the parts: flat tiles in tidy rows on their plot, each name written on its tile and fixed to it (it turns with the
+  // tower like writing on a table); from below flipped across the tile's long side so that it is not mirrored
   const geo = new Map(), tw = TILE.w / 2, td = TILE.d / 2;
   for (const [id, p] of lay.pos) { const qd = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([m, n]) => P({ x: p.x + m * tw, y: p.y, z: p.z + n * td })); if (qd.some(v => !v)) continue;
     const q = P(p); if (!q) continue; const xs = qd.map(v => v.x), ys = qd.map(v => v.y);
@@ -1130,8 +1130,7 @@ function frameTower(now) {
     x.lineWidth = mk ? 3 : chg ? 2 : 1; x.strokeStyle = mk || (chg ? css('--flow') : css('--line')); x.stroke(); x.globalAlpha = 1;
     { let ex = P({ x: p.x + tw, y: p.y, z: p.z }), ez = P({ x: p.x, y: p.y, z: p.z + td });
       if (ex && ez) { let A = { x: ex.x - q.x, y: ex.y - q.y }, Bv = { x: ez.x - q.x, y: ez.y - q.y };
-        if (A.x < -0.2 * Math.hypot(A.x, A.y) || (Math.abs(A.x) <= 0.2 * Math.hypot(A.x, A.y) && A.y < 0)) A = { x: -A.x, y: -A.y };   // (reads left to right, else top to bottom)
-        if (A.x * Bv.y - A.y * Bv.x < 0) Bv = { x: -Bv.x, y: -Bv.y };   // (never mirrored)
+        if (A.x * Bv.y - A.y * Bv.x < 0) Bv = { x: -Bv.x, y: -Bv.y };   // (written on the tile, fixed to it; seen from below flipped across its long side, so not mirrored)
         const sc = Math.min(Math.hypot(A.x, A.y) / tw, Math.hypot(Bv.x, Bv.y) / td);
         let f = 22, lines; for (;;) { x.font = `600 ${f}px "Source Sans 3", sans-serif`; lines = tileName(x, N.get(id).name, TILE.w - 20); if (f <= 15 || !lines.some(t => t.endsWith('…'))) break; f--; }   // (as large as fits in two lines)
         if (f * sc * kz >= 6.5) { x.save(); x.transform(A.x / tw, A.y / tw, Bv.x / td, Bv.y / td, q.x, q.y);   // (the tile's own plane)
