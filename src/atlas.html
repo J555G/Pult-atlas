@@ -581,7 +581,7 @@ function fit3d(id, now) {   // the camera to a part, or to all
   if (now) Object.assign(T3.cam, t); else T3.camTo = t; run3d();
 }
 // Space is steered like a globe: one finger sideways turns the tower round its own axis (the part touched follows),
-// up or down tips it over round the spot touched – without limit, right over if wanted –, diagonally both at once.
+// up or down tips it over round the screen's horizontal line through the spot touched – without limit, right over if wanted –, diagonally both at once.
 // Two fingers: slide in the plane of the screen, pinch closer or further, twirl to turn the picture in the plane of the
 // screen; the spot between them stays exactly under them. Mouse: drag the same, the wheel zooms. A tap is a tap up to 8 px.
 const PITCH = [0.1, 1.5];
@@ -607,14 +607,15 @@ function turnBy(dx, ref) {   // turn round the axis so that ref moves by dx side
   let r = ref; if (!r || Math.hypot(r.x - ax.x, r.z - ax.z) < R * 0.4) { const B = camBasis(); r = { x: ax.x + B.fwd[0] * R, y: (r || c).y ?? c.ty, z: ax.z + B.fwd[2] * R }; }
   const q0 = screenOf(r); spinAxis(0.01); const q1 = screenOf(r); spinAxis(-0.01); const rate = q0 && q1 ? (q1.x - q0.x) / 0.01 : -scale3() * R;
   if (Math.abs(rate) > 1e-3) spinAxis(Math.max(-0.3, Math.min(0.3, dx / rate))); T3.camTo = null; run3d(); }
-function tiltBy(dy, ref) {   // tip the tower over, round the spot touched (it stays where it is on the screen); no limit – it can turn right over
-  const c = T3.cam, r = ref || { x: c.tx, y: c.ty, z: c.tz }, a = dy * 0.006, q0 = screenOf(r), R = [Math.cos(c.yaw), 0, -Math.sin(c.yaw)];
-  const rot = (v, t) => { const cs = Math.cos(t), sn = Math.sin(t), d = R[0] * v[0] + R[1] * v[1] + R[2] * v[2], k = [R[1] * v[2] - R[2] * v[1], R[2] * v[0] - R[0] * v[2], R[0] * v[1] - R[1] * v[0]];
-    return v.map((x, i) => x * cs + k[i] * sn + R[i] * d * (1 - cs)); };   // (Rodrigues: v turned by t round the line across the screen)
-  const v = [c.tx - r.x, c.ty - r.y, c.tz - r.z], p0 = c.pitch; let best = null;
-  for (const sg of [1, -1]) { const w = rot(v, sg * a); c.pitch = p0 + a; c.tx = r.x + w[0]; c.ty = r.y + w[1]; c.tz = r.z + w[2]; const q = screenOf(r); const e = q && q0 ? Math.hypot(q.x - q0.x, q.y - q0.y) : 0; if (!best || e < best.e) best = { e, w }; }
-  c.tx = r.x + best.w[0]; c.ty = r.y + best.w[1]; c.tz = r.z + best.w[2];
-  c.pitch = Math.atan2(Math.sin(c.pitch), Math.cos(c.pitch)); T3.camTo = null; run3d(); }
+function tiltBy(dy, ref) {   // tip the tower over round the screen's horizontal line through the spot touched (it stays put); no limit
+  const c = T3.cam, r = ref || { x: c.tx, y: c.ty, z: c.tz }, a = dy * 0.006, cs = Math.cos(a), sn = Math.sin(a), B = camBasis();
+  const dot = (u, v) => u[0] * v[0] + u[1] * v[1] + u[2] * v[2], v = [c.tx - r.x, c.ty - r.y, c.tz - r.z];
+  const f = B.fwd.map((x, k) => x * cs + B.up[k] * sn), u = B.up.map((x, k) => x * cs - B.fwd[k] * sn), g = B.right;   // (the view turned: the line across the screen stays)
+  const vr = dot(v, g), vu = dot(v, B.up), vf = dot(v, B.fwd); c.tx = r.x + vr * g[0] + vu * u[0] + vf * f[0]; c.ty = r.y + vr * g[1] + vu * u[1] + vf * f[1]; c.tz = r.z + vr * g[2] + vu * u[2] + vf * f[2];   // (the pivot carried round the spot)
+  const p = Math.asin(Math.max(-1, Math.min(1, f[1]))), cp = Math.cos(p);   // back to turn, tilt and twirl
+  if (cp < 1e-5) { c.pitch = p; c.yaw = Math.atan2(-g[2], g[0]); c.roll = 0; }
+  else { const y = Math.atan2(f[0], f[2]), sy = Math.sin(y), cy = Math.cos(y), sp = Math.sin(p); c.yaw = y; c.pitch = p; c.roll = Math.atan2(dot(g, [-sy * sp, cp, -cy * sp]), dot(g, [cy, 0, -sy])); }
+  T3.camTo = null; run3d(); }
 function zoomAt(f, mx, my) {   // closer or further by f, towards the height of the floor under (mx, my)
   const d0 = T3.cam.dist, d1 = Math.max(160, Math.min(20000, d0 * f)), k = 1 - d1 / d0, H = cv3.clientHeight;
   const W = cv3.clientWidth, B = camBasis(), u = 1 / scale3(); for (let i = 0; i < 3; i++) T3.cam[['tx', 'ty', 'tz'][i]] += (B.right[i] * (mx - W / 2) - B.up[i] * (my - H / 2)) * u * k; T3.cam.dist = d1; onAxis(); T3.camTo = null; T3.spin = null; run3d();

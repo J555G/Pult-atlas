@@ -155,6 +155,11 @@
 - Two fingers: twirling turns the picture in the plane of the screen (measured: 0.5 rad of fingers → 0.51 rad), the
   spot between them staying under them; slide and pinch as before.
 
+## Decided 21 Oct (12:20)
+- One finger up/down tips the tower round the screen's horizontal line through the spot touched, also after a twirl
+  (measured: after a 0.5 rad twirl a swipe down moves a far part straight down the screen; a full turn returns exactly).
+- Parts near the tower's axis barely move on a sideways swipe – kept as it is for now (owner).
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
