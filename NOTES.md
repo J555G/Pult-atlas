@@ -193,6 +193,12 @@
 - Floors keep their spacing (the owner: the point is seeing how the parts relate, not a flat stack).
 - Lines start and end on the flat cards.
 
+## Decided 21 Oct (18:47)
+- The owner: keep everything tidy and readable – the point is understanding Pult's architecture. So the flat cards became
+  flat tiles in tight rows on their plot (200 × 92, fixed like squares on a map), each name written upright over its
+  tile on the screen – never squashed, mirrored or upside down, from any side –, nearest first; a name that would cover
+  one already written is left out, its tile stays. Tapping a name = tapping its tile. (Replaces the turning flat cards.)
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
