@@ -592,6 +592,9 @@ function pan3d(dx, dy) {   // the view moved across the screen by dx, dy pixels
 }
 function rrect(x, a, b, w, h, r) { if (x.roundRect) return x.roundRect(a, b, w, h, r); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
 function hit3d(ex, ey) { if (S.view === 'space' && TW3.lay) return hitTower(ex, ey); for (let i = T3.drawn.length - 1; i >= 0; i--) { const d = T3.drawn[i]; if (Math.abs(ex - d.x) <= d.w && Math.abs(ey - d.y) <= d.h) return d.id; } return null; }
+function tileName(x, name, w) {   // a part's name in at most two lines of width w (the current font), cut short with … if need be
+  const words = name.split(' '), ln = ['']; for (const wd of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + wd : wd; if (x.measureText(t).width > w && ln[ln.length - 1]) ln.push(wd); else ln[ln.length - 1] = t; }
+  const out = ln.slice(0, 2); if (ln.length > 2) out[1] += ' ' + ln.slice(2).join(' '); return out.map(t => { if (x.measureText(t).width <= w) return t; while (t.length > 2 && x.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; }); }
 function hitTower(ex, ey) {   // only what is in direct view: names on top first, then the nearest along the line of sight – card, floor, plot or group area, see-through or not
   const D = T3.drawn, under = d => Math.abs(ex - d.x) <= d.w && Math.abs(ey - d.y) <= d.h;
   for (let i = D.length - 1; i >= 0; i--) if (D[i].lab && under(D[i])) return D[i].id;
@@ -1133,27 +1136,29 @@ function frameTower(now) {
   const floorLab = []; { const fl = lay.floors.map(fl => { const q = P({ x: fl.x0, y: fl.y, z: (fl.z0 + fl.z1) / 2 }) || P({ x: (fl.x0 + fl.x1) / 2, y: fl.y, z: (fl.z0 + fl.z1) / 2 }); return q && { t: fl.t, y: q.y }; }).filter(Boolean).sort((a, b) => a.y - b.y);
     const fs = Math.round(14 * kz), gap = fs + 14; let last = -1e9; x.font = `italic ${fs}px "Gentium Book Plus", Georgia, serif`;
     for (const f of fl) { const y = Math.max(f.y, last + gap, 14); last = y; const w = x.measureText(FLOORNAME[f.t]).width; const b = { t: f.t, x: 6 + (w + 16) / 2, y, w: (w + 16) / 2, h: fs * 0.8, fs }; floorLab.push(b); taken.push(b); } }
-  // the parts: flat tiles in tidy rows on their plot; each name written upright over its tile – never squashed or mirrored,
-  // from any side –, the nearest first; a name that would cover one already written is left out (its tile stays)
+  // the parts: flat tiles in tidy rows on their plot, each name written flat on its tile – along it whichever way reads left
+  // to right on the screen, so never upside down, and never mirrored (from below too)
   const geo = new Map(), tw = TILE.w / 2, td = TILE.d / 2;
   for (const [id, p] of lay.pos) { const qd = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([m, n]) => P({ x: p.x + m * tw, y: p.y, z: p.z + n * td })); if (qd.some(v => !v)) continue;
     const q = P(p); if (!q) continue; const xs = qd.map(v => v.x), ys = qd.map(v => v.y);
     geo.set(id, { q, qd, bb: { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2, w: (Math.max(...xs) - Math.min(...xs)) / 2, h: (Math.max(...ys) - Math.min(...ys)) / 2 } }); }
-  const cards = [...geo].map(([id, g]) => [id, g.q]).sort((a, b) => b[1].z - a[1].z), names = new Map();
-  for (const [id] of [...cards].reverse()) { const g = geo.get(id), wpx = g.bb.w * 2; if (wpx < 26 && id !== S.sel) continue;
-    const fs = Math.round(Math.max(11, Math.min(17, TILE.w * g.q.s / 11)) * kz); x.font = `600 ${fs}px "Source Sans 3", sans-serif`;
-    let t = N.get(id).name; const mw = Math.max(70 * kz, wpx * 1.1); if (x.measureText(t).width > mw) { while (t.length > 3 && x.measureText(t + '…').width > mw) t = t.slice(0, -1); t += '…'; }
-    const lb = { x: g.q.x, y: g.q.y, w: x.measureText(t).width / 2 + 4, h: fs * 0.62, fs, t }; if (id === S.sel || !taken.some(o => over(o, lb))) { taken.push(lb); names.set(id, lb); } }
+  const cards = [...geo].map(([id, g]) => [id, g.q]).sort((a, b) => b[1].z - a[1].z);
   const kSave = T2.k;
   const drawCard = (id, q) => { let al = 1; if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al = 0.3; const hv = HV.get(id); if (!sel && HV.size && !hv) al = 0.25; if (S.offv && netOf(id) === 'online') al *= 0.35;
     const mk = id === sel ? css('--acc') : hv ? hlCol(hv.t) : null, g = geo.get(id), p = lay.pos.get(id), chg = V.chg.has(id) && S.ver > 0;
     x.globalAlpha = al; x.beginPath(); g.qd.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath(); x.fillStyle = fill(id); x.fill();
     x.lineWidth = mk ? 3 : chg ? 2 : 1; x.strokeStyle = mk || (chg ? css('--flow') : css('--line')); x.stroke(); x.globalAlpha = 1;
-    const lb = names.get(id); if (lb) { x.font = `600 ${lb.fs}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round'; x.globalAlpha = Math.max(al, 0.45);
-      x.lineWidth = 3.5; x.strokeStyle = css('--bg'); x.strokeText(lb.t, lb.x, lb.y); x.fillStyle = mk || css('--ink'); x.fillText(lb.t, lb.x, lb.y); x.globalAlpha = 1;
-      T3.drawn.push({ id, x: lb.x, y: lb.y, w: lb.w, h: lb.h + 3, lab: true }); }
+    { let ex = P({ x: p.x + tw, y: p.y, z: p.z }), ez = P({ x: p.x, y: p.y, z: p.z + td });
+      if (ex && ez) { let A = { x: ex.x - q.x, y: ex.y - q.y }, Bv = { x: ez.x - q.x, y: ez.y - q.y };
+        if (A.x < -0.2 * Math.hypot(A.x, A.y) || (Math.abs(A.x) <= 0.2 * Math.hypot(A.x, A.y) && A.y < 0)) A = { x: -A.x, y: -A.y };   // (reads left to right, else top to bottom)
+        if (A.x * Bv.y - A.y * Bv.x < 0) Bv = { x: -Bv.x, y: -Bv.y };   // (never mirrored)
+        const sc = Math.min(Math.hypot(A.x, A.y) / tw, Math.hypot(Bv.x, Bv.y) / td);
+        let f = 22, lines; for (;;) { x.font = `600 ${f}px "Source Sans 3", sans-serif`; lines = tileName(x, N.get(id).name, TILE.w - 20); if (f <= 15 || !lines.some(t => t.endsWith('…'))) break; f--; }   // (as large as fits in two lines)
+        if (f * sc * kz >= 6.5) { x.save(); x.transform(A.x / tw, A.y / tw, Bv.x / td, Bv.y / td, q.x, q.y);   // (the tile's own plane)
+          x.font = `600 ${f}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.globalAlpha = Math.max(al, 0.45); x.fillStyle = mk || css('--ink');
+          lines.forEach((t, k) => x.fillText(t, 0, (k - (lines.length - 1) / 2) * f * 1.1)); x.restore(); x.globalAlpha = 1; } } }
     const sb = { id, x: g.bb.x, y: g.bb.y, w: g.bb.w, h: g.bb.h, z: q.z, card: { c: p, u: [1, 0, 0], v: [0, 0, 1], hw: tw, hd: td, fy: lay.plots.find(t => t.id === p.plot)?.y ?? p.y - 5 } }; T3.drawn.push(sb);
-    if (hv?.n) badge(x, lb || { id, x: g.bb.x, y: g.bb.y, w: Math.min(g.bb.w, 60), h: Math.min(g.bb.h, 14) }, hv, 1); };
+    if (hv?.n) badge(x, { id, x: g.bb.x, y: g.bb.y, w: Math.min(g.bb.w, 60), h: Math.min(g.bb.h, 14) }, hv, 1); };
   // back to front, so that a see-through floor or area in front tints what lies behind it: the floors are parallel, so
   // from the camera's height outwards – the floors below it from the bottom up, those above it from the top down, each
   // floor before the cards standing on it (those below the camera) or after them (above), the camera's own storey last
