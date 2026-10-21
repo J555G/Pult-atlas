@@ -600,36 +600,55 @@ function fit3d(id, now) {   // the camera to a part, or to all
     const R = Math.max(400, ...ns.map(p => Math.hypot(p.x - cx, p.y - cy, p.z - cz))); t = { tx: cx, ty: cy, tz: cz, dist: R * 1.55 + 450 }; }
   if (now) Object.assign(T3.cam, t); else T3.camTo = t; run3d();
 }
-// Space: one finger turns (the tilt stays above the floors), two fingers slide and zoom towards the fingers – no
-// twisting; with a mouse, shift- or right-drag slides, the wheel zooms at the pointer. A tap is a tap up to 8 px.
-const PITCH = [-1.48, -0.08];
-function zoomAt(f, mx, my) {   // zoom by factor f (distance × f) keeping the point under (mx, my) where it is
-  const B = camBasis(), W = cv3.clientWidth, H = cv3.clientHeight, d0 = T3.cam.dist, d1 = Math.max(250, Math.min(20000, d0 * f)), u = d0 / (H * 0.95), k = 1 - d1 / d0;
-  const wx = (mx - W / 2) * u, wy = -(my - H / 2) * u;
-  for (let i = 0; i < 3; i++) T3.cam[['tx', 'ty', 'tz'][i]] += (B.right[i] * wx + B.up[i] * wy) * k;
+// Space is steered like a map app: one finger slides the floors (the spot touched stays under the finger); two fingers
+// pinch to zoom towards the floor between them, twist to turn round that spot, and move up or down together to tilt.
+// Mouse: drag slides, right- or shift-drag turns and tilts, the wheel zooms at the pointer. A tap is a tap up to 8 px.
+const PITCH = [0.1, 1.5];   // (from nearly level to straight down – the camera always above the floors)
+function ground(mx, my) {   // the point of the horizontal plane through the camera's target that lies under (mx, my)
+  const c = T3.cam, B = camBasis(), W = cv3.clientWidth, H = cv3.clientHeight, f = H * 0.95;
+  const C = [c.tx + B.fwd[0] * c.dist, c.ty + B.fwd[1] * c.dist, c.tz + B.fwd[2] * c.dist];
+  const d = [0, 1, 2].map(i => -B.fwd[i] + B.right[i] * (mx - W / 2) / f + B.up[i] * -(my - H / 2) / f);
+  if (d[1] > -0.02) return null; const t = (c.ty - C[1]) / d[1]; return t > 0 ? { x: C[0] + d[0] * t, z: C[2] + d[2] * t } : null;
+}
+function slide(x0, y0, x1, y1) { const a = ground(x0, y0), b = ground(x1, y1); if (!a || !b) return; const lim = T3.cam.dist * 0.6;
+  T3.cam.tx += Math.max(-lim, Math.min(lim, a.x - b.x)); T3.cam.tz += Math.max(-lim, Math.min(lim, a.z - b.z)); T3.camTo = null; run3d(); }
+function zoomAt(f, mx, my) {   // closer or further by f, towards the spot of the floor under (mx, my)
+  const d0 = T3.cam.dist, d1 = Math.max(160, Math.min(20000, d0 * f)), k = 1 - d1 / d0, g = ground(mx, my);
+  if (g) { T3.cam.tx += (g.x - T3.cam.tx) * k; T3.cam.tz += (g.z - T3.cam.tz) * k; }
   T3.cam.dist = d1; T3.camTo = null; T3.spin = null; run3d();
 }
+function twist(da, mx, my) {   // turn round the spot under (mx, my)
+  const g = ground(mx, my) || { x: T3.cam.tx, z: T3.cam.tz }, c = T3.cam, dx = c.tx - g.x, dz = c.tz - g.z, cs = Math.cos(da), sn = Math.sin(da);
+  c.tx = g.x + dx * cs + dz * sn; c.tz = g.z - dx * sn + dz * cs; c.yaw += da; c.camTo = null; T3.camTo = null; run3d();
+}
+const tilt = dy => { T3.cam.pitch = Math.max(PITCH[0], Math.min(PITCH[1], T3.cam.pitch + dy * 0.0045)); T3.camTo = null; run3d(); };
 cv3.addEventListener('contextmenu', e => { if (S.view === 'space') e.preventDefault(); });
 cv3.addEventListener('pointerdown', e => { if (S.view !== 'space') return down2(e);
   cv3.setPointerCapture(e.pointerId); T3.ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY }); T3.spin = null;
-  if (T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()]; T3.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; T3.drag = null; return; }
-  const id = hit3d(e.offsetX, e.offsetY); T3.drag = { id, x: e.offsetX, y: e.offsetY, x0: e.offsetX, y0: e.offsetY, moved: false, pan: e.shiftKey || e.button === 2, v: [0, 0] }; $('#tip').hidden = true;
+  if (T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()]; T3.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), ang: Math.atan2(b.y - a.y, b.x - a.x), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, start: new Map([...T3.ptrs].map(([k, v]) => [k, { ...v }])), mode: null }; T3.drag = null; return; }
+  const id = hit3d(e.offsetX, e.offsetY); T3.drag = { id, x: e.offsetX, y: e.offsetY, x0: e.offsetX, y0: e.offsetY, moved: false, turn: e.shiftKey || e.button === 2, v: [0, 0, 0, 0] }; $('#tip').hidden = true;
 });
 cv3.addEventListener('pointermove', e => { if (S.view !== 'space') return move2(e);
   if (T3.ptrs.has(e.pointerId)) T3.ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
-  if (T3.pinch && T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()], p = T3.pinch, d = Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-    pan3d(mx - p.mx, my - p.my); zoomAt(p.d / d, mx, my); p.d = d; p.mx = mx; p.my = my; return; }   // (slide with the fingers, zoom towards them)
+  if (T3.pinch && T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()], p = T3.pinch, d = Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), ang = Math.atan2(b.y - a.y, b.x - a.x), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    let da = ang - p.ang; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
+    if (!p.mode) {   // (what the two fingers do is decided once, from how both have moved since they touched: then it stays so)
+      const mv = [...T3.ptrs].map(([k, v]) => { const s0 = p.start.get(k) || v; return { dx: v.x - s0.x, dy: v.y - s0.y }; }), far = mv.map(m => Math.hypot(m.dx, m.dy));
+      if (far.every(f => f > 10)) p.mode = mv.every(m => Math.abs(m.dy) > 1.5 * Math.abs(m.dx)) && Math.sign(mv[0].dy) === Math.sign(mv[1].dy) ? 'tilt' : 'map';
+      else if (far.some(f => f > 30)) p.mode = 'map';
+      if (!p.mode) return; }
+    if (p.mode === 'tilt') tilt(my - p.my); else { slide(p.mx, p.my, mx, my); zoomAt(p.d / d, mx, my); if (Math.abs(da) > 0.0005) twist(da, mx, my); }
+    Object.assign(p, { d, ang, mx, my }); return; }
   const d = T3.drag;
   if (!d) { const id = hit3d(e.offsetX, e.offsetY); if (id) tip(e, id); else $('#tip').hidden = true; return; }
-  if (!d.moved && Math.hypot(e.offsetX - d.x0, e.offsetY - d.y0) <= 8) return;   // (a tap, not a turn)
-  if (!d.moved) { d.moved = true; d.x = e.offsetX; d.y = e.offsetY; return; }
-  const dx = e.offsetX - d.x, dy = e.offsetY - d.y; d.x = e.offsetX; d.y = e.offsetY;
-  if (d.pan || e.shiftKey) pan3d(dx, dy);
-  else { T3.cam.yaw -= dx * 0.005; T3.cam.pitch = Math.max(PITCH[0], Math.min(PITCH[1], T3.cam.pitch + dy * 0.005)); T3.cam.roll = 0; T3.camTo = null; d.v = [dx * 0.005, dy * 0.005]; }
-  run3d();
+  if (!d.moved && Math.hypot(e.offsetX - d.x0, e.offsetY - d.y0) <= 8) return;   // (a tap, not a slide)
+  if (!d.moved) d.moved = true;   // (from here on a slide – from where the finger first touched, nothing lost)
+  const x0 = d.x, y0 = d.y; d.x = e.offsetX; d.y = e.offsetY;
+  if (d.turn || e.shiftKey) { twist((d.x - x0) * 0.006, cv3.clientWidth / 2, cv3.clientHeight / 2); tilt(d.y - y0); }
+  else { slide(x0, y0, d.x, d.y); d.v = [x0, y0, d.x, d.y]; }
 });
 const up3 = e => { T3.ptrs.delete(e.pointerId); if (T3.ptrs.size < 2) { T3.pinch = null; T2.pinch = null; } const d = T3.drag; T3.drag = null;
-  if (d?.moved && S.view === 'space' && !d.pan && Math.hypot(...d.v) > 0.002) T3.spin = d.v.slice();   // (a little glide after letting go)
+  if (d?.moved && S.view === 'space' && !d.turn && Math.hypot(d.v[2] - d.v[0], d.v[3] - d.v[1]) > 2) T3.spin = { x: d.v[2], y: d.v[3], dx: d.v[2] - d.v[0], dy: d.v[3] - d.v[1] };   // (a little glide after letting go)
   if (!d || d.moved) { run3d(); return; }
   const now = Date.now(), id = d.id;
   if (id && T3.lastTap?.id === id && now - T3.lastTap.t < 350) { T3.lastTap = null; toggle(id); return; }
@@ -657,7 +676,7 @@ function renderPanel() {
       <div class="heat">${[0, 1, 2, 3, 4, 5].map(i => `<i style="background:var(--h${i})" title="${i}"></i>`).join('')}<span style="margin-left:6px">none … very high</span></div>
       <div><span class="sw" style="border-top:2px dashed var(--flow);background:none;height:0"></span>dashed outline: changed in the version shown</div>
       <div>Selecting a part shows its direct links; <i>Whole chains</i> (Options) follows them further. <i>Relies on / Relied on by / Both</i> then hides everything else.</div>
-      <div>In <i>Space</i>, one finger turns the tower (always seen from above), two fingers slide it and pinch to zoom towards them (with a mouse: drag to turn, shift- or right-drag to slide, wheel to zoom at the pointer); names never cover each other – where one would, the part shows as a chip; <i>Front</i>, <i>Top</i> and <i>Corner</i> turn it for you, <i>Floors</i> sets the height between the floors. Far away, parts are chips in their colour; nearer, their names; near, the whole card. ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
+      <div>In <i>Space</i>, steer as in a map app: one finger slides the floors; two fingers pinch to zoom, twist to turn round the spot between them, and move up or down together to tilt (with a mouse: drag slides, right- or shift-drag turns and tilts, the wheel zooms at the pointer); names never cover each other – where one would, the part shows as a chip; <i>Front</i>, <i>Top</i> and <i>Corner</i> turn it for you, <i>Floors</i> sets the height between the floors. Far away, parts are chips in their colour; nearer, their names; near, the whole card. ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
       <div>Four views of the same parts, the selection kept between them: <b>Flow</b> – columns from the sources on the left to the screen on the right; <b>Map</b> – each main part as a region with its parts, ribbons for how much they connect; <b>Focus</b> – the selected part in the middle, data coming in on the left and going out on the right, the code it calls above and the code calling it below; <b>Space</b> – a tower of four floors, the sources at the bottom and the screen on top: every main part a plot on its floor with its parts standing on it, lines between floors running straight up or down a shaft; Front, Top and Corner turn it, Floors sets their height. <b>Data</b>, <b>Code</b> and <b>Selected only</b> choose the lines, in any combination.</div>
       <div>In Flow, lines between parts of the same column are drawn only for the selected part (↕ on a card counts them), and the lines of an opened group are bundled into one ribbon per partner until a part is selected. Zoomed out, cards show only their names.</div>
       <div><b>Explore</b> opens guided walks through Pult, its start-up, traces of functions, where data comes from and goes, its health and comparisons between versions; the parts concerned light up, numbered by step.</div>
@@ -1021,7 +1040,7 @@ function frameTower(now) {
   if (T3.fitAll) { T3.fitAll = false; fitTower(null, true); }
   const c = T3.cam; let moving = false;
   if (T3.camTo) { const t = T3.camTo; let done = true; for (const k of ['tx', 'ty', 'tz', 'dist', 'yaw', 'pitch', 'roll']) { if (t[k] == null) continue; c[k] = (c[k] || 0) + (t[k] - (c[k] || 0)) * 0.14; if (Math.abs(t[k] - c[k]) > (k[0] === 't' ? 0.5 : k === 'dist' ? 1 : 1e-3)) done = false; } if (done) { Object.assign(c, t); T3.camTo = null; } else moving = true; }
-  if (T3.spin) { c.yaw -= T3.spin[0]; c.pitch = Math.max(PITCH[0], Math.min(PITCH[1], c.pitch + T3.spin[1])); T3.spin = T3.spin.map(v => v * 0.88); if (Math.hypot(...T3.spin) < 0.0004) T3.spin = null; else moving = true; }
+  if (T3.spin) { const g = T3.spin; slide(g.x, g.y, g.x + g.dx, g.y + g.dy); g.dx *= 0.86; g.dy *= 0.86; if (Math.hypot(g.dx, g.dy) < 0.4) T3.spin = null; else moving = true; }
   c.roll = 0;
   const f = H * 0.95, B = camBasis(), P = pt => proj(B, pt, W, H, f);
   const quad = (y, x0, x1, z0, z1) => { const ps = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([a, b]) => P({ x: a, y, z: b })); return ps.every(Boolean) ? ps : null; };
@@ -1109,7 +1128,7 @@ function fitTower(id, now) {   // the camera to one part, some, or the whole tow
   const R = Math.max(400, ...pts.map(p => Math.hypot(p.x - cx, p.y - cy, p.z - cz)));
   const t = { tx: cx, ty: cy, tz: cz, dist: R * 1.75 + 300 }; if (now) Object.assign(T3.cam, t); else T3.camTo = Object.assign(T3.camTo || {}, t); run3d();
 }
-const SNAPS = { front: { yaw: 0, pitch: -0.1, roll: 0 }, top: { yaw: 0, pitch: -1.47, roll: 0 }, corner: { yaw: 0.55, pitch: -0.38, roll: 0 } };
+const SNAPS = { front: { yaw: 0, pitch: 0.12, roll: 0 }, top: { yaw: 0, pitch: 1.5, roll: 0 }, corner: { yaw: 0.55, pitch: 0.55, roll: 0 } };
 
 // ---------------------------------------------------------------- explore: walks, start-up, traces, data, health, versions
 const GH = 'https://github.com/J555G/lesepult/blob/';
