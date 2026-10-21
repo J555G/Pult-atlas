@@ -168,6 +168,14 @@
   keeps up with the finger. Measured: parts move the finger's way upright, twirled and upside down; the pivot does not
   move; right-down-up-left returns exactly. Front / Top / Corner set the tower straight again.
 
+## Decided 21 Oct (13:51)
+- Space: only what is in direct view can be tapped (owner's choices). Names drawn on top come first; otherwise the
+  nearest thing along the line of sight wins – card, floor, plot or opened-group area –, even where the thing in front
+  is see-through. A tap on a plot selects its main part, on a group area that opened part, on bare floor clears the
+  selection. Measured (Corner): 81 of 109 card centres tappable, the rest behind a floor (13), a name (8) or a nearer
+  card (7); from below none (the floors are in front).
+- Questions to the owner go in writing in the reply, not as tappable choices (he wants to comment on every point).
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
