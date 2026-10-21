@@ -147,6 +147,14 @@
   follows them exactly – slid with them, spread or drawn in with the pinch like a photo (measured: offset to the fingers
   unchanged by a slide, scaled exactly by the pinch). Other parts, nearer or further, move by their own perspective.
 
+## Decided 21 Oct (12:10)
+- Space steered like a globe (owner's choices): one finger sideways turns the tower round its axis, up or down tips it
+  over round the spot touched (that spot stays put) – without limit, right over and upside down if wanted –, diagonal
+  swipes do both at once. Riding up and down the floors now with two fingers (slide) or by tapping a floor's name.
+- The Tilt slider is gone again (one finger tilts). Front / Top / Corner glide back the short way round.
+- Two fingers: twirling turns the picture in the plane of the screen (measured: 0.5 rad of fingers → 0.51 rad), the
+  spot between them staying under them; slide and pinch as before.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
