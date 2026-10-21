@@ -59,9 +59,9 @@ header .seg.nb { display: inline-flex !important; }
 .results button { display: block; width: 100%; text-align: left; border: 0; background: transparent; color: var(--ink); padding: 7px 10px; cursor: pointer; font: 14px var(--ui); }
 .results button:hover, .results button.on { background: var(--soft); }
 .results small { color: var(--mut); display: block; font-size: 12px; }
-main { flex: 1; display: flex; min-height: 0; position: relative; }
-#stage { flex: 1; min-width: 0; position: relative; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-#cv3 { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+main { flex: 1; display: flex; min-height: 0; position: relative; overflow: hidden; }
+#stage { flex: 1; min-width: 0; min-height: 0; position: relative; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+#cv3 { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }   /* (absolute: the drawing never holds its area open – the pane beside or below can take the room) */
 #cv3:active { cursor: grabbing; }
 #panel { flex: none; width: 380px; max-width: 46vw; border-left: 1px solid var(--line); background: var(--surface); overflow: auto; padding: 16px 18px; padding-right: max(18px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }   /* a fixed pane beside the drawing */
 #panel h2 { font: 700 22px/1.15 var(--display); margin: 0 0 4px; padding-right: 30px; text-wrap: balance; }
@@ -196,6 +196,15 @@ footer input[type=range] { accent-color: var(--acc); }
 .touch #divider { width: 28px; margin: 0 -14px; } .touch #divider::after { width: 8px; height: 64px; }
 @media (max-width: 760px) { #divider { width: auto; height: 16px; margin: -8px 0; cursor: row-resize; } #divider::after { width: 48px; height: 6px; } .touch #divider { width: auto; height: 28px; margin: -14px 0; } .touch #divider::after { width: 64px; height: 8px; } }
 #segArr, #flatBtn { display: none !important; } body:not(.v-space) #segSnap, body:not(.v-space) .rng { display: none; }
+/* compact bar (touch screens and narrow windows): one row; the switches live in a tray that drops over the drawing */
+#ctlWrap { display: contents; } #ctlBtn { display: none; }
+.touch #tray .seg button, .touch #tray button.plain { min-height: 44px; min-width: 44px; padding: 0 11px; font-size: 15px; } .touch #tray .rng input { width: 110px; height: 44px; } .touch #tray .rng { font-size: 13px; }
+body.compact #ctlBtn { display: inline-flex; align-items: center; justify-content: center; }
+#tray { position: fixed; z-index: 25; left: 0; right: 0; background: var(--surface); border-bottom: 1px solid var(--line); box-shadow: 0 12px 28px rgba(0,0,0,.22); padding: 10px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); }
+#tray #ctlWrap { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+body.compact #ctlBtn[aria-expanded="true"] { background: var(--ink); color: var(--surface); }
+body.compact header { flex-wrap: nowrap; } body.compact .search { flex: 1 1 80px; min-width: 70px; }
+.hint:empty { display: none; }
 .sizes { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 @media (max-width: 560px) { .touch .seg button, .touch button.plain, .touch header .seg button, .touch header button.plain { padding: 0 9px; } .touch .rng input { width: 64px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
@@ -205,6 +214,8 @@ footer input[type=range] { accent-color: var(--acc); }
   <h1>Pult Atlas<small id="hdrVer"></small></h1>
   <div class="seg nb" id="navBtns"><button id="back" title="Back to the previous part (Alt + ←)" aria-label="Back" disabled>‹</button><button id="fwd" title="Forward (Alt + →)" aria-label="Forward" disabled>›</button><button id="home" title="Show everything" aria-label="Show everything">⌂</button></div>
   <div class="search"><input id="q" type="search" placeholder="Find a part or function…" autocomplete="off" aria-label="Find a part"><div class="results" id="res" hidden></div></div>
+  <button class="plain" id="ctlBtn" aria-expanded="false" title="Views, lines, colours and filters"><span class="l">Controls ▾</span><span class="s">☰</span></button>
+  <div id="ctlWrap">
   <div class="seg" id="segView" title="View"><button data-v="flow" aria-label="Flow: columns from sources to screen">Flow</button><button data-v="map" aria-label="Map: regions with their parts">Map</button><button data-v="focus" aria-label="Focus: one part and its neighbours">Focus</button><button data-v="space" aria-label="Space: cards on strings in 3D">Space</button></div>
   <div class="seg" id="segLines" title="Which lines to draw"><button data-l="ldata" title="data flows (dashed, violet)">Data</button><button data-l="lcode" title="code that calls other code (grey)">Code</button><button data-l="lsel" title="only the lines of the selected or lit parts"><span class="l">Selected only</span><span class="s">Sel.</span></button></div>
   <div class="seg" id="segSnap" title="Turn the tower to"><button data-snap="front">Front</button><button data-snap="top">Top</button><button data-snap="corner">Corner</button></div>
@@ -214,10 +225,12 @@ footer input[type=range] { accent-color: var(--acc); }
   <div class="seg" id="segFocus" title="With a part selected, show only…"><button data-v="all" aria-pressed="true">All</button><button data-v="up" aria-pressed="false" title="only what the selected part relies on" aria-label="Relies on"><span class="l">Relies on</span><span class="s">↑</span></button><button data-v="down" aria-pressed="false" title="only what relies on the selected part" aria-label="Relied on by"><span class="l">Relied on by</span><span class="s">↓</span></button><button data-v="both" aria-label="Both" aria-pressed="false" title="only the selected part's connections"><span class="l">Both</span><span class="s">↕</span></button></div>
   <label class="rng" title="The height between the floors"><span>Floors</span> <input type="range" id="spread" min="0.4" max="3" step="0.05" value="1" aria-label="Spacing"></label>
   <button class="plain" id="optBtn" aria-expanded="false" title="Options"><span class="t">Options </span>▾</button>
+  </div>
   <canvas id="mini" aria-label="Overview: the main parts by floor; tap one to go there"></canvas>
   <button class="plain" id="guideBtn" aria-pressed="false" title="Guided walks, start-up, traces, data, health, versions" aria-label="Explore"><span class="l">Explore</span><span class="s">✦</span></button>
   <button class="plain" id="infoBtn" title="How to read the drawing" aria-label="How to read the drawing">ⓘ</button>
 </header>
+<div id="tray" hidden></div>
 <div class="menu" id="opts" hidden>
   <label class="chk"><input type="checkbox" id="ind" checked> Load indicators</label>
   <label class="chk"><input type="checkbox" id="offv"> Offline view</label>
@@ -228,7 +241,7 @@ footer input[type=range] { accent-color: var(--acc); }
   <div class="row"><button class="plain" id="expAll">Expand all</button><button class="plain" id="colAll">Collapse</button></div>
 </div>
 <main>
-  <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><div class="hint" id="hint">Drag to turn (flat: to move) · pinch or scroll to zoom · twirl with two fingers · drag a part to pull it · double-tap to open it</div><div class="tip" id="tip" hidden></div></div>
+  <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><div class="hint" id="hint" aria-live="polite"></div><div class="tip" id="tip" hidden></div></div>
   <div id="divider" role="separator" aria-orientation="vertical" aria-label="Drag to change the width of the pane; double-tap for the usual width" tabindex="0"></div>
   <aside id="panel" aria-label="About the part"><button class="plain" id="pclose" aria-label="Close">✕</button><div id="pbody"></div></aside>
 </main>
@@ -1278,7 +1291,7 @@ const HINTS = { space: 'Four floors, the sources at the bottom and the screen on
   flow: 'From the sources on the left to the screen on the right · drag to move · pinch or scroll to zoom · double-tap a part to open it',
   map: 'Each main part with its parts · ribbons: how much they connect · select a part for its own lines · double-tap to open',
   focus: 'The selected part in the middle · tap a neighbour to move to it · double-tap to open it' };
-function viewChanged() { document.body.classList.toggle('v-space', S.view === 'space'); $('#hint').textContent = HINTS[S.view]; T2.fit = true; if (S.view === 'space') { T3.fitAll = true; Object.assign(T3.cam, SNAPS.corner); } }
+function viewChanged() { document.body.classList.toggle('v-space', S.view === 'space'); $('#hint').textContent = ''; T2.fit = true; if (S.view === 'space') { T3.fitAll = true; Object.assign(T3.cam, SNAPS.corner); } }
 seg('#segView', 'view', viewChanged); viewChanged();
 $('#segSnap').onclick = e => { const b = e.target.closest('button'); if (!b) return; T3.camTo = Object.assign({}, SNAPS[b.dataset.snap]); run3d(); };
 { const paint = () => [...$('#segLines').children].forEach(b => b.setAttribute('aria-pressed', !!S[b.dataset.l]));
@@ -1310,7 +1323,14 @@ addEventListener('keydown', e => { const g = S.guide; if (!g || S.sel || e.targe
 $('#pclose').onclick = closePanel;
 $('#infoBtn').onclick = () => { if (!S.sel && S.info) { S.info = false; if (S.guide) draw(); else closePanel(); } else { S.info = true; if (S.sel) select(null); else renderPanel(); } };
 addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('open') && !e.target.closest('input')) closePanel(); });
-$('#optBtn').onclick = () => { const m = $('#opts'), open = m.hidden; m.hidden = !open; $('#optBtn').setAttribute('aria-expanded', open); if (open) m.style.top = ($('header').getBoundingClientRect().bottom + 6) + 'px'; };
+$('#optBtn').onclick = () => { const m = $('#opts'), open = m.hidden; m.hidden = !open; $('#optBtn').setAttribute('aria-expanded', open); if (open) m.style.top = ($('#optBtn').getBoundingClientRect().bottom + 6) + 'px'; };
+// the compact bar: on touch screens and in narrow windows the switches move into a tray under the bar
+function setCompact() { const on = TOUCH || innerWidth < 1100, w = $('#ctlWrap'); document.body.classList.toggle('compact', on);
+  if (on && w.parentNode !== $('#tray')) $('#tray').append(w); if (!on && w.parentNode !== $('header')) { $('header').insertBefore(w, $('#mini')); trayOpen(false); } }
+function trayOpen(open) { const t = $('#tray'); t.hidden = !open; $('#ctlBtn').setAttribute('aria-expanded', open); if (open) t.style.top = $('header').getBoundingClientRect().bottom + 'px'; }
+$('#ctlBtn').onclick = () => trayOpen($('#tray').hidden);
+document.addEventListener('pointerdown', e => { if (!$('#tray').hidden && !e.target.closest('#tray, #ctlBtn, #opts')) trayOpen(false); });
+
 document.addEventListener('pointerdown', e => { if (!$('#opts').hidden && !e.target.closest('#opts, #optBtn')) { $('#opts').hidden = true; $('#optBtn').setAttribute('aria-expanded', false); } });
 $('#ind').checked = S.ind; $('#ind').onchange = e => { S.ind = e.target.checked; keep(); draw(); };
 $('#offv').onchange = e => { S.offv = e.target.checked; draw(); };
@@ -1342,6 +1362,7 @@ if (innerWidth <= 560) $('#q').placeholder = 'Find…';
 document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 addEventListener('wheel', e => { if (e.ctrlKey && !e.target.closest('#cv3')) e.preventDefault(); }, { passive: false });
 const TOUCH = navigator.maxTouchPoints > 0 || matchMedia('(any-pointer: coarse)').matches; if (TOUCH) document.documentElement.classList.add('touch');   // (finger-sized controls)
+setCompact(); addEventListener('resize', setCompact);
 // Safari can draw the page wider than the screen and shrink it (Request Desktop Website, page zoom below 100 %):
 // the shrinking is measured against the screen's own width and made up for, so a 44 px button stays 44 points
 const KZ = () => (S.size || 1) * (TOUCH ? shrink() : 1);   // (the top bar stays at 44 px whatever the Size)   // how much the writing in the drawing is enlarged

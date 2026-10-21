@@ -82,6 +82,15 @@
 - The old physics web (draw3d, frame3d, tick3d …) is no longer used – still in the code, to be removed when the tower
   has proved itself.
 
+## Decided 21 Oct (07:54)
+- Compact bar on touch screens (phones and iPad) and in windows under 1100 px: one row (‹ › ⌂, search, Controls,
+  overview strip – not on phones –, Explore, ⓘ); Controls drops a tray with the views, lines, colours, filters and
+  options over the drawing, closing when the drawing is tapped. Tray buttons 44 px. Wide mouse screens keep the full bar.
+- The standing gesture note is gone; its line only shows short messages and errors.
+- Bug fixed: the drawing could not shrink below its canvas size, so a taller pane (dragged divider, phones) slid under
+  the version bar – the canvas is now absolute inside its area.
+- Lines on phones: same as elsewhere (the owner declined 'Selected only' by default).
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
