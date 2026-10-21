@@ -95,6 +95,11 @@
 - Opening or closing a part keeps its top edge where it was on the screen (Flow, Map, Space; the view moves by what the
   layout moved). Map and Space now also open parts inside a main part that is itself closed.
 
+## Decided 21 Oct (08:24)
+- ‹ › go back and forward through everything looked at: each stop is the selected part (or none) together with the
+  Explore page that was open (walk and step, trace, data, health, comparison …). Also at the top of the pane beside ✕
+  (hidden when there is nowhere to go), and the browser's / phone's back gesture.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,

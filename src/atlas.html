@@ -66,7 +66,10 @@ main { flex: 1; display: flex; min-height: 0; position: relative; overflow: hidd
 #panel { flex: none; width: 380px; max-width: 46vw; border-left: 1px solid var(--line); background: var(--surface); overflow: auto; padding: 16px 18px; padding-right: max(18px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }   /* a fixed pane beside the drawing */
 #panel h2 { font: 700 22px/1.15 var(--display); margin: 0 0 4px; padding-right: 30px; text-wrap: balance; }
 body:not(.open) #pclose { display: none; }
-#pclose { position: sticky; top: 0; float: right; margin: -6px -6px 0 0; z-index: 1; background: var(--surface); }
+#pnav:has(#pback:disabled):has(#pfwd:disabled) #pback, #pnav:has(#pback:disabled):has(#pfwd:disabled) #pfwd { display: none; }
+#pnav { position: sticky; top: 0; float: right; margin: -6px -6px 0 8px; z-index: 1; display: flex; gap: 4px; background: var(--surface); }
+#pnav button { font-size: 17px; } #pnav button:disabled { color: var(--line); cursor: default; }
+#pclose { background: var(--surface); }
 #panel h3 { font: 600 11px var(--ui); text-transform: uppercase; letter-spacing: .07em; color: var(--mut); margin: 18px 0 6px; }
 #panel p { margin: 6px 0; max-width: 65ch; }
 .crumbs { font-size: 12px; color: var(--mut); }
@@ -164,7 +167,7 @@ footer input[type=range] { accent-color: var(--acc); }
 .touch #panel h2 { font-size: calc(22px * var(--k)); } .touch #panel h3 { font-size: calc(11px * var(--k)); }
 .touch .list { font-size: calc(13px * var(--k)); } .touch .list code, .touch .mono { font-size: calc(12px * var(--k)); }
 .touch .pill, .touch .crumbs, .touch .hintp, .touch .sub, .touch .legend { font-size: calc(12.5px * var(--k)); }
-.touch #pclose { min-height: calc(44px * var(--k)); min-width: calc(44px * var(--k)); font-size: calc(17px * var(--k)); }
+.touch #pnav button { min-height: calc(44px * var(--k)); min-width: calc(44px * var(--k)); font-size: calc(17px * var(--k)); }
 .touch .list li { min-height: calc(44px * var(--k)); align-items: center; padding: 2px 0; }
 .touch .list a, .touch .crumbs a, .touch .hintp a { display: inline-block; padding: calc(8px * var(--k)) 0; }
 .touch a.ic { display: inline-flex; align-items: center; justify-content: center; min-width: calc(40px * var(--k)); min-height: calc(40px * var(--k)); font-size: calc(17px * var(--k)); }
@@ -243,7 +246,7 @@ body.compact header { flex-wrap: nowrap; } body.compact .search { flex: 1 1 80px
 <main>
   <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><div class="hint" id="hint" aria-live="polite"></div><div class="tip" id="tip" hidden></div></div>
   <div id="divider" role="separator" aria-orientation="vertical" aria-label="Drag to change the width of the pane; double-tap for the usual width" tabindex="0"></div>
-  <aside id="panel" aria-label="About the part"><button class="plain" id="pclose" aria-label="Close">✕</button><div id="pbody"></div></aside>
+  <aside id="panel" aria-label="About the part"><div id="pnav"><button class="plain" id="pback" aria-label="Back" title="Back" disabled>‹</button><button class="plain" id="pfwd" aria-label="Forward" title="Forward" disabled>›</button><button class="plain" id="pclose" aria-label="Close">✕</button></div><div id="pbody"></div></aside>
 </main>
 <footer>
   <button class="plain" id="play" aria-label="Play through the versions">▶</button>
@@ -375,11 +378,14 @@ function keepAnchor(id, a0) { const a1 = anchorOf(id); if (!a0 || !a1) return;
   if (S.view === 'space') { T3.cam.tx += a1.x - a0.x; T3.cam.ty += a1.y - a0.y; T3.cam.tz += a1.z - a0.z; if (T3.camTo) { delete T3.camTo.tx; delete T3.camTo.ty; delete T3.camTo.tz; } }
   else { T2.x += (a0.x - a1.x) * T2.k; T2.y += (a0.y - a1.y) * T2.k; T2.to = null; }
   run3d(); }
-// the way back and forward through the parts looked at (and nothing selected – the whole view – counts as a stop too)
-const NAV = { list: [null], pos: 0 };
-function navPush(id) {
-  if (NAV.list[NAV.pos] === id) return;
-  NAV.list = NAV.list.slice(0, NAV.pos + 1); NAV.list.push(id); NAV.pos++; if (NAV.list.length > 200) { NAV.list.shift(); NAV.pos--; }
+// the way back and forward through everything looked at: each stop is the selected part (or none) with the Explore
+// page that was open – a walk and its step, a trace, a comparison … – so ‹ › go back there exactly
+const NAV = { list: [{ sel: null, guide: null }], pos: 0 };
+const navStop = () => ({ sel: S.sel ?? null, guide: S.guide ? JSON.parse(JSON.stringify(S.guide, (k, v) => k === 'play' ? undefined : v)) : null });
+const navKey = st => JSON.stringify(st);
+function navPush() {
+  const st = navStop(); if (navKey(NAV.list[NAV.pos]) === navKey(st)) return;
+  NAV.list = NAV.list.slice(0, NAV.pos + 1); NAV.list.push(st); NAV.pos++; if (NAV.list.length > 300) { NAV.list.shift(); NAV.pos--; }
   if (NAV_TOP) try { history.pushState({ atlas: NAV.pos }, ''); } catch (_) {}   // (the phone's back gesture too, in the web app)
   navPaint();
 }
@@ -388,10 +394,11 @@ if (NAV_TOP) try { history.replaceState({ atlas: 0 }, ''); } catch (_) {}
 function navGo(d) { const i = NAV.pos + d; if (i < 0 || i >= NAV.list.length) return; if (NAV_TOP) { try { history.go(d); return; } catch (_) {} } navTo(i); }
 function navTo(i) {
   if (i < 0 || i >= NAV.list.length) return;
-  NAV.pos = i; const id = NAV.list[i]; select(id, true); if (id) setTimeout(() => fit(id), 40); else { T3.fitNext = true; run3d(); } navPaint();
+  NAV.pos = i; const st = NAV.list[i]; stopPlay(); S.info = false; S.guide = st.guide ? JSON.parse(JSON.stringify(st.guide)) : null; guideHL();
+  select(st.sel, true); if (st.sel) setTimeout(() => fit(st.sel), 40); $('#pbody').scrollTop = 0; $('#panel').scrollTop = 0; navPaint();
 }
-function navPaint() { $('#back').disabled = NAV.pos <= 0; $('#fwd').disabled = NAV.pos >= NAV.list.length - 1; }
-function select(id, fromNav) { if (!fromNav && V) navPush(id ?? null); select0(id); }
+function navPaint() { const b = NAV.pos <= 0, f = NAV.pos >= NAV.list.length - 1; $('#back').disabled = b; $('#fwd').disabled = f; $('#pback').disabled = b; $('#pfwd').disabled = f; }
+function select(id, fromNav) { select0(id); if (!fromNav && V) navPush(); }
 function select0(id) { S.sel = id; if (id) { let p = N.get(id).parent; while (p) { S.exp.add(p); p = N.get(p).parent; } } draw(); }
 function tip(ev, id) {
   const c = N.get(id), t = $('#tip'), r = $('#stage').getBoundingClientRect();
@@ -1068,7 +1075,7 @@ function visHL(nodes = T3.nodes) {   // the highlighted parts as the cards that 
   for (const [id, h] of S.hl) { const r = rep(id, nodes); if (r) { put(r, h); continue; } for (const k of nodes.keys()) if (k.startsWith(id + '.')) put(k, h); }
   return m;
 }
-function guide(g) { stopPlay(); S.guide = g; S.info = false; guideHL(); if (S.sel) select(null); else draw(); $('#pbody').scrollTop = 0; $('#panel').scrollTop = 0; }
+function guide(g) { stopPlay(); S.guide = g; S.info = false; guideHL(); if (S.sel) select(null); else { draw(); navPush(); } $('#pbody').scrollTop = 0; $('#panel').scrollTop = 0; }
 function guideHL() {
   const g = S.guide, H = new Map(), put = (id, t, n) => { if (id && N.has(id) && !H.has(id)) H.set(id, { t, n }); };
   if (g?.k === 'walk') { const w = MODEL.walks.find(x => x.id === g.w); w.steps[g.i].parts.forEach(p => put(p, 'now', g.i + 1)); for (let j = g.i - 1; j >= 0; j--) w.steps[j].parts.forEach(p => put(p, 'past', j + 1)); }
@@ -1317,7 +1324,7 @@ function setFlat(on) {
   T3.camTo = on ? { yaw: 0, pitch: 0, roll: 0 } : { yaw: 0.5, pitch: -0.25 }; const sp = S.sel && T3.nodes.get(S.sel); if (sp) Object.assign(T3.camTo, { tx: sp.x, ty: sp.y, tz: S.flat ? 0 : sp.z });   // (turning the view: about the selected part)
   T3.fitNext = true; draw();
 }
-$('#back').onclick = () => navGo(-1); $('#fwd').onclick = () => navGo(1);
+$('#back').onclick = () => navGo(-1); $('#fwd').onclick = () => navGo(1); $('#pback').onclick = () => navGo(-1); $('#pfwd').onclick = () => navGo(1);
 $('#home').onclick = () => { T2.fit = true; T3.fitAll = true; select(null); T3.camTo = S.flat ? { yaw: 0, pitch: 0, roll: 0 } : { yaw: 0.5, pitch: -0.25, roll: 0 }; T3.fitNext = true; run3d(); };
 addEventListener('keydown', e => { if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); navGo(-1); } if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); navGo(1); } });
 addEventListener('pointerdown', e => { if (e.button === 3) { e.preventDefault(); navGo(-1); } if (e.button === 4) { e.preventDefault(); navGo(1); } });
@@ -1328,7 +1335,7 @@ if (S.flat) Object.assign(T3.cam, { yaw: 0, pitch: 0, roll: 0 });
 function note2(t) { const h = $('#hint'), o = h.textContent; h.textContent = t; setTimeout(() => { h.textContent = o; }, 1800); }
 $('#spread').value = S.spread;
 $('#spread').oninput = e => { S.spread = +e.target.value; keep(); draw(); };   // (in the tower: the height between floors)
-function closePanel() { stopPlay(); S.info = false; S.guide = null; S.hl = new Map(); if (S.sel) select(null); else draw(); }
+function closePanel() { stopPlay(); S.info = false; S.guide = null; S.hl = new Map(); if (S.sel) select(null); else { draw(); navPush(); } }
 $('#guideBtn').onclick = () => { if (S.guide && !S.sel) closePanel(); else guide(S.guide || { k: 'menu' }); };
 $('#miniChk').checked = S.mini; $('#mini').hidden = !S.mini; $('#miniChk').onchange = e => { S.mini = e.target.checked; $('#mini').hidden = !S.mini; drawMini(); };
 $('#mini').onclick = e => { const r = $('#mini').getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, b = MINI.find(m => x >= m.x && x <= m.x + m.w && y >= m.y && y <= m.y + m.h); if (b) { select(b.id); setTimeout(() => fit(b.id), 40); } };
