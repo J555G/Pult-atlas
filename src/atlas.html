@@ -580,8 +580,8 @@ function fit3d(id, now) {   // the camera to a part, or to all
     const R = Math.max(400, ...ns.map(p => Math.hypot(p.x - cx, p.y - cy, p.z - cz))); t = { tx: cx, ty: cy, tz: cz, dist: R * 1.55 + 450 }; }
   if (now) Object.assign(T3.cam, t); else T3.camTo = t; run3d();
 }
-// Space is steered like a globe: one finger sideways turns the tower round its own axis (the part touched follows),
-// up or down tips it over round the screen's horizontal line through the spot touched – without limit, right over if wanted –, diagonally both at once.
+// Space is steered like a trackball: one finger rolls the tower whichever way it moves, round the screen's own lines
+// through the selected part (else the middle of the tower), which stays put – without limit, right over if wanted.
 // Two fingers: slide in the plane of the screen, pinch closer or further, twirl to turn the picture in the plane of the
 // screen; the spot between them stays exactly under them. Mouse: drag the same, the wheel zooms. A tap is a tap up to 8 px.
 const PITCH = [0.1, 1.5];
@@ -607,11 +607,15 @@ function turnBy(dx, ref) {   // turn round the axis so that ref moves by dx side
   let r = ref; if (!r || Math.hypot(r.x - ax.x, r.z - ax.z) < R * 0.4) { const B = camBasis(); r = { x: ax.x + B.fwd[0] * R, y: (r || c).y ?? c.ty, z: ax.z + B.fwd[2] * R }; }
   const q0 = screenOf(r); spinAxis(0.01); const q1 = screenOf(r); spinAxis(-0.01); const rate = q0 && q1 ? (q1.x - q0.x) / 0.01 : -scale3() * R;
   if (Math.abs(rate) > 1e-3) spinAxis(Math.max(-0.3, Math.min(0.3, dx / rate))); T3.camTo = null; run3d(); }
-function tiltBy(dy, ref) {   // tip the tower over round the screen's horizontal line through the spot touched (it stays put); no limit
-  const c = T3.cam, r = ref || { x: c.tx, y: c.ty, z: c.tz }, a = dy * 0.006, cs = Math.cos(a), sn = Math.sin(a), B = camBasis();
-  const dot = (u, v) => u[0] * v[0] + u[1] * v[1] + u[2] * v[2], v = [c.tx - r.x, c.ty - r.y, c.tz - r.z];
-  const f = B.fwd.map((x, k) => x * cs + B.up[k] * sn), u = B.up.map((x, k) => x * cs - B.fwd[k] * sn), g = B.right;   // (the view turned: the line across the screen stays)
-  const vr = dot(v, g), vu = dot(v, B.up), vf = dot(v, B.fwd); c.tx = r.x + vr * g[0] + vu * u[0] + vf * f[0]; c.ty = r.y + vr * g[1] + vu * u[1] + vf * f[1]; c.tz = r.z + vr * g[2] + vu * u[2] + vf * f[2];   // (the pivot carried round the spot)
+function pivot3() {   // what one finger turns the tower round: the selected part, else the middle of the tower
+  const L = TW3.lay; if (S.sel && L) { const r = refAt(0, 0, S.sel); if (r) return r; } const a = towerAxis(); return { x: a.x, y: (a.y0 + a.y1) / 2, z: a.z }; }
+function roll3(dx, dy, piv) {   // trackball: the tower rolls the way the finger moves, round the screen's own lines through the pivot (which stays put)
+  const c = T3.cam, r = piv || pivot3(), L = TW3.lay, q = screenOf(r), R = L ? Math.max(300, ...L.floors.map(f => Math.max(f.x1 - f.x0, f.z1 - f.z0) / 2)) : 800;
+  const k = Math.max(0.0015, Math.min(0.012, 1 / (R * (q ? q.s : scale3())))), a = dy * k, b = dx * k, B = camBasis();   // (speed: the tower's near edge keeps up with the finger)
+  const dot = (u, v) => u[0] * v[0] + u[1] * v[1] + u[2] * v[2], v = [c.tx - r.x, c.ty - r.y, c.tz - r.z], vr = dot(v, B.right), vu = dot(v, B.up), vf = dot(v, B.fwd);
+  let f = B.fwd.map((x, i) => x * Math.cos(a) + B.up[i] * Math.sin(a)), u = B.up.map((x, i) => x * Math.cos(a) - B.fwd[i] * Math.sin(a)), g = B.right;   // (up/down: round the line across the screen)
+  const f2 = f.map((x, i) => x * Math.cos(b) - g[i] * Math.sin(b)); g = g.map((x, i) => x * Math.cos(b) + f[i] * Math.sin(b)); f = f2;   // (sideways: round the line up the screen)
+  c.tx = r.x + vr * g[0] + vu * u[0] + vf * f[0]; c.ty = r.y + vr * g[1] + vu * u[1] + vf * f[1]; c.tz = r.z + vr * g[2] + vu * u[2] + vf * f[2];   // (the view's centre carried round the pivot)
   const p = Math.asin(Math.max(-1, Math.min(1, f[1]))), cp = Math.cos(p);   // back to turn, tilt and twirl
   if (cp < 1e-5) { c.pitch = p; c.yaw = Math.atan2(-g[2], g[0]); c.roll = 0; }
   else { const y = Math.atan2(f[0], f[2]), sy = Math.sin(y), cy = Math.cos(y), sp = Math.sin(p); c.yaw = y; c.pitch = p; c.roll = Math.atan2(dot(g, [-sy * sp, cp, -cy * sp]), dot(g, [cy, 0, -sy])); }
@@ -639,9 +643,9 @@ cv3.addEventListener('pointermove', e => { if (S.view !== 'space') return move2(
   const d = T3.drag;
   if (!d) { const id = hit3d(e.offsetX, e.offsetY); if (id) tip(e, id); else $('#tip').hidden = true; return; }
   const tx = e.offsetX - d.x0, ty = e.offsetY - d.y0;
-  if (!d.moved) { if (Math.hypot(tx, ty) <= 8) return; d.moved = true; d.ref = refAt(d.x0, d.y0, d.id); }
+  if (!d.moved) { if (Math.hypot(tx, ty) <= 8) return; d.moved = true; d.ref = pivot3(); }
   const dx = e.offsetX - d.x, dy = e.offsetY - d.y; d.x = e.offsetX; d.y = e.offsetY;
-  if (dx) turnBy(dx, d.ref); if (dy) tiltBy(dy, d.ref); d.vx = dx; d.vy = dy;   // (sideways turns round the axis, up/down tips it over – both at once, like a globe)
+  roll3(dx, dy, d.ref); d.vx = dx; d.vy = dy;   // (a trackball: the tower rolls whichever way the finger moves)
 });
 const up3 = e => { T3.ptrs.delete(e.pointerId); if (T3.ptrs.size < 2) { T3.pinch = null; T2.pinch = null; } const d = T3.drag; T3.drag = null;
   if (d?.moved && S.view === 'space' && Math.hypot(d.vx || 0, d.vy || 0) > 2) T3.spin = { vx: (d.vx || 0) * 0.6, vy: (d.vy || 0) * 0.6, ref: d.ref };   // (a little glide after letting go)
@@ -673,7 +677,7 @@ function renderPanel() {
       <div class="heat">${[0, 1, 2, 3, 4, 5].map(i => `<i style="background:var(--h${i})" title="${i}"></i>`).join('')}<span style="margin-left:6px">none … very high</span></div>
       <div><span class="sw" style="border-top:2px dashed var(--flow);background:none;height:0"></span>dashed outline: changed in the version shown</div>
       <div>Selecting a part shows its direct links; <i>Whole chains</i> (Options) follows them further. <i>Relies on / Relied on by / Both</i> then hides everything else.</div>
-      <div>In <i>Space</i>, swipe left or right to turn the tower round its axis and up or down to tip it over (right round, if you like) – diagonally both at once, like a globe; two fingers move the tower in the plane of the screen, pinch for closer or further and twist to turn; tap a floor's name in the margin to glide there (with a mouse: drag the same, the wheel zooms); tap a floor's name in the margin to glide there (with a mouse: drag the same, shift-drag tilts, the wheel zooms); names never cover each other – where one would, the part shows as a chip; <i>Front</i>, <i>Top</i> and <i>Corner</i> turn it for you, <i>Floors</i> sets the height between the floors. Far away, parts are chips in their colour; nearer, their names; near, the whole card. ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
+      <div>In <i>Space</i>, one finger rolls the tower whichever way it moves, like a trackball, round the selected part (or the middle of the tower); two fingers move the tower in the plane of the screen, pinch for closer or further and twist to turn; tap a floor's name in the margin to glide there (with a mouse: drag the same, the wheel zooms); tap a floor's name in the margin to glide there (with a mouse: drag the same, shift-drag tilts, the wheel zooms); names never cover each other – where one would, the part shows as a chip; <i>Front</i>, <i>Top</i> and <i>Corner</i> turn it for you, <i>Floors</i> sets the height between the floors. Far away, parts are chips in their colour; nearer, their names; near, the whole card. ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
       <div>Four views of the same parts, the selection kept between them: <b>Flow</b> – columns from the sources on the left to the screen on the right; <b>Map</b> – each main part as a region with its parts, ribbons for how much they connect; <b>Focus</b> – the selected part in the middle, data coming in on the left and going out on the right, the code it calls above and the code calling it below; <b>Space</b> – a tower of four floors, the sources at the bottom and the screen on top: every main part a plot on its floor with its parts standing on it, lines between floors running straight up or down a shaft; Front, Top and Corner turn it, Floors sets their height. <b>Data</b>, <b>Code</b> and <b>Selected only</b> choose the lines, in any combination.</div>
       <div>In Flow, lines between parts of the same column are drawn only for the selected part (↕ on a card counts them), and the lines of an opened group are bundled into one ribbon per partner until a part is selected. Zoomed out, cards show only their names.</div>
       <div><b>Explore</b> opens guided walks through Pult, its start-up, traces of functions, where data comes from and goes, its health and comparisons between versions; the parts concerned light up, numbered by step.</div>
@@ -1037,7 +1041,7 @@ function frameTower(now) {
   if (T3.fitAll) { T3.fitAll = false; fitTower(null, true); }
   const c = T3.cam; let moving = false;
   if (T3.camTo) { const t = T3.camTo; let done = true; for (const k of ['tx', 'ty', 'tz', 'dist', 'yaw', 'pitch', 'roll']) { if (t[k] == null) continue; if (k === 'yaw' || k === 'pitch') { const P2 = 2 * Math.PI; c[k] = (c[k] || 0) - P2 * Math.round(((c[k] || 0) - t[k]) / P2); } c[k] = (c[k] || 0) + (t[k] - (c[k] || 0)) * 0.14; if (Math.abs(t[k] - c[k]) > (k[0] === 't' ? 0.5 : k === 'dist' ? 1 : 1e-3)) done = false; } if (done) { Object.assign(c, t); T3.camTo = null; } else moving = true; }
-  if (T3.spin) { const g = T3.spin; if (g.vx) turnBy(g.vx, g.ref); if (g.vy) tiltBy(g.vy, g.ref); g.vx *= 0.82; g.vy *= 0.82; if (Math.hypot(g.vx, g.vy) < 0.4) T3.spin = null; else moving = true; }
+  if (T3.spin) { const g = T3.spin; roll3(g.vx, g.vy, g.ref); g.vx *= 0.82; g.vy *= 0.82; if (Math.hypot(g.vx, g.vy) < 0.4) T3.spin = null; else moving = true; }
   const f = H * 0.95, B = camBasis(), P = pt => proj(B, pt, W, H, f);
   const quad = (y, x0, x1, z0, z1) => { const ps = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([a, b]) => P({ x: a, y, z: b })); return ps.every(Boolean) ? ps : null; };
   const sel = S.sel && lay.pos.has(S.sel) ? S.sel : null, r = sel ? reach(sel, lay.edges) : null, HV = visHL(lay.pos);

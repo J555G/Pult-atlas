@@ -160,6 +160,14 @@
   (measured: after a 0.5 rad twirl a swipe down moves a far part straight down the screen; a full turn returns exactly).
 - Parts near the tower's axis barely move on a sideways swipe – kept as it is for now (owner).
 
+## Decided 21 Oct (13:26)
+- The globe rules conflicted (sideways turned round the tower's own axis, up/down round the screen's line, each swipe
+  round a different spot – tipped or twirled, sideways went slanted or backwards and the tower wandered). Replaced, by
+  the owner's choice, with a trackball: one finger rolls the tower whichever way it moves, round the screen's own lines,
+  pivoting on the selected part (else the middle of the tower), which stays put. Speed set so the tower's near edge
+  keeps up with the finger. Measured: parts move the finger's way upright, twirled and upside down; the pivot does not
+  move; right-down-up-left returns exactly. Front / Top / Corner set the tower straight again.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
