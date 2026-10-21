@@ -113,6 +113,17 @@
 - The divider can be pulled all the way to the edge (the pane closes, the drawing takes the whole width; on phones
   down to the bottom). A ⅓ button on the divider brings the pane back to the right third (phones: the bottom third).
 
+## Decided 21 Oct (10:10)
+- Space steered like a map app (owner's choice over a freed turntable or walking through): one finger slides the floors
+  so the spot touched stays under the finger (with a glide); two fingers pinch to zoom towards the floor spot between
+  them and twist to turn round it; both fingers up or down together tilt (from nearly level to straight down). Mouse:
+  drag slides, right/shift-drag turns and tilts, wheel zooms at the pointer. What two fingers do is decided once per
+  touch from both fingers' movement (touch events arrive one finger at a time – judged per event, a twist looked like a
+  tilt and the halves cancelled out).
+- Bug found and fixed: the tower had been seen from below all along (the tilt's sign was reversed, so the limit meant
+  to keep the camera above the floors kept it underneath). The camera is now always above.
+- Measured: slide, pinch and wheel keep the touched spot exactly in place; twist turns the floors the fingers' way.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
