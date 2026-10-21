@@ -109,6 +109,10 @@
   placed is left out and its card becomes a small chip. Floors spaced by their depth so they do not cover each other.
 - Measured, not yet acted on: 200–600 style look-ups per frame in Space (3–5 ms a frame on a desktop, more on phones).
 
+## Decided 21 Oct (09:58)
+- The divider can be pulled all the way to the edge (the pane closes, the drawing takes the whole width; on phones
+  down to the bottom). A ⅓ button on the divider brings the pane back to the right third (phones: the bottom third).
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
