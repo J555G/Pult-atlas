@@ -213,6 +213,11 @@ footer input[type=range] { accent-color: var(--acc); }
 #divider { flex: none; width: 16px; margin: 0 -8px; position: relative; z-index: 5; cursor: col-resize; touch-action: none; }
 #divider::after { content: ''; position: absolute; top: 50%; left: 50%; width: 6px; height: 48px; border-radius: 3px; background: var(--line); transform: translate(-50%, -50%); }
 #divider:hover::after, #divider.drag::after { background: var(--acc); }
+#paneThird { position: absolute; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%) translateY(-70px); width: 30px; height: 30px; border-radius: 15px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 13px var(--ui); cursor: pointer; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+.touch #paneThird { width: 40px; height: 40px; border-radius: 20px; font-size: 15px; transform: translate(-50%, -50%) translateY(-84px); }
+body.paneShut #paneThird { transform: translate(-100%, -50%) translateY(-70px); left: 0; }
+body.paneShut #panel { padding: 0; border: 0; overflow: hidden; }
+@media (max-width: 760px) { #paneThird, .touch #paneThird { transform: translate(-50%, -50%) translateX(-90px); } body.paneShut #paneThird { left: 50%; transform: translate(-50%, -100%) translateX(-90px); top: 0; } }
 .touch #divider { width: 28px; margin: 0 -14px; } .touch #divider::after { width: 8px; height: 64px; }
 @media (max-width: 760px) { #divider { width: auto; height: 16px; margin: -8px 0; cursor: row-resize; } #divider::after { width: 48px; height: 6px; } .touch #divider { width: auto; height: 28px; margin: -14px 0; } .touch #divider::after { width: 64px; height: 8px; } }
 #segArr, #flatBtn { display: none !important; } body:not(.v-space) #segSnap, body:not(.v-space) .rng { display: none; }
@@ -265,7 +270,7 @@ body.compact header { flex-wrap: nowrap; } body.compact .search { flex: 1 1 80px
 </div>
 <main>
   <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><div class="hint" id="hint" aria-live="polite"></div><div class="tip" id="tip" hidden></div></div>
-  <div id="divider" role="separator" aria-orientation="vertical" aria-label="Drag to change the width of the pane; double-tap for the usual width" tabindex="0"></div>
+  <div id="divider" role="separator" aria-orientation="vertical" aria-label="Drag to change the width of the pane, all the way to the edge to close it" tabindex="0"><button id="paneThird" title="The pane on the right third of the screen" aria-label="Pane to a third of the screen">⅓</button></div>
   <aside id="panel" aria-label="About the part"><div id="pnav"><button class="plain" id="pback" aria-label="Back" title="Back" disabled>‹</button><button class="plain" id="pfwd" aria-label="Forward" title="Forward" disabled>›</button><button class="plain" id="pclose" aria-label="Close">✕</button></div><div id="pbody"></div></aside>
 </main>
 <footer>
@@ -1445,11 +1450,16 @@ function setSize(v) { S.size = v; document.documentElement.style.setProperty('--
 if (!TOUCH) $('.sizes').hidden = true;
 // the divider: drag to make the pane wider or narrower (higher or lower on phones); double-tap for the usual size
 const isCol = () => getComputedStyle($('main')).flexDirection === 'column';
-function paneFit() { const P = $('#panel'), m = $('main').getBoundingClientRect();
-  if (isCol()) { P.style.width = ''; P.style.maxWidth = ''; P.style.height = S.paneH ? Math.max(120, Math.min(m.height - 140, S.paneH)) + 'px' : ''; }
-  else { P.style.height = ''; P.style.width = S.paneW ? Math.max(260, Math.min(m.width - 300, S.paneW)) + 'px' : ''; P.style.maxWidth = S.paneW ? 'none' : ''; } }
+// the pane can be pulled away completely (to the right edge, or down on phones); ⅓ brings it back to a third of the screen
+function paneFit() { const P = $('#panel'), m = $('main').getBoundingClientRect(), col = isCol();
+  const v = col ? S.paneH : S.paneW, max = col ? m.height - 120 : m.width - 260, shut = v != null && v < 90;
+  document.body.classList.toggle('paneShut', shut);
+  if (col) { P.style.width = ''; P.style.maxWidth = ''; P.style.height = v == null ? '' : shut ? '0px' : Math.min(max, v) + 'px'; }
+  else { P.style.height = ''; P.style.width = v == null ? '' : shut ? '0px' : Math.min(max, v) + 'px'; P.style.maxWidth = v == null ? '' : 'none'; } }
+function paneThird() { const m = $('main').getBoundingClientRect(); if (isCol()) S.paneH = Math.round(m.height / 3); else S.paneW = Math.round(m.width / 3); keep(); paneFit(); draw(); }
 { const dv = $('#divider'); let drag = null, lastTap = 0;
-  dv.addEventListener('pointerdown', e => { e.preventDefault(); dv.setPointerCapture(e.pointerId); drag = e.pointerId; dv.classList.add('drag');
+  $('#paneThird').addEventListener('pointerdown', e => e.stopPropagation()); $('#paneThird').onclick = e => { e.stopPropagation(); paneThird(); };
+  dv.addEventListener('pointerdown', e => { if (e.target.closest('#paneThird')) return; e.preventDefault(); dv.setPointerCapture(e.pointerId); drag = e.pointerId; dv.classList.add('drag');
     const now = Date.now(); if (now - lastTap < 350) { S.paneW = S.paneH = null; keep(); paneFit(); run3d(); drag = null; dv.classList.remove('drag'); } lastTap = now; });
   dv.addEventListener('pointermove', e => { if (drag !== e.pointerId) return; const m = $('main').getBoundingClientRect();
     if (isCol()) S.paneH = Math.round(m.bottom - e.clientY); else S.paneW = Math.round(m.right - e.clientX); paneFit(); run3d(); });
