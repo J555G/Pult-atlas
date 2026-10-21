@@ -591,7 +591,20 @@ function pan3d(dx, dy) {   // the view moved across the screen by dx, dy pixels
   for (let i = 0; i < 3; i++) T3.cam[['tx', 'ty', 'tz'][i]] -= (B.right[i] * dx - B.up[i] * dy) * u;
 }
 function rrect(x, a, b, w, h, r) { if (x.roundRect) return x.roundRect(a, b, w, h, r); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
-function hit3d(ex, ey) { for (let i = T3.drawn.length - 1; i >= 0; i--) { const d = T3.drawn[i]; if (Math.abs(ex - d.x) <= d.w && Math.abs(ey - d.y) <= d.h) return d.id; } return null; }
+function hit3d(ex, ey) { if (S.view === 'space' && TW3.lay) return hitTower(ex, ey); for (let i = T3.drawn.length - 1; i >= 0; i--) { const d = T3.drawn[i]; if (Math.abs(ex - d.x) <= d.w && Math.abs(ey - d.y) <= d.h) return d.id; } return null; }
+function hitTower(ex, ey) {   // only what is in direct view: names on top first, then the nearest along the line of sight – card, floor, plot or group area, see-through or not
+  const D = T3.drawn, under = d => Math.abs(ex - d.x) <= d.w && Math.abs(ey - d.y) <= d.h;
+  for (let i = D.length - 1; i >= 0; i--) if (D[i].lab && under(D[i])) return D[i].id;
+  const L = TW3.lay, c = T3.cam, B = camBasis(), W = cv3.clientWidth, H = cv3.clientHeight, f = H * 0.95;
+  const C = [c.tx + B.fwd[0] * c.dist, c.ty + B.fwd[1] * c.dist, c.tz + B.fwd[2] * c.dist], R = [0, 1, 2].map(i => B.right[i] * (ex - W / 2) / f - B.up[i] * (ey - H / 2) / f - B.fwd[i]);   // (the line of sight: C + R·depth)
+  let best = { z: Infinity, id: null };
+  for (const fl of L.floors) { if (Math.abs(R[1]) < 1e-9) continue; const z = (fl.y - C[1]) / R[1]; if (z < 60 || z >= best.z) continue;
+    const px = C[0] + R[0] * z, pz = C[2] + R[2] * z, inside = o => px >= o.x0 && px <= o.x1 && pz >= o.z0 && pz <= o.z1; if (!inside(fl)) continue;
+    const g = L.groups.filter(g => Math.abs(g.y - fl.y) < 1 && inside(g)).sort((a, b) => (a.x1 - a.x0) * (a.z1 - a.z0) - (b.x1 - b.x0) * (b.z1 - b.z0))[0], pl = L.plots.find(p => Math.abs(p.y - fl.y) < 1 && inside(p));
+    best = { z, id: g ? g.id : pl ? pl.id : null }; }   // (a floor, its plots and their group areas are one layer: the most particular one under the finger)
+  let card = null; for (const d of D) if (!d.lab && d.z != null && under(d) && (!card || d.z < card.z)) card = d;
+  if (card && card.z <= best.z + 40) return card.id;   // (a card standing on the spot touched counts as in front of it)
+  return best.id; }
 function fit3d(id, now) {   // the camera to a part, or to all
   const ns = [...T3.nodes.values()]; if (!ns.length) return;
   let t;
@@ -1124,13 +1137,13 @@ function frameTower(now) {
       x.lineWidth = mk ? 2.5 : 0.8; x.strokeStyle = mk || css('--line'); x.stroke(); x.globalAlpha = 1; }
     else { x.save(); x.translate(q.x, q.y); x.scale(q.s, q.s); T2.k = q.s;
     paintCard2(x, id, { x: 0, y: 0, w: CW / 2, h: CH / 2 }, mk, al);
-    x.restore(); } const sb = chip.has(id) ? { id, x: q.x, y: q.y, w: Math.max(10, Math.min(CW * q.s, 34) / 2), h: Math.max(8, Math.min(CH * q.s, 11) / 2) } : { id, x: q.x, y: q.y, w: CW / 2 * q.s, h: CH / 2 * q.s }; T3.drawn.push(sb); if (hv?.n) badge(x, sb, hv, 1); }
+    x.restore(); } const sb = chip.has(id) ? { id, x: q.x, y: q.y, w: Math.max(10, Math.min(CW * q.s, 34) / 2), h: Math.max(8, Math.min(CH * q.s, 11) / 2) } : { id, x: q.x, y: q.y, w: CW / 2 * q.s, h: CH / 2 * q.s }; sb.z = q.z; T3.drawn.push(sb); if (hv?.n) badge(x, sb, hv, 1); }
   T2.k = kSave; x.globalAlpha = 1;
   // the names last, where they were placed, with a halo
   x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
-  for (const b of groupLab) { x.globalAlpha = 1; x.font = `700 ${b.fs}px "Source Sans 3", sans-serif`; x.lineWidth = 4; x.strokeStyle = css('--bg'); x.strokeText('▾ ' + N.get(b.id).name, b.x, b.y); x.fillStyle = S.sel === b.id ? css('--acc') : css('--ink'); x.fillText('▾ ' + N.get(b.id).name, b.x, b.y); T3.drawn.push({ id: b.id, x: b.x, y: b.y, w: b.w, h: b.h + 3 }); }
+  for (const b of groupLab) { x.globalAlpha = 1; x.font = `700 ${b.fs}px "Source Sans 3", sans-serif`; x.lineWidth = 4; x.strokeStyle = css('--bg'); x.strokeText('▾ ' + N.get(b.id).name, b.x, b.y); x.fillStyle = S.sel === b.id ? css('--acc') : css('--ink'); x.fillText('▾ ' + N.get(b.id).name, b.x, b.y); T3.drawn.push({ id: b.id, x: b.x, y: b.y, w: b.w, h: b.h + 3, lab: true }); }
   for (const b of plotLab) { const lit = !HV.size || [...HV.keys()].some(k => N.get(k).l1 === b.id) || b.id === selPlot || b.id === S.sel;
-    x.globalAlpha = lit ? 1 : 0.45; x.font = `700 ${b.fs}px "Source Sans 3", sans-serif`; x.lineWidth = 5; x.strokeStyle = css('--bg'); x.strokeText(N.get(b.id).name, b.x, b.y); x.fillStyle = S.sel === b.id ? css('--acc') : css('--ink'); x.fillText(N.get(b.id).name, b.x, b.y); T3.drawn.push({ id: b.id, x: b.x, y: b.y, w: b.w, h: b.h + 3 }); }
+    x.globalAlpha = lit ? 1 : 0.45; x.font = `700 ${b.fs}px "Source Sans 3", sans-serif`; x.lineWidth = 5; x.strokeStyle = css('--bg'); x.strokeText(N.get(b.id).name, b.x, b.y); x.fillStyle = S.sel === b.id ? css('--acc') : css('--ink'); x.fillText(N.get(b.id).name, b.x, b.y); T3.drawn.push({ id: b.id, x: b.x, y: b.y, w: b.w, h: b.h + 3, lab: true }); }
   x.globalAlpha = 1;
   x.textAlign = 'left'; x.textBaseline = 'middle';
   T3.floorHits = floorLab;
