@@ -203,7 +203,7 @@ body.paneShut #panel { padding: 0; border: 0; overflow: hidden; }
 @media (max-width: 760px) { #paneThird, .touch #paneThird { transform: translate(-50%, -50%) translateX(-90px); } body.paneShut #paneThird { left: 50%; transform: translate(-50%, -100%) translateX(-90px); top: 0; } }
 .touch #divider { width: 28px; margin: 0 -14px; } .touch #divider::after { width: 8px; height: 64px; }
 @media (max-width: 760px) { #divider { width: auto; height: 16px; margin: -8px 0; cursor: row-resize; } #divider::after { width: 48px; height: 6px; } .touch #divider { width: auto; height: 28px; margin: -14px 0; } .touch #divider::after { width: 64px; height: 8px; } }
-#segArr, #flatBtn { display: none !important; } body:not(.v-space) #segSnap, body:not(.v-space) .rng { display: none; }
+#segArr, #flatBtn { display: none !important; } body:not(.v-space) #segSnap, body:not(.v-space) .rng, body:not(.v-space) #tiltRng { display: none; }
 /* compact bar (touch screens and narrow windows): one row; the switches live in a tray that drops over the drawing */
 #ctlWrap { display: contents; } #ctlBtn { display: none; }
 .touch #tray .seg button, .touch #tray button.plain { min-height: 44px; min-width: 44px; padding: 0 11px; font-size: 15px; } .touch #tray .rng input { width: 110px; height: 44px; } .touch #tray .rng { font-size: 13px; }
@@ -231,6 +231,7 @@ body.compact header { flex-wrap: nowrap; } body.compact .search { flex: 1 1 80px
   <button class="plain" id="flatBtn" aria-pressed="false" title="Flatten the view onto a plane">Flat</button>
   <div class="seg" id="segMetric" title="Colour by"><button data-v="part" aria-pressed="true">Part</button><button data-v="mem" aria-pressed="false" title="Memory">Mem</button><button data-v="store" aria-pressed="false" title="Storage" aria-label="Storage"><span class="l">Store</span><span class="s">Sto</span></button><button data-v="cpu" aria-pressed="false">CPU</button><button data-v="gpu" aria-pressed="false">GPU</button></div>
   <div class="seg" id="segFocus" title="With a part selected, show only…"><button data-v="all" aria-pressed="true">All</button><button data-v="up" aria-pressed="false" title="only what the selected part relies on" aria-label="Relies on"><span class="l">Relies on</span><span class="s">↑</span></button><button data-v="down" aria-pressed="false" title="only what relies on the selected part" aria-label="Relied on by"><span class="l">Relied on by</span><span class="s">↓</span></button><button data-v="both" aria-label="Both" aria-pressed="false" title="only the selected part's connections"><span class="l">Both</span><span class="s">↕</span></button></div>
+  <label class="rng" id="tiltRng" title="How steeply you look down on the tower"><span>Tilt</span> <input type="range" id="tilt" min="0.1" max="1.5" step="0.01" value="0.55" aria-label="Tilt"></label>
   <label class="rng" title="The height between the floors"><span>Floors</span> <input type="range" id="spread" min="0.4" max="3" step="0.05" value="1" aria-label="Spacing"></label>
   <button class="plain" id="optBtn" aria-expanded="false" title="Options"><span class="t">Options </span>▾</button>
   </div>
@@ -587,7 +588,12 @@ function fit3d(id, now) {   // the camera to a part, or to all
 const PITCH = [0.1, 1.5];
 const towerAxis = () => { const L = TW3.lay; if (!L?.floors.length) return { x: 0, z: 0, y0: 0, y1: 0 };
   return { x: L.floors.reduce((s, f) => s + (f.x0 + f.x1) / 2, 0) / L.floors.length, z: L.floors.reduce((s, f) => s + (f.z0 + f.z1) / 2, 0) / L.floors.length, y0: Math.min(...L.floors.map(f => f.y)), y1: Math.max(...L.floors.map(f => f.y)) + CH }; };
-function onAxis() { const a = towerAxis(), c = T3.cam; c.tx = a.x; c.tz = a.z; c.ty = Math.max(a.y0, Math.min(a.y1, c.ty)); }
+function onAxis() { const a = towerAxis(), c = T3.cam, L = TW3.lay, R = L ? Math.max(400, ...L.floors.map(f => Math.max(f.x1 - f.x0, f.z1 - f.z0))) : 2000;
+  c.ty = Math.max(a.y0 - R * 0.5, Math.min(a.y1 + R * 0.5, c.ty)); const dx = c.tx - a.x, dz = c.tz - a.z, r = Math.hypot(dx, dz); if (r > R) { c.tx = a.x + dx * R / r; c.tz = a.z + dz * R / r; } }   // (never further than about a floor's width from the tower)
+function slide3(dx, dy) {   // two fingers: the tower moves with them, in the plane facing the viewer
+  const B = camBasis(), k = 1 / scale3(); for (let i = 0; i < 3; i++) T3.cam[['tx', 'ty', 'tz'][i]] -= (B.right[i] * dx - B.up[i] * dy) * k; onAxis(); T3.camTo = null; run3d(); }
+function spinAxis(da) {   // turn the view round the tower's own axis (not round wherever the view was slid to)
+  const a = towerAxis(), c = T3.cam, x = c.tx - a.x, z = c.tz - a.z, cs = Math.cos(da), sn = Math.sin(da); c.yaw += da; c.tx = a.x + x * cs + z * sn; c.tz = a.z - x * sn + z * cs; }
 const scale3 = () => cv3.clientHeight * 0.95 / T3.cam.dist;   // (screen pixels per world unit at the pivot)
 function refAt(mx, my, id) {   // the spot that should follow the finger: the part touched, else the tower's axis at the floor nearest the finger
   const L = TW3.lay, B = camBasis(), W = cv3.clientWidth, H = cv3.clientHeight, f = H * 0.95; if (!L) return null;
@@ -600,12 +606,12 @@ function ride(dy, ref) {   // move up or down the tower so that ref moves by dy 
 function turnBy(dx, ref) {   // turn round the axis so that ref moves by dx sideways (parts near the axis: as if at the floor's edge)
   const c = T3.cam, L = TW3.lay, ax = towerAxis(), R = L ? Math.max(300, ...L.floors.map(f => Math.max(f.x1 - f.x0, f.z1 - f.z0) / 2)) : 800;
   let r = ref; if (!r || Math.hypot(r.x - ax.x, r.z - ax.z) < R * 0.4) { const B = camBasis(); r = { x: ax.x + B.fwd[0] * R, y: (r || c).y ?? c.ty, z: ax.z + B.fwd[2] * R }; }
-  const q0 = screenOf(r); c.yaw += 0.01; const q1 = screenOf(r); c.yaw -= 0.01; const rate = q0 && q1 ? (q1.x - q0.x) / 0.01 : -scale3() * R;
-  if (Math.abs(rate) > 1e-3) c.yaw += Math.max(-0.3, Math.min(0.3, dx / rate)); T3.camTo = null; run3d(); }
+  const q0 = screenOf(r); spinAxis(0.01); const q1 = screenOf(r); spinAxis(-0.01); const rate = q0 && q1 ? (q1.x - q0.x) / 0.01 : -scale3() * R;
+  if (Math.abs(rate) > 1e-3) spinAxis(Math.max(-0.3, Math.min(0.3, dx / rate))); T3.camTo = null; run3d(); }
 const tilt = dy => { T3.cam.pitch = Math.max(PITCH[0], Math.min(PITCH[1], T3.cam.pitch + dy * 0.0045)); T3.camTo = null; run3d(); };
 function zoomAt(f, mx, my) {   // closer or further by f, towards the height of the floor under (mx, my)
   const d0 = T3.cam.dist, d1 = Math.max(160, Math.min(20000, d0 * f)), k = 1 - d1 / d0, H = cv3.clientHeight;
-  T3.cam.ty += -(my - H / 2) / scale3() / Math.max(0.25, Math.cos(T3.cam.pitch)) * k; T3.cam.dist = d1; onAxis(); T3.camTo = null; T3.spin = null; run3d();
+  const W = cv3.clientWidth, B = camBasis(), u = 1 / scale3(); for (let i = 0; i < 3; i++) T3.cam[['tx', 'ty', 'tz'][i]] += (B.right[i] * (mx - W / 2) - B.up[i] * (my - H / 2)) * u * k; T3.cam.dist = d1; onAxis(); T3.camTo = null; T3.spin = null; run3d();
 }
 cv3.addEventListener('contextmenu', e => { if (S.view === 'space') e.preventDefault(); });
 cv3.addEventListener('pointerdown', e => { if (S.view !== 'space') return down2(e);
@@ -617,12 +623,7 @@ cv3.addEventListener('pointermove', e => { if (S.view !== 'space') return move2(
   if (T3.ptrs.has(e.pointerId)) T3.ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
   if (T3.pinch && T3.ptrs.size === 2) { const [a, b] = [...T3.ptrs.values()], p = T3.pinch, d = Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), ang = Math.atan2(b.y - a.y, b.x - a.x), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
     let da = ang - p.ang; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
-    if (!p.mode) {   // (decided once, from how both fingers have moved since they touched)
-      const mv = [...T3.ptrs].map(([k, v]) => { const s0 = p.start.get(k) || v; return { dx: v.x - s0.x, dy: v.y - s0.y }; }), far = mv.map(m => Math.hypot(m.dx, m.dy));
-      if (far.every(f => f > 10)) p.mode = mv.every(m => Math.abs(m.dy) > 1.5 * Math.abs(m.dx)) && Math.sign(mv[0].dy) === Math.sign(mv[1].dy) ? 'tilt' : 'zoom';
-      else if (far.some(f => f > 30)) p.mode = 'zoom';
-      if (!p.mode) return; }
-    if (p.mode === 'tilt') tilt(my - p.my); else { zoomAt(p.d / d, mx, my); if (Math.abs(da) > 0.0005) { T3.cam.yaw -= da; run3d(); } }
+    slide3(mx - p.mx, my - p.my); zoomAt(p.d / d, mx, my); if (Math.abs(da) > 0.0005) { spinAxis(da); run3d(); }   // (slide, pinch and twist at once, as with a photo)
     Object.assign(p, { d, ang, mx, my }); return; }
   const d = T3.drag;
   if (!d) { const id = hit3d(e.offsetX, e.offsetY); if (id) tip(e, id); else $('#tip').hidden = true; return; }
@@ -661,7 +662,7 @@ function renderPanel() {
       <div class="heat">${[0, 1, 2, 3, 4, 5].map(i => `<i style="background:var(--h${i})" title="${i}"></i>`).join('')}<span style="margin-left:6px">none … very high</span></div>
       <div><span class="sw" style="border-top:2px dashed var(--flow);background:none;height:0"></span>dashed outline: changed in the version shown</div>
       <div>Selecting a part shows its direct links; <i>Whole chains</i> (Options) follows them further. <i>Relies on / Relied on by / Both</i> then hides everything else.</div>
-      <div>In <i>Space</i>, swipe up or down to ride through the floors and left or right to turn the tower round its axis; pinch for closer or further, two fingers up or down together to tilt; tap a floor's name in the margin to glide there (with a mouse: drag the same, shift-drag tilts, the wheel zooms); names never cover each other – where one would, the part shows as a chip; <i>Front</i>, <i>Top</i> and <i>Corner</i> turn it for you, <i>Floors</i> sets the height between the floors. Far away, parts are chips in their colour; nearer, their names; near, the whole card. ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
+      <div>In <i>Space</i>, swipe up or down to ride through the floors and left or right to turn the tower round its axis; two fingers move the tower in the plane of the screen, pinch for closer or further and twist to turn; <i>Tilt</i> (Controls) sets how steeply you look down; tap a floor's name in the margin to glide there (with a mouse: drag the same, shift-drag tilts, the wheel zooms); tap a floor's name in the margin to glide there (with a mouse: drag the same, shift-drag tilts, the wheel zooms); names never cover each other – where one would, the part shows as a chip; <i>Front</i>, <i>Top</i> and <i>Corner</i> turn it for you, <i>Floors</i> sets the height between the floors. Far away, parts are chips in their colour; nearer, their names; near, the whole card. ‹ › go back and forward through the parts you looked at; ⌂ shows everything.</div>
       <div>Four views of the same parts, the selection kept between them: <b>Flow</b> – columns from the sources on the left to the screen on the right; <b>Map</b> – each main part as a region with its parts, ribbons for how much they connect; <b>Focus</b> – the selected part in the middle, data coming in on the left and going out on the right, the code it calls above and the code calling it below; <b>Space</b> – a tower of four floors, the sources at the bottom and the screen on top: every main part a plot on its floor with its parts standing on it, lines between floors running straight up or down a shaft; Front, Top and Corner turn it, Floors sets their height. <b>Data</b>, <b>Code</b> and <b>Selected only</b> choose the lines, in any combination.</div>
       <div>In Flow, lines between parts of the same column are drawn only for the selected part (↕ on a card counts them), and the lines of an opened group are bundled into one ribbon per partner until a part is selected. Zoomed out, cards show only their names.</div>
       <div><b>Explore</b> opens guided walks through Pult, its start-up, traces of functions, where data comes from and goes, its health and comparisons between versions; the parts concerned light up, numbered by step.</div>
@@ -1026,7 +1027,7 @@ function frameTower(now) {
   const c = T3.cam; let moving = false;
   if (T3.camTo) { const t = T3.camTo; let done = true; for (const k of ['tx', 'ty', 'tz', 'dist', 'yaw', 'pitch', 'roll']) { if (t[k] == null) continue; c[k] = (c[k] || 0) + (t[k] - (c[k] || 0)) * 0.14; if (Math.abs(t[k] - c[k]) > (k[0] === 't' ? 0.5 : k === 'dist' ? 1 : 1e-3)) done = false; } if (done) { Object.assign(c, t); T3.camTo = null; } else moving = true; }
   if (T3.spin) { const g = T3.spin; if (g.axis === 'turn') turnBy(g.v, g.ref); else ride(g.v, g.ref); g.v *= 0.82; if (Math.abs(g.v) < 0.4) T3.spin = null; else moving = true; }
-  c.roll = 0;
+  c.roll = 0; const ti = $('#tilt'); if (ti && document.activeElement !== ti && Math.abs(+ti.value - c.pitch) > 0.005) ti.value = c.pitch.toFixed(2);
   const f = H * 0.95, B = camBasis(), P = pt => proj(B, pt, W, H, f);
   const quad = (y, x0, x1, z0, z1) => { const ps = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([a, b]) => P({ x: a, y, z: b })); return ps.every(Boolean) ? ps : null; };
   const sel = S.sel && lay.pos.has(S.sel) ? S.sel : null, r = sel ? reach(sel, lay.edges) : null, HV = visHL(lay.pos);
@@ -1377,6 +1378,7 @@ const HINTS = { space: 'Four floors, the sources at the bottom and the screen on
   focus: 'The selected part in the middle · tap a neighbour to move to it · double-tap to open it' };
 function viewChanged() { document.body.classList.toggle('v-space', S.view === 'space'); $('#hint').textContent = ''; T2.fit = true; if (S.view === 'space') { T3.fitAll = true; Object.assign(T3.cam, SNAPS.corner); } }
 seg('#segView', 'view', viewChanged); viewChanged();
+$('#tilt').oninput = e => { T3.cam.pitch = +e.target.value; T3.camTo = null; T3.spin = null; run3d(); };
 $('#segSnap').onclick = e => { const b = e.target.closest('button'); if (!b) return; T3.spin = null; T3.camTo = Object.assign({}, SNAPS[b.dataset.snap]); run3d(); };
 { const paint = () => [...$('#segLines').children].forEach(b => b.setAttribute('aria-pressed', !!S[b.dataset.l]));
   $('#segLines').onclick = e => { const b = e.target.closest('button'); if (!b) return; S[b.dataset.l] = !S[b.dataset.l]; paint(); keep(); draw(); }; paint(); }

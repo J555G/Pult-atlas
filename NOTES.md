@@ -133,6 +133,15 @@
   the margin to glide there. The pivot always stays on the tower's axis. Mouse: drag the same, shift-drag tilts.
 - Floors about half as far apart (420 base, grown by 0.21 × floor depth); names still never overlap.
 
+## Decided 21 Oct (10:40)
+- Space, two fingers: sliding moves the tower in the plane of the screen (the plane facing the viewer, whatever the tilt),
+  pinch zooms towards the fingers, twist turns the tower round its axis the fingers' way – all at once. The pivot may now
+  leave the axis by up to about one floor's width (and half a floor-width above or below the tower); one-finger turning
+  still turns round the tower's axis, so a tower slid aside turns in place.
+- Tilt moved from 'two fingers up/down' to a Tilt slider in the Controls tray (Space only); Front / Top / Corner stay.
+- Measured: a two-finger slide moves a part by the fingers' distance (within ~10 %, parts nearer than the pivot a little
+  more); twist turns the parts the fingers' way; a one-finger turn after sliding aside keeps the axis in place.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
