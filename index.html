@@ -603,7 +603,7 @@ function hitTower(ex, ey) {   // only what is in direct view: names on top first
     const g = L.groups.filter(g => Math.abs(g.y - fl.y) < 1 && inside(g)).sort((a, b) => (a.x1 - a.x0) * (a.z1 - a.z0) - (b.x1 - b.x0) * (b.z1 - b.z0))[0], pl = L.plots.find(p => Math.abs(p.y - fl.y) < 1 && inside(p));
     best = { z, id: g ? g.id : pl ? pl.id : null }; }   // (a floor, its plots and their group areas are one layer: the most particular one under the finger)
   let card = null; for (const d of D) { const k = d.card; if (!k || Math.abs(R[1]) < 1e-9) continue; const z = (k.c.y - C[1]) / R[1]; if (z < 60 || (card && z >= card.z)) continue;
-    const px = C[0] + R[0] * z - k.c.x, pz = C[2] + R[2] * z - k.c.z; if (Math.abs(px * k.u[0] + pz * k.u[2]) <= CW / 2 && Math.abs(px * k.v[0] + pz * k.v[2]) <= CH / 2 + 6) card = { id: d.id, z, fy: k.fy }; }
+    const px = C[0] + R[0] * z - k.c.x, pz = C[2] + R[2] * z - k.c.z; if (Math.abs(px * k.u[0] + pz * k.u[2]) <= k.hw && Math.abs(px * k.v[0] + pz * k.v[2]) <= k.hd) card = { id: d.id, z, fy: k.fy }; }
   if (card) { let block = Infinity; for (const fl of L.floors) { if (Math.abs(fl.y - card.fy) < 1 || Math.abs(R[1]) < 1e-9) continue; const z = (fl.y - C[1]) / R[1]; const px = C[0] + R[0] * z, pz = C[2] + R[2] * z;
       if (z > 60 && px >= fl.x0 && px <= fl.x1 && pz >= fl.z0 && pz <= fl.z1) block = Math.min(block, z); }   // (other floors only: its own floor, plot and group never hide it)
     if (card.z < block) return card.id; }
@@ -1021,7 +1021,7 @@ function wheel2(e) { const k = Math.max(0.12, Math.min(4, T2.k * Math.exp(-e.del
 // ---------------------------------------------------------------- Space: a tower of four floors (sources at the bottom, the screen on top)
 // Every main part is a plot on its floor, its parts upright cards in rows on the plot; lines between floors run straight
 // up or down a shaft and across, never diagonally. Everything is placed by rule: nothing moves but the camera.
-const TW3 = { lay: null };
+const TW3 = { lay: null }, TILE = { w: 200, d: 92 };   // (a part: a flat tile on its plot, its name written upright over it)
 const FLOORS = ['sources', 'engines', 'behind', 'screen'], FLOORNAME = { sources: 'Sources', engines: 'Engines', behind: 'Stored and behind the scenes', screen: 'On screen' };
 function layTower(vis) {
   const items = new Map();
@@ -1030,7 +1030,7 @@ function layTower(vis) {
     if (its.length === 1 && its[0] === l.id) its = openedUnder(l.id);   // (a closed main part: its parts, and inside them what is opened)
     if (its.length) items.set(l.id, its); }
   const all = new Set([...items.values()].flat()), edges = visEdges(all).filter(lineOn);
-  const TX = 230, TZ = 230, PM = 20, pos = new Map(), plots = [], floors = [], groups = []; let FH = 420 * S.spread;
+  const TX = TILE.w + 24, TZ = TILE.d + 24, PM = 24, pos = new Map(), plots = [], floors = [], groups = []; let FH = 420 * S.spread;
   FLOORS.forEach((t, fi) => {
     const ls = MODEL.l1.filter(l => l.tier === t && items.has(l.id)); if (!ls.length) return;
     const y = fi * FH;
@@ -1120,7 +1120,7 @@ function frameTower(now) {
     drawPath(shaft(a, b, lay.FH, true, true), col, al, Math.min(4, 1.2 + Math.log2(1 + e.n) * 0.6), e.kind === 'flow'); }
   };
   // what is written, in order of priority: the selected part, the names of the plots, the names of opened groups, then the
-  // cards from the nearest back; whatever would cover something already placed is left out (a card then shows as a chip)
+  // names of the parts from the nearest back; whatever would cover something already placed is left out (its tile stays)
   const over = (a, b) => Math.abs(a.x - b.x) < a.w + b.w + 2 && Math.abs(a.y - b.y) < a.h + b.h + 2, taken = [];
   const kz = KZ(), plotLab = [], groupLab = [];
   for (const p of lay.plots) { const cx = (p.x0 + p.x1) / 2, cz = (p.z0 + p.z1) / 2;
@@ -1133,35 +1133,27 @@ function frameTower(now) {
   const floorLab = []; { const fl = lay.floors.map(fl => { const q = P({ x: fl.x0, y: fl.y, z: (fl.z0 + fl.z1) / 2 }) || P({ x: (fl.x0 + fl.x1) / 2, y: fl.y, z: (fl.z0 + fl.z1) / 2 }); return q && { t: fl.t, y: q.y }; }).filter(Boolean).sort((a, b) => a.y - b.y);
     const fs = Math.round(14 * kz), gap = fs + 14; let last = -1e9; x.font = `italic ${fs}px "Gentium Book Plus", Georgia, serif`;
     for (const f of fl) { const y = Math.max(f.y, last + gap, 14); last = y; const w = x.measureText(FLOORNAME[f.t]).width; const b = { t: f.t, x: 6 + (w + 16) / 2, y, w: (w + 16) / 2, h: fs * 0.8, fs }; floorLab.push(b); taken.push(b); } }
-  // the cards lie flat on their plot, each turned on the spot so that its writing faces the viewer (from below: read the right way round)
-  let U = [B.right[0], 0, B.right[2]]; { const l = Math.hypot(U[0], U[2]); U = l > 0.05 ? [U[0] / l, 0, U[2] / l] : [Math.cos(c.yaw), 0, -Math.sin(c.yaw)]; }
-  const geo = new Map(), kzc = kz;
-  for (const [id, p] of lay.pos) { const q = P(p); if (!q) continue; let u = U, v = [-U[2], 0, U[0]];
-    const ea = P({ x: p.x + u[0] * CW / 2, y: p.y, z: p.z + u[2] * CW / 2 }), eb = P({ x: p.x + v[0] * CH / 2, y: p.y, z: p.z + v[2] * CH / 2 }); if (!ea || !eb) continue;
-    let a = { x: ea.x - q.x, y: ea.y - q.y }, b = { x: eb.x - q.x, y: eb.y - q.y };
-    if (b.y < 0) { v = v.map(t => -t); b = { x: -b.x, y: -b.y }; }   // (the card's foot towards the viewer)
-    if (a.x * b.y - a.y * b.x < 0) { u = u.map(t => -t); a = { x: -a.x, y: -a.y }; }   // (never mirrored)
-    const sa = Math.hypot(a.x, a.y) / (CW / 2), sb = Math.hypot(b.x, b.y) / (CH / 2);
-    geo.set(id, { q, a, b, u, v, sa, flat: sb / Math.max(1e-6, sa), bb: { x: q.x, y: q.y, w: Math.abs(a.x) + Math.abs(b.x), h: Math.abs(a.y) + Math.abs(b.y) } }); }
-  const cards = [...geo].map(([id, g]) => [id, g.q]).sort((a, b) => b[1].z - a[1].z), chip = new Set(), edge = new Map();
-  for (const [id] of [...cards].reverse()) { const g = geo.get(id);
-    if (CW * g.sa < 74 * kzc) { chip.add(id); continue; }   // (far: only its colour)
-    if (g.flat < 0.3) {   // (seen nearly edge-on: a sliver, its name written above it)
-      const fs = Math.round(12 * kzc); x.font = `600 ${fs}px "Source Sans 3", sans-serif`; const w = x.measureText(N.get(id).name).width;
-      const lb = { x: g.q.x, y: g.q.y - g.bb.h - fs * 0.7, w: w / 2 + 3, h: fs * 0.6, fs }; chip.add(id); if (id === S.sel || !taken.some(o => over(o, lb))) { taken.push(lb); edge.set(id, lb); } continue; }
-    if (id !== S.sel && taken.some(o => over(o, g.bb))) chip.add(id); else taken.push(g.bb); }
+  // the parts: flat tiles in tidy rows on their plot; each name written upright over its tile – never squashed or mirrored,
+  // from any side –, the nearest first; a name that would cover one already written is left out (its tile stays)
+  const geo = new Map(), tw = TILE.w / 2, td = TILE.d / 2;
+  for (const [id, p] of lay.pos) { const qd = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([m, n]) => P({ x: p.x + m * tw, y: p.y, z: p.z + n * td })); if (qd.some(v => !v)) continue;
+    const q = P(p); if (!q) continue; const xs = qd.map(v => v.x), ys = qd.map(v => v.y);
+    geo.set(id, { q, qd, bb: { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2, w: (Math.max(...xs) - Math.min(...xs)) / 2, h: (Math.max(...ys) - Math.min(...ys)) / 2 } }); }
+  const cards = [...geo].map(([id, g]) => [id, g.q]).sort((a, b) => b[1].z - a[1].z), names = new Map();
+  for (const [id] of [...cards].reverse()) { const g = geo.get(id), wpx = g.bb.w * 2; if (wpx < 26 && id !== S.sel) continue;
+    const fs = Math.round(Math.max(11, Math.min(17, TILE.w * g.q.s / 11)) * kz); x.font = `600 ${fs}px "Source Sans 3", sans-serif`;
+    let t = N.get(id).name; const mw = Math.max(70 * kz, wpx * 1.1); if (x.measureText(t).width > mw) { while (t.length > 3 && x.measureText(t + '…').width > mw) t = t.slice(0, -1); t += '…'; }
+    const lb = { x: g.q.x, y: g.q.y, w: x.measureText(t).width / 2 + 4, h: fs * 0.62, fs, t }; if (id === S.sel || !taken.some(o => over(o, lb))) { taken.push(lb); names.set(id, lb); } }
   const kSave = T2.k;
-  const quadOf = g => [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([m, n]) => ({ x: g.q.x + g.a.x * m + g.b.x * n, y: g.q.y + g.a.y * m + g.b.y * n }));
   const drawCard = (id, q) => { let al = 1; if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al = 0.3; const hv = HV.get(id); if (!sel && HV.size && !hv) al = 0.25; if (S.offv && netOf(id) === 'online') al *= 0.35;
-    const mk = id === sel ? css('--acc') : hv ? hlCol(hv.t) : null, g = geo.get(id), p = lay.pos.get(id);
-    if (chip.has(id)) {   // far or edge-on: the card's outline filled with its colour
-      const qd = quadOf(g); x.globalAlpha = al; x.beginPath(); qd.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath(); x.fillStyle = fill(id); x.fill();
-      x.lineWidth = mk ? 2.5 : 0.8; x.strokeStyle = mk || css('--line'); x.stroke(); x.globalAlpha = 1;
-      const lb = edge.get(id); if (lb) { x.font = `600 ${lb.fs}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 3; x.strokeStyle = css('--bg'); x.globalAlpha = Math.max(al, 0.5); x.strokeText(N.get(id).name, lb.x, lb.y); x.fillStyle = mk || css('--ink'); x.fillText(N.get(id).name, lb.x, lb.y); x.globalAlpha = 1;
-        T3.drawn.push({ id, x: lb.x, y: lb.y, w: lb.w, h: lb.h + 3, lab: true }); } }
-    else { x.save(); x.transform(g.a.x / (CW / 2), g.a.y / (CW / 2), g.b.x / (CH / 2), g.b.y / (CH / 2), q.x, q.y); T2.k = g.sa;   // (the card laid onto the plot)
-      paintCard2(x, id, { x: 0, y: 0, w: CW / 2, h: CH / 2 }, mk, al); x.restore(); }
-    const sb = { id, x: q.x, y: q.y, w: g.bb.w, h: g.bb.h, z: q.z, card: { c: p, u: g.u, v: g.v, fy: lay.plots.find(t => t.id === p.plot)?.y ?? p.y - 5 } }; T3.drawn.push(sb); if (hv?.n) badge(x, { id, x: q.x, y: q.y, w: Math.min(g.bb.w, CW / 2 * g.sa), h: Math.min(g.bb.h, CH / 2 * g.sa) }, hv, 1); };
+    const mk = id === sel ? css('--acc') : hv ? hlCol(hv.t) : null, g = geo.get(id), p = lay.pos.get(id), chg = V.chg.has(id) && S.ver > 0;
+    x.globalAlpha = al; x.beginPath(); g.qd.forEach((v, i) => i ? x.lineTo(v.x, v.y) : x.moveTo(v.x, v.y)); x.closePath(); x.fillStyle = fill(id); x.fill();
+    x.lineWidth = mk ? 3 : chg ? 2 : 1; x.strokeStyle = mk || (chg ? css('--flow') : css('--line')); x.stroke(); x.globalAlpha = 1;
+    const lb = names.get(id); if (lb) { x.font = `600 ${lb.fs}px "Source Sans 3", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round'; x.globalAlpha = Math.max(al, 0.45);
+      x.lineWidth = 3.5; x.strokeStyle = css('--bg'); x.strokeText(lb.t, lb.x, lb.y); x.fillStyle = mk || css('--ink'); x.fillText(lb.t, lb.x, lb.y); x.globalAlpha = 1;
+      T3.drawn.push({ id, x: lb.x, y: lb.y, w: lb.w, h: lb.h + 3, lab: true }); }
+    const sb = { id, x: g.bb.x, y: g.bb.y, w: g.bb.w, h: g.bb.h, z: q.z, card: { c: p, u: [1, 0, 0], v: [0, 0, 1], hw: tw, hd: td, fy: lay.plots.find(t => t.id === p.plot)?.y ?? p.y - 5 } }; T3.drawn.push(sb);
+    if (hv?.n) badge(x, lb || { id, x: g.bb.x, y: g.bb.y, w: Math.min(g.bb.w, 60), h: Math.min(g.bb.h, 14) }, hv, 1); };
   // back to front, so that a see-through floor or area in front tints what lies behind it: the floors are parallel, so
   // from the camera's height outwards – the floors below it from the bottom up, those above it from the top down, each
   // floor before the cards standing on it (those below the camera) or after them (above), the camera's own storey last
