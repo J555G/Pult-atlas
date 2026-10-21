@@ -124,6 +124,15 @@
   to keep the camera above the floors kept it underneath). The camera is now always above.
 - Measured: slide, pinch and wheel keep the touched spot exactly in place; twist turns the floors the fingers' way.
 
+## Decided 21 Oct (10:12)
+- Map-app steering was wrong for a tower (measured: nothing followed the finger – each floor drifted at its own speed –,
+  a swipe up flew 4,230 units sideways instead of climbing, the pivot floated between floors). Replaced, by the owner's
+  choice, with 'scroll the tower': swipe up/down rides through the floors (the part touched follows the finger),
+  left/right turns the tower round its axis (the part touched follows), the swipe keeps the direction it began in;
+  pinch closer/further towards the floor under the fingers; two fingers up/down together tilt; tap a floor's name in
+  the margin to glide there. The pivot always stays on the tower's axis. Mouse: drag the same, shift-drag tilts.
+- Floors about half as far apart (420 base, grown by 0.21 × floor depth); names still never overlap.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
