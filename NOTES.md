@@ -252,6 +252,14 @@
 - The ⅓ button on the divider is gone. A pane pulled shut keeps its handle wholly on screen (a slim strip at the edge)
   to drag it back out; double-tap the divider for the usual size.
 
+## Decided 31 Oct (15:05)
+- Flow: every card with parts has a chevron button at its right (▸ closed, ▾ open), in both zoom levels; a tap on it
+  unfolds or folds the part; a tap on an opened group's ▾ heading folds it. A tap elsewhere on the card still selects.
+- Flow keeps its order: the main parts are ordered once from the main-part graph (per version), parts within a group by
+  the main parts they link to; columns are placed as if everything were closed. Opening a part unfolds it downward in
+  its place (its frame starts exactly where its card was); only the cards below it in its own column move down.
+  Measured: opening Engines moved nothing else; opening Map moved only the five cards below it.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
