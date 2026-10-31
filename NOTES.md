@@ -277,6 +277,11 @@
   Checked: screenshots before and after opening Engines – chevron and name on the same pixels, the headings band
   unchanged.
 
+## Decided 31 Oct (16:45)
+- The Controls tray is always one line: what does not fit scrolls sideways, with a fade at the edge that has more
+  (iPad portrait 834 px: Flow needs ~850 px, Space ~1,160 px). The top bar is one line on iPads in both orientations.
+  Open, asked: the phone's top bar (two lines at 412 px) and how to restyle the Data view.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
