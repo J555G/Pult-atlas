@@ -56,7 +56,6 @@ header .seg.nb { display: inline-flex !important; }
 .results button:hover, .results button.on { background: var(--soft); }
 .results small { color: var(--mut); display: block; font-size: 12px; }
 main { flex: 1; display: flex; min-height: 0; position: relative; overflow: hidden; }
-/* the Data view: the Data Map – one row per stream of data, source → toolkit → package → in Pult; stacked on a phone */
 #start { position: absolute; inset: 0; overflow: auto; background: var(--bg); z-index: 3; padding: 28px max(16px, env(safe-area-inset-left, 0px)) 40px; }
 #start .st-in { max-width: 860px; margin: 0 auto; }
 #start h2 { font: 700 30px/1.1 var(--display); margin: 0 0 8px; }
@@ -72,41 +71,6 @@ main { flex: 1; display: flex; min-height: 0; position: relative; overflow: hidd
 #start .fl .ps { display: flex; flex-wrap: wrap; gap: 4px; }
 #start .fl .ps button { font: 13px var(--ui); border: 1px solid var(--line); border-radius: 14px; padding: 3px 10px; min-height: 28px; background: var(--bg); color: var(--ink); cursor: pointer; }
 @media (max-width: 600px) { #start .fl { grid-template-columns: 1fr; } }
-#dmap { position: absolute; inset: 0; overflow: auto; background: var(--bg); padding: 18px max(16px, env(safe-area-inset-left, 0px)) 40px; -webkit-overflow-scrolling: touch; }
-#dmap .dm-in { max-width: 1280px; margin: 0 auto; }
-#dmap h2 { font: 700 26px/1.15 var(--display); margin: 0 0 6px; }
-#dmap h3 { font: 700 19px/1.2 var(--display); margin: 30px 0 10px; }
-#dmap .lede { color: var(--mut); max-width: 68ch; margin: 0 0 16px; font-size: 15px; }
-#dmap .dm-heads, #dmap .dm-row { display: grid; grid-template-columns: 9rem repeat(4, minmax(0, 1fr)); gap: 0 24px; }
-#dmap .dm-heads { position: sticky; top: -18px; background: var(--bg); z-index: 2; padding: 8px 0; border-bottom: 1px solid var(--line); }
-#dmap .dm-heads div { font: 600 12px/1.2 var(--ui); text-transform: uppercase; letter-spacing: .08em; color: var(--mut); }
-#dmap .dm-row { padding: 14px 0; border-bottom: 1px solid var(--line); border-radius: 8px; }
-#dmap .dm-row.hit { background: color-mix(in srgb, var(--acc) 7%, transparent); box-shadow: inset 3px 0 0 var(--acc); padding-left: 0; }
-#dmap .dm-stream { font: 700 17px/1.2 var(--display); padding: 6px 0 0 8px; }
-#dmap .dm-stream small { display: block; font: 400 13px/1.35 var(--ui); color: var(--mut); margin-top: 4px; }
-#dmap .dm-card { position: relative; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 8px; padding: 9px 11px; font-size: 14px; line-height: 1.4; min-width: 0; }
-#dmap .dm-card b { display: block; font-weight: 700; margin-bottom: 2px; }
-#dmap .dm-card ul { margin: 2px 0 0; padding-left: 1.05em; } #dmap .dm-card li { margin: 1px 0; }
-#dmap .dm-card .note { margin-top: 6px; font-size: 13px; color: var(--mut); }
-#dmap .dm-card.priv b, #dmap .priv { color: var(--down); }
-#dmap .dm-row > .dm-card:not(:last-child)::after { content: ""; position: absolute; right: -19px; top: 50%; width: 12px; height: 2px; background: var(--mut); opacity: .6; }
-#dmap .dm-row > .dm-card:not(:last-child)::before { content: ""; position: absolute; right: -22px; top: calc(50% - 4px); border: 5px solid transparent; border-left: 6px solid var(--mut); border-right: 0; opacity: .6; }
-#dmap .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
-#dmap .chips button { font: 13px var(--ui); border: 1px solid var(--line); border-radius: 14px; padding: 3px 10px; min-height: 28px; background: var(--bg); color: var(--ink); cursor: pointer; }
-#dmap .chips button.on { border-color: var(--acc); color: var(--acc); font-weight: 600; }
-#dmap .dm-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 14px; font-size: 13px; color: var(--mut); }
-#dmap .dm-legend i { display: inline-block; width: 4px; height: 14px; border-radius: 2px; background: var(--c); vertical-align: -2px; margin-right: 6px; }
-#dmap .dm-layers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-#dmap .dm-layer { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; }
-#dmap .dm-layer b { display: block; font: 700 16px/1.2 var(--display); margin-bottom: 3px; } #dmap .dm-layer p { margin: 0; color: var(--mut); font-size: 14px; }
-@media (max-width: 860px) {
-  #dmap .dm-heads { display: none; } #dmap .dm-row { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  #dmap .dm-row > .dm-card::before, #dmap .dm-row > .dm-card::after { display: none; }
-  #dmap .dm-row > .dm-card:not(:last-child)::after { display: block; content: "↓"; background: none; width: auto; height: auto; right: auto; left: 50%; top: auto; bottom: -18px; color: var(--mut); font-size: 15px; line-height: 1; transform: translateX(-50%); }
-  #dmap .dm-card .step { display: block; font: 600 11px/1 var(--ui); text-transform: uppercase; letter-spacing: .08em; color: var(--mut); margin-bottom: 4px; }
-  #dmap .dm-layers { grid-template-columns: minmax(0, 1fr); } }
-#dmap .dm-card .step { display: none; }
-@media (max-width: 860px) { #dmap .dm-card .step { display: block; } }
 #stage { flex: 1; min-width: 0; min-height: 0; position: relative; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 #cv3 { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }   /* (absolute: the drawing never holds its area open – the pane beside or below can take the room) */
 #cv3:active { cursor: grabbing; }
@@ -266,7 +230,21 @@ header { background: var(--soft); border-bottom: 1px solid var(--line); min-heig
 .tabs button { border: 0; background: transparent; color: var(--mut); font: 600 14px var(--ui); padding: 4px 12px; border-radius: 7px; cursor: pointer; min-height: 32px; }
 .tabs button[aria-pressed="true"] { background: var(--surface); color: var(--acc); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
 .touch .tabs button { min-height: 38px; padding: 0 13px; font-size: 15px; }
-@media (max-width: 700px) { body.compact header { flex-wrap: wrap; } .tabs { order: 10; flex: 1 1 100%; } .tabs button { flex: 1; padding: 4px 4px; } }
+/* a phone: still one line – ‹ › give way to the phone's own back gesture, the search becomes 🔍 (its field opens over the
+   bar), ⓘ moves into Controls */
+#qBtn, #infoBtn2 { display: none; }
+@media (max-width: 700px) {
+  #navBtns #back, #navBtns #fwd { display: none; }
+  body.compact header .search { display: none; } #qBtn { display: inline-flex; align-items: center; justify-content: center; }
+  body.searching header .search { display: block; position: absolute; left: max(8px, env(safe-area-inset-left, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); top: max(3px, env(safe-area-inset-top, 0px)); max-width: none; z-index: 5; }
+  body.searching header .search input { height: 44px; font-size: 16px; }
+  header #infoBtn { display: none; } #infoBtn2 { display: inline-flex; align-items: center; }
+  .tabs { flex: 1 1 auto; min-width: 0; } .tabs button { flex: 1; padding: 4px 2px; font-size: 13.5px; min-width: 0; }
+  .touch .tabs button { padding: 0 2px; font-size: 14px; }
+  header { gap: 4px; }
+}
+@media (max-width: 400px) { .touch header button.plain, .touch header .seg.nb button { min-width: 38px; padding: 0 5px; } header { padding-left: max(6px, env(safe-area-inset-left, 0px)) !important; padding-right: max(6px, env(safe-area-inset-right, 0px)) !important; }
+  .tabs { padding: 1px; gap: 0; } .tabs button, .touch .tabs button { font-size: 12.5px; padding: 0 1px; letter-spacing: -.01em; } }
 #ctlWrap { display: contents; } #ctlBtn { display: none; }
 .touch #tray .seg button, .touch #tray button.plain { min-height: 44px; min-width: 44px; padding: 0 11px; font-size: 15px; } .touch #tray .rng input { width: 110px; height: 44px; } .touch #tray .rng { font-size: 13px; }
 body.compact #ctlBtn { display: inline-flex; align-items: center; justify-content: center; }
@@ -279,7 +257,7 @@ body.compact #ctlBtn { display: inline-flex; align-items: center; justify-conten
 #tray.more-l #ctlWrap { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); }
 #tray.more-l.more-r #ctlWrap { -webkit-mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); }
 body.compact #ctlBtn[aria-expanded="true"] { background: var(--ink); color: var(--surface); }
-body.compact header { flex-wrap: nowrap; } @media (max-width: 700px) { body.compact header { flex-wrap: wrap; } } body.compact .search { flex: 1 1 80px; min-width: 70px; }
+body.compact header { flex-wrap: nowrap; position: relative; } body.compact .search { flex: 1 1 80px; min-width: 70px; }
 .hint:empty { display: none; }
 .sizes { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 @media (max-width: 560px) { .touch .seg button, .touch button.plain, .touch header .seg button, .touch header button.plain { padding: 0 9px; } .touch .rng input { width: 64px; } }
@@ -290,6 +268,7 @@ body.compact header { flex-wrap: nowrap; } @media (max-width: 700px) { body.comp
   <h1>Pult Atlas<small id="hdrVer"></small></h1>
   <div class="seg nb" id="navBtns"><button id="back" title="Back to the previous part (Alt + ←)" aria-label="Back" disabled>‹</button><button id="fwd" title="Forward (Alt + →)" aria-label="Forward" disabled>›</button><button id="home" title="The start page" aria-label="Start page">⌂</button></div>
   <div class="tabs" id="segView" role="tablist" title="View"><button data-v="flow" aria-label="Flow: columns from sources to screen">Flow</button><button data-v="map" aria-label="Map: regions with their parts">Map</button><button data-v="focus" aria-label="Focus: one part and its neighbours">Focus</button><button data-v="space" aria-label="Space: a tower of four floors">Space</button><button data-v="data" aria-label="Data: where the data comes from and where it appears">Data</button></div>
+  <button class="plain" id="qBtn" aria-label="Find a part or function" title="Find a part or function">🔍</button>
   <div class="search"><input id="q" type="search" placeholder="Find a part or function…" autocomplete="off" aria-label="Find a part"><div class="results" id="res" hidden></div></div>
   <button class="plain" id="ctlBtn" aria-expanded="false" title="Views, lines, colours and filters"><span class="l">Controls ▾</span><span class="s">☰</span></button>
   <div id="ctlWrap">
@@ -298,6 +277,7 @@ body.compact header { flex-wrap: nowrap; } @media (max-width: 700px) { body.comp
   <div class="seg" id="segMetric" title="Colour by"><button data-v="part" aria-pressed="true">Part</button><button data-v="mem" aria-pressed="false" title="Memory">Mem</button><button data-v="store" aria-pressed="false" title="Storage" aria-label="Storage"><span class="l">Store</span><span class="s">Sto</span></button><button data-v="cpu" aria-pressed="false">CPU</button><button data-v="gpu" aria-pressed="false">GPU</button></div>
   <div class="seg" id="segFocus" title="With a part selected, show only…"><button data-v="all" aria-pressed="true">All</button><button data-v="up" aria-pressed="false" title="only what the selected part relies on" aria-label="Relies on"><span class="l">Relies on</span><span class="s">↑</span></button><button data-v="down" aria-pressed="false" title="only what relies on the selected part" aria-label="Relied on by"><span class="l">Relied on by</span><span class="s">↓</span></button><button data-v="both" aria-label="Both" aria-pressed="false" title="only the selected part's connections"><span class="l">Both</span><span class="s">↕</span></button></div>
   <label class="rng" title="The height between the floors"><span>Floors</span> <input type="range" id="spread" min="0.4" max="3" step="0.05" value="1" aria-label="Spacing"></label>
+  <button class="plain" id="infoBtn2" title="How to read the drawing">ⓘ How to read it</button>
   <button class="plain" id="optBtn" aria-expanded="false" title="Options"><span class="t">Options </span>▾</button>
   </div>
   <canvas id="mini" aria-label="Overview: the main parts by floor; tap one to go there"></canvas>
@@ -315,7 +295,7 @@ body.compact header { flex-wrap: nowrap; } @media (max-width: 700px) { body.comp
   <div class="row"><button class="plain" id="expAll">Expand all</button><button class="plain" id="colAll">Collapse</button></div>
 </div>
 <main>
-  <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><div id="dmap" hidden></div><div id="start" hidden></div><div class="hint" id="hint" aria-live="polite"></div><div class="tip" id="tip" hidden></div></div>
+  <div id="stage"><canvas id="cv3" aria-label="Components of Pult and how they connect"></canvas><div id="start" hidden></div><div class="hint" id="hint" aria-live="polite"></div><div class="tip" id="tip" hidden></div></div>
   <div id="divider" role="separator" aria-orientation="vertical" aria-label="Drag to change the width of the pane, all the way to the edge to close it" tabindex="0"></div>
   <aside id="panel" aria-label="About the part"><div id="pnav"><button class="plain" id="pback" aria-label="Back" title="Back" disabled>‹</button><button class="plain" id="pfwd" aria-label="Forward" title="Forward" disabled>›</button><button class="plain" id="pclose" aria-label="Close">✕</button></div><div id="pbody"></div></aside>
 </main>
@@ -435,11 +415,11 @@ function draw(refit) {
     if (S.focus !== 'down') r.up.forEach((_, x) => k.add(x)); if (S.focus !== 'up') r.down.forEach((_, x) => k.add(x));
     vis = vis.filter(x => k.has(x)); visSet = k; edges = edges.filter(e => k.has(e.a) && k.has(e.b)); }
   L = { vis, edges: edges.filter(lineOn) };
-  if (S.view === 'data') { renderDataMap(); renderPanel(); return; }
+  if (S.view === 'data') { T2.lay = layData(); run3d(); renderPanel(); return; }
   if (S.view === 'space') TW3.lay = layTower(vis); else lay2d();
   run3d(); renderPanel();
 }
-function fit(id) { if (S.view === 'data') return; return S.view === 'space' ? fitTower(id) : fit2d(id); }
+function fit(id) { if (S.view === 'data') return T2.lay?.pos?.has(id) ? fit2d(id) : null; return S.view === 'space' ? fitTower(id) : fit2d(id); }
 // ---------------------------------------------------------------- the start page: what the atlas is, the floors, where to begin
 function showStart(on) { $('#start').hidden = !on; document.body.classList.toggle('starting', on); if (on) renderStart(); }
 function renderStart() {
@@ -459,24 +439,60 @@ $('#start').onclick = e => { const b = e.target.closest('button'); if (!b) retur
   else if (b.dataset.g) guide({ k: b.dataset.g }); else if (b.dataset.part) select(b.dataset.part); };
 // ---------------------------------------------------------------- the Data view (datamap.json, written by hand; the build checks every part it names)
 const DMC = { src: 38, tk: 212, pk: 150, ap: 14 };   // (the floors' colour families: sources ochre, toolkit slate, packages green-grey, in Pult red-brown)
-function renderDataMap() {
-  const D = MODEL.datamap, el = $('#dmap'); if (!D) { el.innerHTML = '<div class="dm-in"><p class="lede">The Data Map is not in this build.</p></div>'; return; }
-  const dk = document.documentElement.dataset.theme === 'dark', col = k => `hsl(${DMC[k]} ${dk ? 30 : 38}% ${dk ? 55 : 45}%)`;
-  const near = pid => S.sel && (S.sel === pid || S.sel.startsWith(pid + '.') || pid.startsWith(S.sel + '.'));   // (the selected part, a part of it, or what it is part of)
-  const chip = pid => N.get(pid) ? `<button data-part="${esc(pid)}" class="${near(pid) ? 'on' : ''}">${esc(N.get(pid).name)}</button>` : '';
-  const card = c => `<div class="dm-card${c.priv ? ' priv' : ''}" style="--c:${col(c.k)}"><span class="step">${esc(c.step || D.columns[c.k])}</span><b>${esc(c.title)}</b>${c.text ? esc(c.text) : ''}
-    ${c.items ? `<ul>${c.items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}${c.note ? `<div class="note">${esc(c.note)}</div>` : ''}
-    ${c.parts?.length ? `<div class="chips">${c.parts.map(chip).join('')}</div>` : ''}</div>`;
-  const top = el.scrollTop;
-  el.innerHTML = `<div class="dm-in"><h2>Where Pult's data comes from</h2><p class="lede">${esc(D.lede)} Tap a part to select it; it stays selected in the other views.</p>
-    <div class="dm-legend">${Object.entries(D.columns).map(([k, t]) => `<span><i style="--c:${col(k)}"></i>${esc(t)}</span>`).join('')}<span class="priv">private – only on your devices</span></div>
-    <div class="dm-heads"><div></div>${Object.values(D.columns).map(t => `<div>${esc(t)}</div>`).join('')}</div>
-    ${D.streams.map(st => `<div class="dm-row${st.cells.some(c => (c.parts || []).some(near)) ? ' hit' : ''}"><div class="dm-stream">${esc(st.name)}<small>${esc(st.small)}</small></div>${st.cells.map(card).join('')}</div>`).join('')}
-    <h3>Three layers of data</h3><div class="dm-layers">${D.layers.map(l => `<div class="dm-layer"><b>${esc(l.title)}</b><p>${esc(l.text)}</p></div>`).join('')}</div></div>`;
-  el.scrollTop = top;
-  if (S.sel && !renderDataMap.seen?.has(S.sel)) { (renderDataMap.seen ||= new Set()).add(S.sel); const h = el.querySelector('.dm-row.hit'); if (h && (h.offsetTop < el.scrollTop || h.offsetTop > el.scrollTop + el.clientHeight - 80)) el.scrollTo({ top: h.offsetTop - 60, behavior: 'smooth' }); }
+// Drawn like Flow: four columns (Source, Toolkit, Package, In Pult) of rounded cards in the floors' colours, one row per
+// stream of data with its name on the left, curved arrows from card to card along each row, the three layers beneath.
+// A card shows its title; tapped, its details (sources, the parts it names) open in the pane. A selected part marks its rows.
+function layData() {
+  const D = MODEL.datamap; if (!D) return { kind: 'data', pos: new Map(), frames: [], heads: [], edges: [], empty: true };
+  const keys = Object.keys(D.columns), GX = CW + 90, RH = CH + 34, X0 = 330, pos = new Map(), rows = [], heads = [];
+  keys.forEach((k, c) => heads.push({ x: X0 + c * GX, y: -36, t: D.columns[k] }));
+  D.streams.forEach((st, r) => { const y = r * RH; rows.push({ r, y, name: st.name, small: st.small });
+    st.cells.forEach(cell => { const c = keys.indexOf(cell.k); pos.set(`dm:${r}:${cell.k}`, { x: X0 + c * GX, y: y + CH / 2, w: CW / 2, h: CH / 2, cell, st, c }); }); });
+  const ly = D.streams.length * RH + 70;
+  D.layers.forEach((l, i) => pos.set(`dm:L:${i}`, { x: X0 + i * GX, y: ly + 40 + CH / 2, w: CW / 2, h: CH / 2, layer: l, c: i }));
+  const extra = rows.map(rw => ({ x: 105, y: rw.y + CH / 2, w: 105, h: CH / 2 }));   // (the streams' names, left of the cards – counted when fitting the view)
+  return { kind: 'data', pos, frames: [], heads, edges: [], rows, layersY: ly, X0, GX, keys, extra };
 }
-document.addEventListener('click', e => { const b = e.target.closest('#dmap [data-part]'); if (!b) return; const id = b.dataset.part; select(S.sel === id ? null : id); });
+const dmNear = pid => S.sel && (S.sel === pid || S.sel.startsWith(pid + '.') || pid.startsWith(S.sel + '.'));   // (the selected part, a part of it, or what it is part of)
+function frameData(x, lay) {
+  const dk = dark2(), fillOf = k => `hsl(${DMC[k] ?? 40} ${dk ? 18 : 30}% ${dk ? 24 : 88}%)`, edgeOf = k => `hsl(${DMC[k] ?? 40} ${dk ? 22 : 28}% ${dk ? 40 : 66}%)`;
+  const fsH = Math.max(17, Math.min(40, 15 * KZ() / T2.k));
+  // rows with a part of the selection: a band behind them
+  for (const rw of lay.rows) { const hit = MODEL.datamap.streams[rw.r].cells.some(c => (c.parts || []).some(dmNear));
+    if (hit) { x.globalAlpha = 1; x.fillStyle = `color-mix(in srgb, ${css('--acc')} ${dk ? 14 : 8}%, transparent)`; x.beginPath(); rrect(x, -20, rw.y - 14, lay.X0 + 3 * lay.GX + CW / 2 + 40, CH + 28, 14); x.fill(); } }
+  // the column headings and the streams' names, as Flow's column headings
+  x.fillStyle = css('--mut'); x.font = `italic ${fsH}px "Gentium Book Plus", Georgia, serif`; x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+  for (const h of lay.heads) x.fillText(h.t, h.x, h.y);
+  const nx = lay.X0 - CW / 2 - 18, nw = nx;   // (the names end just left of the first column, never under it)
+  for (const rw of lay.rows) { x.textAlign = 'right'; x.textBaseline = 'middle'; x.fillStyle = css('--ink');
+    let f = Math.max(17, Math.min(34, 15 * KZ() / T2.k)); for (;;) { x.font = `700 ${f}px "Gentium Book Plus", Georgia, serif`; if (x.measureText(rw.name).width <= nw || f <= 11) break; f -= 1; }
+    const two = f <= 22; x.fillText(rw.name, nx, rw.y + (two ? CH / 2 - 9 : CH / 2));
+    if (two) { x.fillStyle = css('--mut'); x.font = '13px "Source Sans 3", sans-serif'; let u = rw.small; while (u.length > 3 && x.measureText(u).width > nw) u = u.slice(0, -1); x.fillText(u, nx, rw.y + CH / 2 + 13); } }
+  x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.fillStyle = css('--mut'); x.font = `italic ${fsH}px "Gentium Book Plus", Georgia, serif`; x.fillText('Three layers of data', lay.X0 + 1.5 * lay.GX, lay.layersY + 20);
+  // the arrows along each row: curved, from card to card
+  x.strokeStyle = css('--mut'); x.fillStyle = css('--mut'); x.globalAlpha = 0.7; x.lineWidth = 1.6;
+  for (const rw of lay.rows) for (let c = 0; c + 1 < lay.keys.length; c++) { const a = lay.pos.get(`dm:${rw.r}:${lay.keys[c]}`), b = lay.pos.get(`dm:${rw.r}:${lay.keys[c + 1]}`); if (!a || !b) continue;
+    const x0 = a.x + a.w, x1 = b.x - b.w - 6, y = a.y, m = (x0 + x1) / 2; x.beginPath(); x.moveTo(x0, y); x.bezierCurveTo(m, y - 16, m, y - 16, x1, y); x.stroke();
+    const an = Math.atan2(16 * 0.75, x1 - m) * -1 * 0; x.beginPath(); x.moveTo(x1 + 6, y); x.lineTo(x1 - 2, y - 4.5); x.lineTo(x1 - 2, y + 4.5); x.fill(); }
+  x.globalAlpha = 1;
+  // the cards
+  for (const [id, b] of lay.pos) { const x0 = b.x - b.w, y0 = b.y - b.h, w = b.w * 2, h = b.h * 2, k = b.cell?.k || 'layer', on = S.dmSel === id;
+    const lit = b.cell && (b.cell.parts || []).some(dmNear);
+    x.beginPath(); rrect(x, x0, y0, w, h, 10); x.fillStyle = b.layer ? css('--surface') : fillOf(k); x.fill();
+    x.lineWidth = (on ? 3 : lit ? 2.5 : 1.2) / Math.min(1, T2.k * 1.4); x.strokeStyle = on ? css('--acc') : lit ? css('--acc') : b.cell?.priv ? css('--down') : b.layer ? css('--line') : edgeOf(k); x.stroke();
+    const t = b.cell ? b.cell.title : b.layer.title; writeName(x, t, x0, 0, w, b.y, y0, false, b.cell?.priv ? css('--down') : css('--ink'));
+    if (13 * KZ() / T2.k <= 17) { const sub = b.cell ? (b.cell.items ? b.cell.items.length + ' sources' : b.cell.parts?.length ? b.cell.parts.map(p => N.get(p)?.name).filter(Boolean).slice(0, 2).join(' · ') : (b.cell.text || '').split(/[;.]/)[0]) : b.layer.text.split('.')[0];
+      x.font = '12px "Source Sans 3", sans-serif'; x.fillStyle = css('--mut'); x.textAlign = 'left'; x.textBaseline = 'alphabetic'; let u = sub || ''; while (u.length > 3 && x.measureText(u).width > w - 24) u = u.slice(0, -1); if (u !== sub) u = u.trimEnd() + '…'; x.fillText(u, x0 + 12, y0 + 43); }
+    T3.drawn.push({ id, x: b.x * T2.k + T2.x, y: b.y * T2.k + T2.y, w: b.w * T2.k, h: b.h * T2.k }); }
+}
+function renderDataCard(P) {   // a Data card's details in the pane
+  const b = T2.lay?.pos?.get(S.dmSel); if (!b) return false; const D = MODEL.datamap;
+  if (b.layer) { P.innerHTML = `<div class="crumbs">Data · Three layers of data</div><h2>${esc(b.layer.title)}</h2><p>${esc(b.layer.text)}</p>`; return true; }
+  const c = b.cell; P.innerHTML = `<div class="crumbs">Data · ${esc(b.st.name)} · ${esc(c.step || D.columns[c.k])}</div><h2${c.priv ? ' style="color:var(--down)"' : ''}>${esc(c.title)}</h2>
+    ${c.text ? `<p>${esc(c.text)}</p>` : ''}${c.items ? `<h3>Sources</h3><ul class="list">${c.items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}${c.note ? `<p style="color:var(--mut)">${esc(c.note)}</p>` : ''}
+    ${c.priv ? '<p style="color:var(--down)">Private – only on your devices.</p>' : ''}
+    ${c.parts?.length ? `<h3>Where it is in the atlas</h3><ul class="list">${c.parts.filter(p => N.get(p)).map(p => `<li><a data-go="${esc(p)}">${esc(N.get(p).name)}</a><span class="k">${esc(N.get(N.get(p).l1)?.name || '')}</span></li>`).join('')}</ul>` : ''}
+    <p class="hintp">${esc(b.st.name)}: ${esc(b.st.small)}.</p>`; return true; }
 function toggle(id) { if (!N.get(id).children.some(x => V.ex.has(x))) { select(id); return; }
   const a0 = anchorOf(id); if (S.exp.has(id)) S.exp.delete(id); else S.exp.add(id); draw(); keepAnchor(id, a0); }
 // opening or closing a part: its top edge stays where it was on the screen (the view moves by what the layout moved)
@@ -513,6 +529,7 @@ function navPaint() { const b = NAV.pos <= 0, f = NAV.pos >= NAV.list.length - 1
 function select(id, fromNav) { if (id) showStart(false); select0(id); if (!fromNav && V) navPush(); }
 function select0(id) { S.sel = id; if (id) { let p = N.get(id).parent; while (p) { S.exp.add(p); p = N.get(p).parent; } } draw(); }
 function tip(ev, id) {
+  if (!N.get(id)) { $('#tip').hidden = true; return; }
   const c = N.get(id), t = $('#tip'), r = $('#stage').getBoundingClientRect();
   t.innerHTML = `<b>${esc(c.name)}</b><br>${esc(c.desc || '')}`; t.hidden = false;
   t.style.left = Math.min(r.width - 290, ev.clientX - r.left + 14) + 'px'; t.style.top = (ev.clientY - r.top + 14) + 'px';
@@ -627,6 +644,7 @@ const up3 = e => { T3.ptrs.delete(e.pointerId); if (T3.ptrs.size < 2) { T3.pinch
   if (!d || d.moved) { run3d(); return; }
   if (S.view !== 'space') { const ex = e.offsetX, ey = e.offsetY; for (let i = T3.drawn.length - 1; i >= 0; i--) { const b = T3.drawn[i]; if (Math.abs(ex - b.x) > b.w || Math.abs(ey - b.y) > b.h) continue;
     if (b.chev && ex >= b.chev.x0 - 6 && ex <= b.chev.x1 + 4) { T3.lastTap = null; toggle(b.id); return; } break; } }   // (▸ / ▾: unfold or fold)
+  if (S.view === 'data') { const id = d.id; if (id && id.startsWith('dm:')) { S.dmSel = S.dmSel === id ? null : id; if (S.sel) select(null); else { renderPanel(); run3d(); } } else { S.dmSel = null; if (S.sel) select(null); else { renderPanel(); run3d(); } } return; }
   const now = Date.now(), id = d.id;
   if (id && T3.lastTap?.id === id && now - T3.lastTap.t < 350) { T3.lastTap = null; toggle(id); return; }
   T3.lastTap = { id, t: now }; if (!id) S.info = false; select(id && S.sel !== id ? id : null); };
@@ -640,7 +658,10 @@ function verBar() { const on = S.guide?.k === 'compare' || !!(HIST?.length && S.
 function renderPanel() { verBar();
   const P = $('#pbody'); const id = S.sel; if (id) S.info = false; const open = !!id || S.info || !!S.guide;
   document.body.classList.toggle('open', open); $('#infoBtn').setAttribute('aria-pressed', !id && S.info); $('#guideBtn').setAttribute('aria-pressed', !!S.guide && !id);
+  if (!id && S.view === 'data' && S.dmSel && !S.info && !S.guide && renderDataCard(P)) { document.body.classList.add('open'); return; }
   if (!id && S.guide && !S.info) { renderGuide(P); return; }
+  if (!id && S.view === 'data' && !S.info && MODEL.datamap) { P.innerHTML = `<h2>Where Pult's data comes from</h2><p>${esc(MODEL.datamap.lede)}</p>
+    <p class="hintp">Tap a card for its sources and the parts of Pult it concerns; a part selected anywhere marks its rows here.</p>`; return; }
   if (!id) {
     const vs = HIST[S.ver], kinds = MODEL.l1.filter(l => V.ex.has(l.id));
     P.innerHTML = `<h2>Pult, part by part</h2><p>Every part of the app, what it does, what it relies on and what it costs your device. Open a part to see what it is made of, down to its functions.</p>
@@ -654,7 +675,7 @@ function renderPanel() { verBar();
       <div class="heat">${[0, 1, 2, 3, 4, 5].map(i => `<i style="background:var(--h${i})" title="${i}"></i>`).join('')}<span style="margin-left:6px">none … very high</span></div>
       <div><span class="sw" style="border-top:2px dashed var(--flow);background:none;height:0"></span>dashed outline: changed in the version shown</div>
       <div>Selecting a part shows its direct links; <i>Whole chains</i> (Options) follows them further. <i>Relies on / Relied on by / Both</i> then hides everything else.</div>
-      <div>Five views of the same parts, the selection kept between them: <b>Flow</b> – columns from the sources on the left to the screen on the right; <b>Map</b> – each main part as a region with its parts, ribbons for how much they connect; <b>Focus</b> – the selected part in the middle, data coming in on the left and going out on the right, the code it calls above and the code calling it below; <b>Space</b> – a tower of four floors, the sources at the bottom and the screen on top, every main part a plot on its floor with its parts as tiles on it; <b>Data</b> – where Pult's data comes from, how it is made, which package it ships in and where it appears, one row per stream (tap a part there to select it). Under <b>Controls</b>: which lines (<i>Data</i>, <i>Code</i>, <i>Selected only</i>, in any combination), colour by part or by load, and the filters.</div>
+      <div>Five views of the same parts, the selection kept between them: <b>Flow</b> – columns from the sources on the left to the screen on the right; <b>Map</b> – each main part as a region with its parts, ribbons for how much they connect; <b>Focus</b> – the selected part in the middle, data coming in on the left and going out on the right, the code it calls above and the code calling it below; <b>Space</b> – a tower of four floors, the sources at the bottom and the screen on top, every main part a plot on its floor with its parts as tiles on it; <b>Data</b> – where Pult's data comes from, how it is made, which package it ships in and where it appears: one row per stream, Source → Toolkit → Package → In Pult (tap a card for its sources and the parts it concerns; a selected part marks its rows). Under <b>Controls</b>: which lines (<i>Data</i>, <i>Code</i>, <i>Selected only</i>, in any combination), colour by part or by load, and the filters.</div>
       <div>In Flow and Map, with nothing selected, the lines are bundled into one ribbon per pair of main parts; a selected part shows its own lines. In Flow, lines within one column are drawn only for the selected part (↕ on a card counts them).</div>
       <div>In <i>Space</i>, one finger rolls the tower whichever way it moves, like a trackball, round the selected part (or the middle of the tower); two fingers slide it in the plane of the screen, pinch for closer or further and twist to turn the picture (with a mouse: drag the same, the wheel zooms). Every name is written on what it names: far away the main parts' names across their plots, nearer the parts' names on their tiles. <i>Front</i>, <i>Top</i> and <i>Corner</i> (Controls) set it straight, <i>Floors</i> sets the height between them.</div>
       <div>‹ › go back and forward through what you looked at; ⌂ returns to the start page. The colours and fonts are Pult's own; light or dark follows Pult's setting on this device (Options → Theme).</div>
@@ -899,6 +920,7 @@ function frame2d(now) {
   let moving = false;
   if (T2.to) { let done = true; for (const k of ['x', 'y', 'k']) { T2[k] += (T2.to[k] - T2[k]) * 0.18; if (Math.abs(T2.to[k] - T2[k]) > (k === 'k' ? 1e-3 : 0.5)) done = false; } if (done) { Object.assign(T2, T2.to); T2.to = null; } else moving = true; }
   x.setTransform(dpr * T2.k, 0, 0, dpr * T2.k, dpr * T2.x, dpr * T2.y);
+  if (lay.kind === 'data') { frameData(x, lay); x.setTransform(dpr, 0, 0, dpr, 0, 0); if (moving) run3d(); return; }
   const sel = S.sel && lay.pos.has(S.sel) ? S.sel : null, r = sel ? reach(sel, lay.edges) : null, HV = visHL(lay.pos);
   const dep = e => e.kind === 'code' ? [e.a, e.b] : [e.b, e.a];
   // frames and regions, column heads
@@ -971,7 +993,7 @@ const dark2 = () => document.documentElement.dataset.theme === 'dark';
 function bbox2(ids) { const L2 = T2.lay; let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   const add = (cx, cy, w, h) => { x0 = Math.min(x0, cx - w); y0 = Math.min(y0, cy - h); x1 = Math.max(x1, cx + w); y1 = Math.max(y1, cy + h); };
   if (ids) ids.forEach(id => { const b = L2.pos.get(id); if (b) add(b.x, b.y, b.w, b.h); });
-  else { L2.pos.forEach(b => add(b.x, b.y, b.w, b.h)); L2.frames.forEach(f => add(f.x + f.w / 2, f.y + f.h / 2, f.w / 2, f.h / 2)); L2.heads.forEach(h => add(h.x, h.y, 120, 14)); }
+  else { L2.pos.forEach(b => add(b.x, b.y, b.w, b.h)); (L2.extra || []).forEach(b => add(b.x, b.y, b.w, b.h)); L2.frames.forEach(f => add(f.x + f.w / 2, f.y + f.h / 2, f.w / 2, f.h / 2)); L2.heads.forEach(h => add(h.x, h.y, 120, 14)); }
   return x0 < Infinity ? { x0, y0, x1, y1 } : null; }
 function fit2d(id, now) {   // the view to one part, to some, or to everything
   const L2 = T2.lay; if (!L2) return; const W = cv3.clientWidth, H = cv3.clientHeight;
@@ -979,7 +1001,8 @@ function fit2d(id, now) {   // the view to one part, to some, or to everything
   if (typeof id === 'string' && L2.pos.has(id)) { const b = L2.pos.get(id), k = Math.max(T2.k, 0.9 * KZ()); t = { k, x: W / 2 - b.x * k, y: H / 2 - b.y * k }; }
   else { const bb = bbox2(Array.isArray(id) ? id : null); if (!bb) return; const k = Math.max(0.55 * KZ(), Math.min(1.4 * KZ(), (W - 40) / (bb.x1 - bb.x0), (H - 50) / (bb.y1 - bb.y0)));
     t = { k, x: W / 2 - (bb.x0 + bb.x1) / 2 * k, y: H / 2 - (bb.y0 + bb.y1) / 2 * k };
-    if ((bb.y1 - bb.y0) * k > H - 50) t.y = 30 - bb.y0 * k; }   // (too tall to fit at a readable size: from the top)
+    if ((bb.y1 - bb.y0) * k > H - 50) t.y = 30 - bb.y0 * k;   // (too tall to fit at a readable size: from the top)
+    if ((bb.x1 - bb.x0) * k > W - 30) t.x = 16 - bb.x0 * k; }   // (too wide: from the left, where the rows begin)
   if (now) { Object.assign(T2, t); T2.to = null; } else T2.to = t; run3d();
 }
 // -- touch and mouse in the flat views: drag to move, pinch or wheel to zoom about the fingers, tap and double-tap as in space
@@ -1442,7 +1465,7 @@ const HINTS = { space: 'Four floors, the sources at the bottom and the screen on
   flow: 'From the sources on the left to the screen on the right · drag to move · pinch or scroll to zoom · double-tap a part to open it',
   map: 'Each main part with its parts · ribbons: how much they connect · select a part for its own lines · double-tap to open',
   focus: 'The selected part in the middle · tap a neighbour to move to it · double-tap to open it' };
-function viewChanged() { if (!$('#tray').hidden) requestAnimationFrame(trayFade); document.body.classList.toggle('v-space', S.view === 'space'); document.body.classList.toggle('v-data', S.view === 'data'); $('#dmap').hidden = S.view !== 'data'; $('#cv3').hidden = S.view === 'data'; $('#hint').textContent = ''; T2.fit = true; if (S.view === 'space') { T3.fitAll = true; Object.assign(T3.cam, SNAPS.corner); } }
+function viewChanged() { if (!$('#tray').hidden) requestAnimationFrame(trayFade); document.body.classList.toggle('v-space', S.view === 'space'); document.body.classList.toggle('v-data', S.view === 'data'); S.dmSel = null; $('#hint').textContent = ''; T2.fit = true; if (S.view === 'space') { T3.fitAll = true; Object.assign(T3.cam, SNAPS.corner); } }
 seg('#segView', 'view', () => { showStart(false); viewChanged(); }); viewChanged();
 $('#segSnap').onclick = e => { const b = e.target.closest('button'); if (!b) return; T3.spin = null; T3.camTo = Object.assign({}, SNAPS[b.dataset.snap]); run3d(); };
 { const paint = () => [...$('#segLines').children].forEach(b => b.setAttribute('aria-pressed', !!S[b.dataset.l]));
@@ -1465,6 +1488,10 @@ addEventListener('keydown', e => { const g = S.guide; if (!g || S.sel || e.targe
   if (g.k === 'walk') { const n = MODEL.walks.find(w => w.id === g.w).steps.length; if (g.i + d >= 0 && g.i + d < n) guide({ ...g, i: g.i + d }); }
   if (g.k === 'startup') { const n = MODEL.startup.length; if (g.i + d >= 0 && g.i + d < n) guide({ ...g, i: g.i + d }); } });
 $('#pclose').onclick = closePanel;
+$('#qBtn').onclick = () => { document.body.classList.add('searching'); $('#q').focus(); };
+$('#q').addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== $('#q')) document.body.classList.remove('searching'); }, 200));
+$('#q').addEventListener('keydown', e => { if (e.key === 'Escape') { $('#q').blur(); document.body.classList.remove('searching'); } });
+$('#infoBtn2').onclick = () => { trayOpen(false); $('#infoBtn').onclick(); };
 $('#infoBtn').onclick = () => { if (!S.sel && S.info) { S.info = false; if (S.guide) draw(); else closePanel(); } else { S.info = true; if (S.sel) select(null); else renderPanel(); } };
 addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('open') && !e.target.closest('input')) closePanel(); });
 $('#optBtn').onclick = () => { const m = $('#opts'), open = m.hidden; m.hidden = !open; $('#optBtn').setAttribute('aria-expanded', open); if (open) m.style.top = ($('#optBtn').getBoundingClientRect().bottom + 6) + 'px'; };

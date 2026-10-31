@@ -280,7 +280,16 @@
 ## Decided 31 Oct (16:45)
 - The Controls tray is always one line: what does not fit scrolls sideways, with a fade at the edge that has more
   (iPad portrait 834 px: Flow needs ~850 px, Space ~1,160 px). The top bar is one line on iPads in both orientations.
-  Open, asked: the phone's top bar (two lines at 412 px) and how to restyle the Data view.
+
+## Decided 31 Oct (16:55)
+- Phones: the top bar on one line too (down to 360 px): ‹ › give way to the phone's back gesture, the search is a 🔍
+  button whose field opens over the bar, ⓘ ("How to read it") moves into Controls; the five tabs share what is left.
+- The Data view is drawn like Flow (owner's choice a): four columns Source · Toolkit · Package · In Pult of rounded
+  cards in the floors' colour families, the streams' names on the left in Gentium, grey italic column headings, curved
+  arrows from card to card, the three layers beneath; it pinches, zooms and slides like the other views. A card shows
+  its title (and one line more when near); tapped, its details – sources, note, the parts it names as links – open in
+  the pane. A part selected anywhere marks its rows with a band and outlines its cards. The HTML page is gone.
+- A drawing too wide to fit at a readable size now opens from the left (Data's stream names, Flow's sources).
 
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
