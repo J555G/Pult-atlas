@@ -265,6 +265,10 @@
   with the chevron (now ▾) and the name exactly where they were (also for parts opened inside a group). Measured:
   opening and folding Engines, Map, Relief and Dictionary – the chevron stays on the same screen spot.
 
+## Decided 31 Oct (15:27)
+- Space: lines are smooth curves (one cubic curve per line, leaving and arriving vertically, swinging across between
+  the floors; on the same floor an arch) instead of the right-angled shafts. Still cut at the floors and drawn in place.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
