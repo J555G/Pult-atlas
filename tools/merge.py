@@ -17,6 +17,8 @@ L1 = [  # id, name, tier, hue, desc
  ('map', 'Map', 'screen', 120, 'The map of the ancient world: base map, layers, imagery, relief, sun and sky, drawing.'),
  ('settings', 'Settings', 'screen', 0, 'The dialogs: settings, installed packages, acknowledgements, sync.'),
  ('export', 'Export', 'screen', 60, 'Exports and backups of what you made.'),
+ ('suda', 'Suda tab', 'screen', 300, 'Encyclopaedias and lexica: persons, places and things, and the marks on names in the text.'),
+ ('tempora', 'Tempora', 'screen', 20, 'The chronograph: reference systems, the years the texts narrate, the persons, your own chronology.'),
  ('offline', 'Offline helper', 'behind', 190, 'The service worker: keeps the app and its data on the device and serves them without a network.'),
  ('storage', 'Device storage', 'behind', 330, 'Where Pult keeps things on your device: databases and caches.'),
  ('engine', 'Engines', 'engines', 250, 'Libraries Pult builds on, and the browser features it relies on.'),
@@ -133,6 +135,14 @@ def main(parts_dir, inv_path, out):
             st.append(s)
         model['startup'] = st
     # Pult's numbered decisions (decisions.json, optional): {"475": {"text": "…", "parts": ["map.relief"]}, …}
+    # the Data Map (datamap.json, written by hand): every part it links to must exist
+    mp = os.path.join(parts_dir, '..', 'datamap.json')
+    if os.path.exists(mp):
+        dm = json.load(open(mp)); model['datamap'] = dm
+        for st in dm['streams']:
+            for c in st['cells']:
+                for pid in c.get('parts', []):
+                    if pid not in comps: report.append(f"Data Map, {st['name']} / {dm['columns'].get(c['k'], c['k'])}: unknown part {pid}")
     dp = os.path.join(parts_dir, '..', 'decisions.json')
     if os.path.exists(dp):
         model['decisions'] = [{'n': n, 'text': d['text'], 'parts': [x for x in (fix(q) for q in d.get('parts', [])) if x]} for n, d in json.load(open(dp)).items()]

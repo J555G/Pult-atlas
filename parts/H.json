@@ -1,0 +1,143 @@
+{
+ "components": [
+  {
+   "id": "suda.tab",
+   "name": "Persons, places and things",
+   "desc": "Encyclopaedias and lexica: persons, places and things – a person's page with every source side by side, and the marks on names in the text.",
+   "detail": "people.js. Packages of kind \"people\" (Smith's Biography, PIR, the Suda, Smith's Geography and Antiquities) keep their persons by number, an index of all names and, per work, the passages where a person is cited.",
+   "decls": [
+    "people.js|(top level)"
+   ],
+   "net": "offline",
+   "res": {
+    "mem": [
+     2,
+     "the index of names of each installed package"
+    ],
+    "store": [
+     2,
+     "the encyclopaedia packages"
+    ],
+    "cpu": [
+     2,
+     "matching names in the text"
+    ],
+    "gpu": [
+     0,
+     "none"
+    ]
+   }
+  },
+  {
+   "id": "tempora.chart",
+   "name": "The chronograph",
+   "desc": "The chronograph: reference systems at top and bottom (Julian years, Olympiads, years of the city, consuls, the sky), between them the lanes of the texts, the persons and your own statements.",
+   "detail": "tempora.js. Each item is what one source says about a time – never one authoritative date. Data: the Liebenam fasti, the dates in the texts, Tempora – persons; the sky computed with astronomy-engine.",
+   "decls": [
+    "tempora.js|(top level)"
+   ],
+   "net": "offline",
+   "res": {
+    "mem": [
+     3,
+     "the lanes and persons drawn"
+    ],
+    "store": [
+     2,
+     "the chronology packages"
+    ],
+    "cpu": [
+     3,
+     "laying out and drawing the lanes"
+    ],
+    "gpu": [
+     1,
+     "a 2D canvas"
+    ]
+   }
+  },
+  {
+   "id": "map.camera",
+   "name": "Camera",
+   "desc": "How freely the map's camera may move: looking up, deep zoom, lens, roll, free flight.",
+   "decls": [
+    "mapcam.js|(top level)"
+   ],
+   "net": "offline"
+  },
+  {
+   "id": "shell.crash",
+   "name": "Crash reports",
+   "desc": "A flight recorder: the app's last seconds written to the device, offered as a report after an unexpected end.",
+   "decls": [
+    "crash.js|(top level)"
+   ],
+   "net": "offline"
+  },
+  {
+   "id": "engine.astronomy",
+   "name": "astronomy-engine",
+   "desc": "Positions of the sun, moon and planets, eclipses and seasons (Don Cross), used by Tempora and the map's sky.",
+   "decls": [
+    "astronomy.min.js|(top level)"
+   ],
+   "net": "offline"
+  },
+  {
+   "id": "data.people",
+   "name": "Encyclopaedia and person packages",
+   "desc": "Smith's three dictionaries, the Prosopographia Imperii Romani, the Suda, and Tempora – persons.",
+   "assets": [
+    "packages/people-smith.gdpkg.gz",
+    "packages/people-pir.gdpkg.gz",
+    "packages/suda.gdpkg.gz",
+    "packages/enc-smith-ant.gdpkg.gz",
+    "packages/enc-smith-geo.gdpkg.gz",
+    "packages/tempora-persons.gdpkg.gz"
+   ],
+   "net": "offline"
+  },
+  {
+   "id": "data.chrono",
+   "name": "Chronology packages",
+   "desc": "The consuls (Liebenam's fasti) and the dates read from the texts.",
+   "assets": [
+    "packages/fasti-liebenam.gdpkg.gz",
+    "packages/chrono-texts.gdpkg.gz"
+   ],
+   "net": "offline"
+  }
+ ],
+ "flows": [
+  {
+   "from": "data.people",
+   "to": "suda",
+   "label": "persons, places, things",
+   "kind": "data"
+  },
+  {
+   "from": "data.people",
+   "to": "tempora",
+   "label": "persons with their lives",
+   "kind": "data"
+  },
+  {
+   "from": "data.chrono",
+   "to": "tempora",
+   "label": "consuls, dates of the texts",
+   "kind": "data"
+  },
+  {
+   "from": "suda",
+   "to": "reader",
+   "label": "marks on names",
+   "kind": "data"
+  },
+  {
+   "from": "tempora",
+   "to": "map",
+   "label": "an eclipse's shadow",
+   "kind": "data"
+  }
+ ]
+}

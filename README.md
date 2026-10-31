@@ -15,6 +15,11 @@ the device (memory, storage, CPU, GPU) – drawn in space as cards on strings, w
 - `tools/startup.py` – how Pult starts, read from its code: script order, page-ready handlers, the steps of app.js's main().
 - `walks.json` – the guided walks, written by hand from Pult's code (each step: parts, functions, a sentence), and captions for
   the start-up steps. `decisions.json` (optional, not yet written) – Pult's numbered decisions with the parts they concern.
+- `datamap.json` – the Data view (from the Pult Data Map, 31 Oct 2026): one row per stream of data, source → toolkit →
+  package → in Pult, each box with the atlas parts it names; written by hand, the build reports any part it names that
+  no longer exists. The figures in it (editions, persons, statements) are written by hand too.
+- `parts/H.json` – the parts for Pult's later files: the Suda tab (people.js), Tempora (tempora.js), the map's camera,
+  crash reports, astronomy-engine, the encyclopaedia and chronology packages.
 - `tools/merge.py` – joins the parts with the inventory into model.json; new functions not yet placed in `parts/` go to
   the main part of their file and are listed in its report.
 - `src/atlas.html` – the page (one view in space; Web or Layers, optionally Flat; Explore: walks, start-up, trace, data,

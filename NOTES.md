@@ -79,8 +79,6 @@
   with nothing selected one bundle per pair of main parts; a selected plot shows its links in blue / orange.
   Nothing moves but the camera: no physics, no pulling parts. Snaps Front / Top / Corner; Floors sets the floor height.
   Far parts are chips, nearer their names, near the whole card; plot names drawn last with a halo.
-- The old physics web (draw3d, frame3d, tick3d …) is no longer used – still in the code, to be removed when the tower
-  has proved itself.
 
 ## Decided 21 Oct (07:54)
 - Compact bar on touch screens (phones and iPad) and in windows under 1100 px: one row (‹ › ⌂, search, Controls,
@@ -219,6 +217,29 @@
 - Bug fixed (owner's screenshot): lines above the plots were dimmed – all lines were drawn in one go before the nearer
   floors and plots. Now each line is cut at the floor heights and each piece drawn in its place among the floors, back
   to front (floors above the camera top-down: the pieces above a floor before it; below the camera bottom-up: after it).
+
+## Decided 31 Oct (13:35) – the owner approved all fourteen proposals
+- Data Map integrated as a fifth view, Data (datamap.json; each box's parts are tappable, the selection carries over to
+  the other views, a selected part marks its rows). The build checks the parts it names; its figures stay hand-written.
+  The old Pult Data Map artifact is left as it is (no choice made about it).
+- Found while doing it: the atlas did not know Pult's later files (tempora.js, people.js, mapcam.js, crash.js,
+  astronomy.min.js – about 370 KB of code, 414 declarations). Added (parts/H.json): Suda tab and Tempora as main parts on
+  the On screen floor, map.camera, shell.crash, engine.astronomy, data.people, data.chrono. All 1,608 declarations placed.
+- Pult's own colours (lesepult/style.css: paper #faf8f3, ink #211f1b, burgundy #7a2e2e for the selection, Pult's blue for
+  "uses", ochre for "used by") and fonts (Source Sans 3 for the interface and part names, Gentium Book Plus for headings).
+- One muted colour family per floor (on screen red-brown, behind the scenes green-grey, engines slate, sources ochre);
+  each main part's own hue only as the thin edge of its plot in Space.
+- Light or dark as set in Pult on this device (read from Pult's database 'greekreader', store 'settings', key 'theme' –
+  only if the database already exists: opening a missing one would create it empty and break Pult's first start); else
+  the device; Options → Theme overrides (As in Pult / Light / Dark).
+- Top bar like Pult's: ‹ › ⌂, the views as tabs (Flow · Map · Focus · Space · Data), search, Controls, Explore, ⓘ;
+  everything else in the Controls tray on every screen. Phones: the tabs on a second row. The overview strip is gone.
+- The version bar shows only with Explore → Versions open, or while an older version is shown.
+- Flow with nothing selected or lit: one ribbon per pair of main parts (Map already did this).
+- A part's page folds into sections like Pult's dictionary sources (the first open; the others as last left).
+- Start page on opening (⌂ returns to it): what the atlas is, Data · Flow · Space · Guided walks, the four floors with
+  their main parts.
+- The old physics web (draw3d, tick3d, frame3d, fit3d, pan3d, Web/Layers/Flat) removed: 18 KB less.
 
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check

@@ -1,0 +1,392 @@
+{
+ "lede": "Every source Pult draws on, what the toolkit does with it, the package it ships in, and where it appears in the app. Read each row from left to right. The sources stay as they were received; what Pult shows is only their presentation.",
+ "columns": {
+  "src": "Source",
+  "tk": "Toolkit",
+  "pk": "Package",
+  "ap": "In Pult"
+ },
+ "streams": [
+  {
+   "name": "Texts",
+   "small": "about 2,580 editions",
+   "cells": [
+    {
+     "k": "src",
+     "title": "Greek and Latin texts (TEI)",
+     "items": [
+      "Perseus Digital Library",
+      "Open Greek and Latin: First1KGreek, CSEL",
+      "LacusCurtius (Velleius)"
+     ],
+     "note": "author dates: TLG canon (CLTK)"
+    },
+    {
+     "k": "tk",
+     "title": "Convert",
+     "text": "into books and sections, with every reference kept; notes and translations left out. An index of all words for the search.",
+     "parts": [
+      "tools.texts"
+     ]
+    },
+    {
+     "k": "pk",
+     "title": "One package per work",
+     "text": "and the library catalogue",
+     "parts": [
+      "data.texts"
+     ]
+    },
+    {
+     "k": "ap",
+     "title": "Library and reader",
+     "text": "search across all texts; names and places marked in the text",
+     "parts": [
+      "library",
+      "reader",
+      "dict.index"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Dictionaries",
+   "small": "Greek and Latin",
+   "cells": [
+    {
+     "k": "src",
+     "title": "Dictionaries and morphology",
+     "items": [
+      "LSJ, Pape, analyses (Eulexis)",
+      "Lewis & Short (Perseus)",
+      "Georges · Collatinus · Whitaker's Words",
+      "treebanks (lemma hints)"
+     ]
+    },
+    {
+     "k": "tk",
+     "title": "Build",
+     "text": "keys without accents, headwords, the forms of every word",
+     "parts": [
+      "tools.dicts",
+      "tools.latin"
+     ]
+    },
+    {
+     "k": "pk",
+     "title": "Ten packages",
+     "text": "pape · lsj · ls · georges · collatinus · whitaker · four for forms and lemmas",
+     "parts": [
+      "data.dicts"
+     ]
+    },
+    {
+     "k": "ap",
+     "title": "Dictionary pane",
+     "text": "tap a word; glosses and grammar in the text; browse a dictionary",
+     "parts": [
+      "dict",
+      "reader.glosses",
+      "reader.grammar"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Encyclopaedias",
+   "small": "persons, places, things",
+   "cells": [
+    {
+     "k": "src",
+     "title": "Reference works",
+     "items": [
+      "Smith: Biography, Geography, Antiquities (Perseus)",
+      "Prosopographia Imperii Romani (BBAW)",
+      "Suda (Adler, First1KGreek)"
+     ]
+    },
+    {
+     "k": "tk",
+     "title": "Person index",
+     "text": "Smith's names checked by readers; PIR matched to Smith; the persons of a text identified (Ammianus with Rolfe's index)"
+    },
+    {
+     "k": "pk",
+     "title": "Five packages",
+     "text": "Smith's three dictionaries · PIR · Suda",
+     "parts": [
+      "data.people"
+     ]
+    },
+    {
+     "k": "ap",
+     "title": "Suda tab",
+     "text": "a person's page with every source side by side; marks on names in the text",
+     "parts": [
+      "suda"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Statements",
+   "small": "what each source says",
+   "cells": [
+    {
+     "k": "src",
+     "title": "What is read",
+     "items": [
+      "Smith's articles (72 so far)",
+      "Ammianus, book 14",
+      "Smith's dates found by rule",
+      "Liebenam's fasti · cross-references"
+     ]
+    },
+    {
+     "k": "tk",
+     "title": "Statements and decisions",
+     "text": "readers write down each fact with the source's exact words; programs check them; reviews, misprints and name fixes kept apart as decisions"
+    },
+    {
+     "k": "pk",
+     "title": "Tempora – persons",
+     "text": "873 persons, 8,165 statements, each life estimated with its reason",
+     "parts": [
+      "data.people"
+     ]
+    },
+    {
+     "k": "ap",
+     "title": "Tempora and the Suda tab",
+     "text": "life bars, the person's panel, the filter by kind and witness",
+     "note": "also: the Tempora section on a person's page",
+     "parts": [
+      "tempora",
+      "suda"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Chronology",
+   "small": "dates and reference systems",
+   "cells": [
+    {
+     "k": "src",
+     "title": "Tables and handbooks",
+     "items": [
+      "Liebenam, Fasti consulares (1909)",
+      "Clinton, Fasti Romani (Caesars)",
+      "the dates in Diodorus, Dionysius, Diogenes",
+      "Teuffel, Schanz, Christ (dates of writing)"
+     ]
+    },
+    {
+     "k": "tk",
+     "title": "Tables",
+     "text": "emperors and consuls matched to persons; the years each book narrates; dates read from the texts"
+    },
+    {
+     "k": "pk",
+     "title": "Fasti · dates in the texts",
+     "text": "fasti-liebenam · chrono-texts",
+     "parts": [
+      "data.chrono"
+     ]
+    },
+    {
+     "k": "ap",
+     "title": "Tempora",
+     "text": "the consuls row, the lanes of the texts, dates of writing",
+     "note": "also: offices on a person's page",
+     "parts": [
+      "tempora"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Calendar and sky",
+   "small": "computed, not downloaded",
+   "cells": [
+    {
+     "k": "src",
+     "title": "Methods",
+     "items": [
+      "Meeus, Astronomical Algorithms",
+      "astronomy-engine (D. Cross)",
+      "Halley's comet (Sitarski)",
+      "star catalogue (d3-celestial)"
+     ]
+    },
+    {
+     "k": "tk",
+     "title": "Computed in Pult",
+     "text": "eclipses, moons, seasons, planets, Sirius; Olympiads, years of the city, Roman and Athenian months",
+     "parts": [
+      "engine.astronomy"
+     ],
+     "step": "In the app"
+    },
+    {
+     "k": "pk",
+     "title": "Part of the app",
+     "text": "no download",
+     "parts": [
+      "data.sky"
+     ]
+    },
+    {
+     "k": "ap",
+     "title": "Tempora and the map",
+     "text": "the reference rows; an eclipse's shadow on the map",
+     "parts": [
+      "tempora",
+      "map.sky",
+      "map.sun"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Maps",
+   "small": "ancient and modern",
+   "cells": [
+    {
+     "k": "src",
+     "title": "Geodata",
+     "items": [
+      "Pleiades (places)",
+      "Ancient World Mapping Center",
+      "Itiner-e (roads)",
+      "Natural Earth · Blue Marble · Copernicus DEM"
+     ]
+    },
+    {
+     "k": "tk",
+     "title": "Tiles",
+     "text": "vector and image tiles, relief and contour lines, place names in Greek and Latin",
+     "parts": [
+      "tools.maps",
+      "tools.relief"
+     ]
+    },
+    {
+     "k": "pk",
+     "title": "Map packages",
+     "text": "base map, ancient landscape, places, roads, relief by region",
+     "parts": [
+      "data.maps"
+     ]
+    },
+    {
+     "k": "ap",
+     "title": "Map",
+     "text": "the places named in a text, your own statements with a place",
+     "parts": [
+      "map"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Private",
+   "small": "not published",
+   "cells": [
+    {
+     "k": "src",
+     "title": "Licensed for private use",
+     "items": [
+      "Frisk · Bailly",
+      "DPRR (King's College London)",
+      "Stephanus of Byzantium (ToposText)",
+      "Latin Library · Rolfe's index of names"
+     ],
+     "priv": true
+    },
+    {
+     "k": "tk",
+     "title": "Same processing",
+     "text": "built into a separate, private repository"
+    },
+    {
+     "k": "pk",
+     "title": "Private repository",
+     "text": "read by Pult on your devices only",
+     "parts": [
+      "data.dicts.private",
+      "net.github_api"
+     ],
+     "priv": true
+    },
+    {
+     "k": "ap",
+     "title": "Dictionary pane, Suda tab, library",
+     "text": "beside the public sources",
+     "parts": [
+      "dict",
+      "suda",
+      "library"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Yours",
+   "small": "kept in the backup",
+   "cells": [
+    {
+     "k": "src",
+     "title": "What you add",
+     "items": [
+      "your statements in Tempora",
+      "corrections and choices (which person is meant, kinds)",
+      "notes and bookmarks"
+     ]
+    },
+    {
+     "k": "tk",
+     "title": "Never overwritten",
+     "text": "your choices win over every rule and reader"
+    },
+    {
+     "k": "pk",
+     "title": "Settings and backup",
+     "text": "on the device",
+     "parts": [
+      "settings.thispult",
+      "storage.idb_reader"
+     ]
+    },
+    {
+     "k": "ap",
+     "title": "Everywhere",
+     "text": "Tempora, the reader, the Suda tab",
+     "parts": [
+      "tempora",
+      "reader",
+      "suda"
+     ]
+    }
+   ]
+  }
+ ],
+ "layers": [
+  {
+   "title": "1 · Sources",
+   "text": "Kept exactly as received: the downloaded files and scans. Nothing in them is changed."
+  },
+  {
+   "title": "2 · Statements",
+   "text": "What each source says, with its words and place. Made by readers and rules; can be made again at any time."
+  },
+  {
+   "title": "3 · Decisions",
+   "text": "Reviews, misprints read, names fixed, your own choices – kept apart and applied on every rebuild."
+  },
+  {
+   "title": "Presentation",
+   "text": "Pult draws from these: the reader, the Suda tab, the map, Tempora. Every item links back to its source."
+  }
+ ]
+}
