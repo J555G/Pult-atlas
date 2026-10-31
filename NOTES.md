@@ -253,12 +253,17 @@
   to drag it back out; double-tap the divider for the usual size.
 
 ## Decided 31 Oct (15:05)
-- Flow: every card with parts has a chevron button at its right (▸ closed, ▾ open), in both zoom levels; a tap on it
+- Flow: every card with parts has a chevron button (left since 15:24; ▸ closed, ▾ open), in both zoom levels; a tap on it
   unfolds or folds the part; a tap on an opened group's ▾ heading folds it. A tap elsewhere on the card still selects.
 - Flow keeps its order: the main parts are ordered once from the main-part graph (per version), parts within a group by
   the main parts they link to; columns are placed as if everything were closed. Opening a part unfolds it downward in
   its place (its frame starts exactly where its card was); only the cards below it in its own column move down.
   Measured: opening Engines moved nothing else; opening Map moved only the five cards below it.
+
+## Decided 31 Oct (15:24)
+- Flow: the chevron is on the left of the card and keeps its place: an opened part's heading is as tall as its card was,
+  with the chevron (now ▾) and the name exactly where they were (also for parts opened inside a group). Measured:
+  opening and folding Engines, Map, Relief and Dictionary – the chevron stays on the same screen spot.
 
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check

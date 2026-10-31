@@ -762,13 +762,13 @@ function layFlow(vis, edges) {
     const x = c * GX; let y = 0; const runs = [];
     cs.forEach(id => { const g = N.get(id).l1; const r = runs[runs.length - 1]; if (r && r.g === g) r.ids.push(id); else runs.push({ g, ids: [id] }); });
     runs.forEach(r => { const framed = r.ids.length > 1 || r.ids[0] !== r.g;
-      if (framed) y += 32; const y0 = y; let lastPar = r.g;   // (an opened part's frame starts exactly where its card was)
+      if (framed) y += CH + 10; const y0 = y; let lastPar = r.g;   // (an opened part's frame starts exactly where its card was; its heading is the card's height)
       r.ids.forEach(id => { const d = framed ? id.split('.').length - 1 : 0, par = N.get(id).parent;
         if (framed && par && par !== r.g && par !== lastPar) {   // a part opened inside the group: its own sub-heading, one step in
-          const pd = par.split('.').length - 1; frames.push({ id: par, sub: true, col: c, d: pd, x: x - CW / 2 + pd * IND, y: y + 2, w: CW - pd * IND, h: 22 }); y += 28; }
+          const pd = par.split('.').length - 1; frames.push({ id: par, sub: true, col: c, d: pd, x: x - CW / 2 + pd * IND, y, w: CW - pd * IND, h: CH }); y += CH + 10; }
         lastPar = par;
         const ind = d * IND; pos.set(id, { x: x + ind / 2, y: y + CH / 2, w: CW / 2 - ind / 2, h: CH / 2, c, g: framed ? r.g : null }); y += CH + 10; });   // (indented one step per level; right edges stay in line)
-      if (framed) frames.push({ id: r.g, col: c, x: x - CW / 2 - 10, y: y0 - 32, w: CW + 20, h: y - y0 + 40, n: r.ids.length });
+      if (framed) frames.push({ id: r.g, col: c, x: x - CW / 2 - 10, y: y0 - CH - 10, w: CW + 20, h: y - y0 + CH + 18, n: r.ids.length });
       y += 26; });
     const off = -FO.cols[c].length * (CH + 36) / 2; cs.forEach(id => pos.get(id).y += off); frames.filter(f => f.col === c).forEach(f => f.y += off);   // (placed as if all were closed, so opening grows the column downward only)
     heads.push({ x, y: off - 46, t: COLS[c][1], n: cs.length }); });
@@ -845,19 +845,22 @@ function edgePath(x, a, b, kind) {   // a curve from one card to another, leavin
   x.moveTo(sx, sy); x.bezierCurveTo(sx + s * d, sy, ex - s * d, ey, ex, ey); return [ex, ey, s > 0 ? 0 : Math.PI];
 }
 function arrowHead(x, [ex, ey, an], w) { const h = 5 + w * 2; x.beginPath(); x.moveTo(ex, ey); x.lineTo(ex - h * Math.cos(an - 0.4), ey - h * Math.sin(an - 0.4)); x.lineTo(ex - h * Math.cos(an + 0.4), ey - h * Math.sin(an + 0.4)); x.fill(); }
+const chevR = h => Math.min(h / 2 - 4, Math.max(12, 11 * KZ() / T2.k));   // (the chevron's radius: finger-sized at any zoom, inside the card)
+function drawChev(x, cx, cy, cr, open, al) {   // ▸ closed, ▾ open, in a round button
+  x.save(); x.globalAlpha = al; x.beginPath(); x.arc(cx, cy, cr, 0, 7); x.fillStyle = css('--surface'); x.fill(); x.lineWidth = Math.max(1, 1 / T2.k); x.strokeStyle = css('--line'); x.stroke();
+  x.beginPath(); const u = cr * 0.38; if (open) { x.moveTo(cx - u, cy - u * 0.5); x.lineTo(cx, cy + u * 0.6); x.lineTo(cx + u, cy - u * 0.5); } else { x.moveTo(cx - u * 0.5, cy - u); x.lineTo(cx + u * 0.6, cy); x.lineTo(cx - u * 0.5, cy + u); }
+  x.lineWidth = Math.max(1.6, cr * 0.17); x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = css('--acc'); x.stroke(); x.restore(); }
 function paintCard2(x, id, b, mk, al, nSame) {
   const cn = N.get(id), w = b.w * 2, h = b.h * 2, x0 = b.x - b.w, y0 = b.y - b.h, big = b.w > CW / 2;
   x.globalAlpha = al; x.beginPath(); rrect(x, x0, y0, w, h, 10); x.fillStyle = fill(id); x.fill();
-  const nk = cn.children.filter(c => V.ex.has(c)).length, cr = nk ? Math.min(h / 2 - 4, Math.max(12, 11 * KZ() / T2.k)) : 0, cw = nk ? 2 * cr + 10 : 0;
-  const chev = () => { if (!nk) return; const cx = x0 + w - cr - 6, open = S.exp.has(id); x.save(); x.globalAlpha = al; x.beginPath(); x.arc(cx, b.y, cr, 0, 7); x.fillStyle = css('--surface'); x.fill(); x.lineWidth = Math.max(1, 1 / T2.k); x.strokeStyle = css('--line'); x.stroke();
-    x.beginPath(); const u = cr * 0.38; if (open) { x.moveTo(cx - u, b.y - u * 0.5); x.lineTo(cx, b.y + u * 0.6); x.lineTo(cx + u, b.y - u * 0.5); } else { x.moveTo(cx - u * 0.5, b.y - u); x.lineTo(cx + u * 0.6, b.y); x.lineTo(cx - u * 0.5, b.y + u); }
-    x.lineWidth = Math.max(1.6, cr * 0.17); x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = css('--acc'); x.stroke(); x.restore(); };   // (▸ closed, ▾ open: tap it to unfold the parts downward)
+  const nk = cn.children.filter(c => V.ex.has(c)).length, cr = nk ? chevR(h) : 0, cw = nk ? 2 * cr + 10 : 0;
+  const chev = () => { if (nk) drawChev(x, x0 + cr + 6, b.y, cr, S.exp.has(id), al); };   // (on the left: tap it to unfold the parts downward; the opened part's heading has it in the same place)
   const fs = 13 * KZ() / T2.k;   // the size the name needs to read well at this zoom
   if (fs > 17) {   // zoomed out: only the name, as large as the card allows
     const chg = V.chg.has(id) && S.ver > 0; x.lineWidth = (mk ? 3 : chg ? 2 : 1) / Math.min(1, T2.k * 1.4); x.strokeStyle = mk || (chg ? css('--flow') : css('--line')); x.stroke();
     let f = Math.min(fs, 28); x.fillStyle = css('--ink'); x.textAlign = 'center'; x.textBaseline = 'middle';
     const words = cn.name.split(' '); let ln;
-    const tw = w - 16 - cw, tx = b.x - cw / 2;
+    const tw = w - 16 - cw, tx = b.x + cw / 2;
     for (;;) { x.font = `700 ${f}px "Source Sans 3", sans-serif`; ln = ['']; for (const wd of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + wd : wd; if (x.measureText(t).width > tw && ln[ln.length - 1]) ln.push(wd); else ln[ln.length - 1] = t; }
       if ((ln.length <= 2 && ln.every(t => x.measureText(t).width <= tw)) || f <= 12) break; f -= 1; }
     ln = ln.slice(0, 2); if (x.measureText(ln[1] || '').width > tw) { let t = ln[1]; while (t.length > 2 && x.measureText(t + '…').width > tw) t = t.slice(0, -1); ln[1] = t + '…'; }
@@ -867,11 +870,11 @@ function paintCard2(x, id, b, mk, al, nSame) {
   const chg = V.chg.has(id) && S.ver > 0; x.lineWidth = mk ? 3 : chg ? 2 : 1; x.strokeStyle = mk || (chg ? css('--flow') : css('--line')); x.setLineDash(chg && !mk ? [4, 3] : []); x.stroke(); x.setLineDash([]);
   x.fillStyle = css('--ink'); x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.font = `600 ${big ? 18 : 15}px "Source Sans 3", sans-serif`;
   let nm = cn.name; while (nm.length > 4 && x.measureText(nm).width > w - 44 - cw) nm = nm.slice(0, -1); if (nm !== cn.name) nm = nm.trimEnd() + '…';
-  x.fillText(nm, x0 + 12, y0 + (big ? 27 : 23));
+  x.fillText(nm, x0 + 12 + cw, y0 + (big ? 27 : 23));
   const bt = V.tot(id, V.code), ad = V.tot(id, V.asset), kids = cn.children.filter(c => V.ex.has(c)).length;
-  x.font = '11.5px "IBM Plex Mono", monospace'; x.fillStyle = css('--mut'); x.fillText([bt ? fmtB(bt) + ' code' : '', ad ? fmtB(ad) + ' data' : '', kids ? kids + ' parts' : ''].filter(Boolean).slice(0, 2).join(' · '), x0 + 12, y0 + (big ? 47 : 41));
+  x.font = '11.5px "IBM Plex Mono", monospace'; x.fillStyle = css('--mut'); x.fillText([bt ? fmtB(bt) + ' code' : '', ad ? fmtB(ad) + ' data' : '', kids ? kids + ' parts' : ''].filter(Boolean).slice(0, 2).join(' · '), x0 + 12 + cw, y0 + (big ? 47 : 41));
   chev();
-  const n = netOf(id), cx = x0 + w - 18 - cw, cy = y0 + 18; x.beginPath(); x.arc(cx, cy, 5, 0, 7); x.lineWidth = 1.2; x.strokeStyle = css('--ink'); x.stroke(); if (n === 'offline') { x.fillStyle = css('--ink'); x.fill(); } else if (n === 'both') { x.beginPath(); x.arc(cx, cy, 5, Math.PI / 2, -Math.PI / 2); x.fillStyle = css('--ink'); x.fill(); }
+  const n = netOf(id), cx = x0 + w - 18, cy = y0 + 18; x.beginPath(); x.arc(cx, cy, 5, 0, 7); x.lineWidth = 1.2; x.strokeStyle = css('--ink'); x.stroke(); if (n === 'offline') { x.fillStyle = css('--ink'); x.fill(); } else if (n === 'both') { x.beginPath(); x.arc(cx, cy, 5, Math.PI / 2, -Math.PI / 2); x.fillStyle = css('--ink'); x.fill(); }
   if (S.ind) Object.keys(METRICS).forEach((m, i) => { x.fillStyle = css('--h' + rating(id, m)); x.fillRect(x0 + 12 + i * 30, y0 + h - 9, 26, 4); });
   x.globalAlpha = 1; return cw;
 }
@@ -891,6 +894,16 @@ function frame2d(now) {
   // frames and regions, column heads
   for (const f of lay.frames.filter(f => !f.sub)) { const hue = HUE(f.id); x.beginPath(); rrect(x, f.x, f.y, f.w, f.h, f.region ? 16 : 12);
     x.fillStyle = `hsl(${hue} 20% ${dark2() ? 18 : 94}%)`; x.globalAlpha = 1; x.fill(); x.lineWidth = f.id === sel ? 3 : 1.5; x.strokeStyle = f.id === sel ? css('--acc') : `hsl(${hue} 20% ${dark2() ? 45 : 62}%)`; x.stroke();
+    if (lay.kind === 'flow') {   // Flow: the heading takes the card's place – the same height, the chevron (now ▾) and the name where they were
+      const cx0 = f.x + 10, cr = chevR(CH), cw = 2 * cr + 10;
+      x.save(); x.beginPath(); rrect(x, f.x, f.y, f.w, CH + 4, 12); x.clip(); x.fillStyle = `hsl(${hue} 26% ${dark2() ? 28 : 84}%)`; x.fillRect(f.x, f.y, f.w, CH + 4); x.restore();
+      x.fillStyle = `hsl(${hue} 26% ${dark2() ? 50 : 55}%)`; x.fillRect(f.x + 8, f.y + CH + 10, 4, f.h - CH - 18);
+      drawChev(x, cx0 + cr + 6, f.y + CH / 2, cr, true, 1);
+      const fs = Math.max(15, Math.min(26, 13 * KZ() / T2.k)); x.fillStyle = f.id === sel ? css('--acc') : css('--ink'); x.font = `700 ${fs}px "Source Sans 3", sans-serif`; x.textAlign = 'left'; x.textBaseline = 'middle';
+      let nm = N.get(f.id).name; while (nm.length > 4 && x.measureText(nm).width > f.w - cw - 40) nm = nm.slice(0, -1); x.fillText(nm === N.get(f.id).name ? nm : nm.trimEnd() + '…', cx0 + cw + 2, f.y + CH / 2);
+      if (f.n && fs < 18) { x.font = '12px "Source Sans 3", sans-serif'; x.fillStyle = css('--mut'); x.textAlign = 'right'; x.fillText(`${f.n} parts`, f.x + f.w - 10, f.y + CH - 8); }
+      x.textBaseline = 'alphabetic';
+      T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + CH / 2) * T2.k + T2.y, w: f.w / 2 * T2.k, h: CH / 2 * T2.k, chev: { x0: cx0 * T2.k + T2.x, x1: (cx0 + cw + 4) * T2.k + T2.x } }); continue; }
     if (!f.region) {   // an opened group: a header band and a bar down its left side, the parts indented inside
       x.save(); x.beginPath(); rrect(x, f.x, f.y, f.w, 28, 12); x.clip(); x.fillStyle = `hsl(${hue} 26% ${dark2() ? 28 : 84}%)`; x.fillRect(f.x, f.y, f.w, 28); x.restore();
       x.fillStyle = `hsl(${hue} 26% ${dark2() ? 50 : 55}%)`; x.fillRect(f.x + 8, f.y + 32, 4, f.h - 40); }
@@ -899,6 +912,12 @@ function frame2d(now) {
     if (!f.region && f.n) { x.font = '12px "Source Sans 3", sans-serif'; x.fillStyle = css('--mut'); x.textAlign = 'right'; x.fillText(`${f.n} parts`, f.x + f.w - 12, f.y + 19); }
     T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + 14) * T2.k + T2.y, w: f.w / 2 * T2.k, h: 14 * T2.k, chev: f.region ? null : { x0: f.x * T2.k + T2.x, x1: (f.x + 40) * T2.k + T2.x } }); }
   for (const f of lay.frames.filter(f => f.sub)) { const hue = HUE(f.id);   // a part opened inside a group: a sub-heading with a tick to its own bar
+    if (lay.kind === 'flow') {   // Flow: as tall as its card was, the chevron (▾) and the name where they were
+      const cr = chevR(CH), cw = 2 * cr + 10; x.beginPath(); rrect(x, f.x, f.y, f.w, CH, 10); x.fillStyle = `hsl(${hue} 26% ${dark2() ? 24 : 88}%)`; x.fill(); x.lineWidth = f.id === sel ? 3 : 1; x.strokeStyle = f.id === sel ? css('--acc') : css('--line'); x.stroke();
+      drawChev(x, f.x + cr + 6, f.y + CH / 2, cr, true, 1);
+      const fs = Math.max(14, Math.min(24, 13 * KZ() / T2.k)); x.fillStyle = f.id === sel ? css('--acc') : css('--ink'); x.font = `700 ${fs}px "Source Sans 3", sans-serif`; x.textAlign = 'left'; x.textBaseline = 'middle';
+      let nm = N.get(f.id).name; while (nm.length > 4 && x.measureText(nm).width > f.w - cw - 12) nm = nm.slice(0, -1); x.fillText(nm === N.get(f.id).name ? nm : nm.trimEnd() + '…', f.x + cw + 2, f.y + CH / 2); x.textBaseline = 'alphabetic';
+      T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + CH / 2) * T2.k + T2.y, w: f.w / 2 * T2.k, h: CH / 2 * T2.k, chev: { x0: f.x * T2.k + T2.x, x1: (f.x + cw + 4) * T2.k + T2.x } }); continue; }
     x.fillStyle = `hsl(${hue} 26% ${dark2() ? 50 : 55}%)`; x.fillRect(f.x + 4, f.y + 6, 3, 12); x.fillRect(f.x + 4, f.y + 22, 3, 6);
     x.fillStyle = f.id === sel ? css('--acc') : css('--ink'); x.font = '700 13px "Source Sans 3", sans-serif'; x.textAlign = 'left'; x.fillText(`▾ ${N.get(f.id).name}`, f.x + 12, f.y + 17);
     T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + 12) * T2.k + T2.y, w: f.w / 2 * T2.k, h: 12 * T2.k, chev: { x0: f.x * T2.k + T2.x, x1: (f.x + 34) * T2.k + T2.x } }); }
@@ -933,7 +952,7 @@ function frame2d(now) {
   // the cards
   for (const [id, b] of lay.pos) { let al = 1; if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al = 0.25; const hv = HV.get(id); if (!sel && HV.size && !hv) al = 0.2; if (S.offv && netOf(id) === 'online') al *= 0.35;
     const cw = paintCard2(x, id, b, id === sel ? css('--acc') : hv ? hlCol(hv.t) : null, al, same.get(id)) || 0;
-    const sb = { id, x: b.x * T2.k + T2.x, y: b.y * T2.k + T2.y, w: b.w * T2.k, h: b.h * T2.k }; if (cw) sb.chev = { x0: (b.x + b.w - cw - 4) * T2.k + T2.x, x1: (b.x + b.w) * T2.k + T2.x }; T3.drawn.push(sb);
+    const sb = { id, x: b.x * T2.k + T2.x, y: b.y * T2.k + T2.y, w: b.w * T2.k, h: b.h * T2.k }; if (cw) sb.chev = { x0: (b.x - b.w) * T2.k + T2.x, x1: (b.x - b.w + cw + 4) * T2.k + T2.x }; T3.drawn.push(sb);
     if (hv?.n) { x.setTransform(dpr, 0, 0, dpr, 0, 0); badge(x, sb, hv, 1); x.setTransform(dpr * T2.k, 0, 0, dpr * T2.k, dpr * T2.x, dpr * T2.y); } }
   x.setTransform(dpr, 0, 0, dpr, 0, 0); x.globalAlpha = 1;
   drawMini();
