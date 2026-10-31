@@ -269,6 +269,14 @@
 - Space: lines are smooth curves (one cubic curve per line, leaving and arriving vertically, swinging across between
   the floors; on the same floor an arch) instead of the right-angled shafts. Still cut at the floors and drawn in place.
 
+## Decided 31 Oct (15:50)
+- Flow, nothing jumps on opening or closing (owner's screenshots): a part's name is written left-aligned beside the
+  chevron, the same way on its card and on the heading that replaces it (shared writeName); the heading is drawn over
+  the lines like the card. The column headings set their own text baseline (left as it was, they followed whatever had
+  been drawn before and moved ~8 px) and in Flow carry no count (it changed with what was open).
+  Checked: screenshots before and after opening Engines – chevron and name on the same pixels, the headings band
+  unchanged.
+
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
   finds the atlas installable (no errors). If Chrome is wanted later: harden the manifest (fixed id and start_url,
