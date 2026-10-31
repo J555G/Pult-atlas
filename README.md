@@ -17,7 +17,8 @@ the device (memory, storage, CPU, GPU) – drawn in space as cards on strings, w
   the start-up steps. `decisions.json` (optional, not yet written) – Pult's numbered decisions with the parts they concern.
 - `datamap.json` – the Data view (from the Pult Data Map, 31 Oct 2026): one row per stream of data, source → toolkit →
   package → in Pult, each box with the atlas parts it names; written by hand, the build reports any part it names that
-  no longer exists. The figures in it (editions, persons, statements) are written by hand too.
+  no longer exists. Figures in braces ({editions}, {persons}, {statements}, {dict_packages}, {enc_packages}) are
+  counted from Pult at every build by `tools/figures.py`.
 - `parts/H.json` – the parts for Pult's later files: the Suda tab (people.js), Tempora (tempora.js), the map's camera,
   crash reports, astronomy-engine, the encyclopaedia and chronology packages.
 - `tools/merge.py` – joins the parts with the inventory into model.json; new functions not yet placed in `parts/` go to

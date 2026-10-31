@@ -220,8 +220,7 @@
 
 ## Decided 31 Oct (13:35) – the owner approved all fourteen proposals
 - Data Map integrated as a fifth view, Data (datamap.json; each box's parts are tappable, the selection carries over to
-  the other views, a selected part marks its rows). The build checks the parts it names; its figures stay hand-written.
-  The old Pult Data Map artifact is left as it is (no choice made about it).
+  the other views, a selected part marks its rows). The build checks the parts it names.
 - Found while doing it: the atlas did not know Pult's later files (tempora.js, people.js, mapcam.js, crash.js,
   astronomy.min.js – about 370 KB of code, 414 declarations). Added (parts/H.json): Suda tab and Tempora as main parts on
   the On screen floor, map.camera, shell.crash, engine.astronomy, data.people, data.chrono. All 1,608 declarations placed.
@@ -240,6 +239,13 @@
 - Start page on opening (⌂ returns to it): what the atlas is, Data · Flow · Space · Guided walks, the four floors with
   their main parts.
 - The old physics web (draw3d, tick3d, frame3d, fit3d, pan3d, Web/Layers/Flat) removed: 18 KB less.
+
+## Decided 31 Oct (13:52)
+- The separate Pult Data Map artifact deleted (owner).
+- The Data view's figures are counted from Pult at every build (tools/figures.py → out/figures.json; datamap.json names
+  them in braces): editions from texts/catalog.json, dictionary and encyclopaedia packages from packages/packages.json,
+  persons and statements from the Tempora – persons package. Still by hand: "Smith's articles (72 so far)", "Ammianus,
+  book 14" and the source lists.
 
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check

@@ -6,7 +6,7 @@
 Checks: every declaration of the current version belongs to exactly one part (left-overs go to the part that owns most
 of their file); flows name existing parts (else their nearest existing ancestor); asset paths are matched to the inventory.
 """
-import json, sys, glob, os
+import json, re, sys, glob, os
 from collections import defaultdict, Counter
 
 L1 = [  # id, name, tier, hue, desc
@@ -138,7 +138,15 @@ def main(parts_dir, inv_path, out):
     # the Data Map (datamap.json, written by hand): every part it links to must exist
     mp = os.path.join(parts_dir, '..', 'datamap.json')
     if os.path.exists(mp):
-        dm = json.load(open(mp)); model['datamap'] = dm
+        dm = json.load(open(mp))
+        fp = os.path.join(os.path.dirname(inv_path), 'figures.json'); figs = json.load(open(fp)) if os.path.exists(fp) else {}
+        def fill(t):   # {name} -> the figure counted from Pult at this build
+            for name in re.findall(r'\{([a-z_]+)\}', t):
+                if name in figs: t = t.replace('{' + name + '}', figs[name])
+                else: report.append(f'Data Map: no figure {{{name}}}'); t = t.replace('{' + name + '}', '?')
+            return t
+        def walk(x): return fill(x) if isinstance(x, str) else [walk(v) for v in x] if isinstance(x, list) else {k: walk(v) for k, v in x.items()} if isinstance(x, dict) else x
+        dm = walk(dm); model['datamap'] = dm
         for st in dm['streams']:
             for c in st['cells']:
                 for pid in c.get('parts', []):

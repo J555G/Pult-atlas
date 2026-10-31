@@ -9,7 +9,7 @@
  "streams": [
   {
    "name": "Texts",
-   "small": "about 2,580 editions",
+   "small": "{editions} editions",
    "cells": [
     {
      "k": "src",
@@ -74,7 +74,7 @@
     },
     {
      "k": "pk",
-     "title": "Ten packages",
+     "title": "{dict_packages} packages",
      "text": "pape · lsj · ls · georges · collatinus · whitaker · four for forms and lemmas",
      "parts": [
       "data.dicts"
@@ -112,7 +112,7 @@
     },
     {
      "k": "pk",
-     "title": "Five packages",
+     "title": "{enc_packages} packages",
      "text": "Smith's three dictionaries · PIR · Suda",
      "parts": [
       "data.people"
@@ -150,7 +150,7 @@
     {
      "k": "pk",
      "title": "Tempora – persons",
-     "text": "873 persons, 8,165 statements, each life estimated with its reason",
+     "text": "{persons} persons, {statements} statements, each life estimated with its reason",
      "parts": [
       "data.people"
      ]
