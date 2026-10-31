@@ -1053,11 +1053,13 @@ function layTower(vis) {
   return { pos, edges, plots, floors, groups, bundles: [...bundles.values()], FH };
 }
 const plotC = (lay, id) => { const p = lay.plots.find(p => p.id === id); return p && { x: (p.x0 + p.x1) / 2, y: p.y, z: (p.z0 + p.z1) / 2 }; };
-function shaft(a, b, FH, ca, cb) {   // a line between floors: straight up or down, across at the half-floor, then to the other end
-  if (Math.abs(a.y - b.y) < 1) { const top = a.y + CH + 150; return [{ x: a.x, y: a.y, z: a.z }, { x: a.x, y: top, z: a.z }, { x: b.x, y: top, z: b.z }, { x: b.x, y: b.y, z: b.z }]; }
-  const up = b.y > a.y, ym = (Math.max(a.y, b.y) - FH / 2) + (up ? 0 : 0) - 30;
-  const ay = a.y, by = b.y;
-  return [{ x: a.x, y: ay, z: a.z }, { x: a.x, y: ym, z: a.z }, { x: b.x, y: ym, z: b.z }, { x: b.x, y: by, z: b.z }];
+function shaft(a, b, FH, ca, cb) {   // a line between parts: one smooth curve, leaving and arriving vertically (an arch on the same floor), sampled as points
+  let P1, P2;
+  if (Math.abs(a.y - b.y) < 1) { const top = a.y + CH + 150; P1 = { x: a.x, y: top, z: a.z }; P2 = { x: b.x, y: top, z: b.z }; }
+  else { const ym = Math.max(a.y, b.y) - FH / 2 - 30; P1 = { x: a.x, y: ym, z: a.z }; P2 = { x: b.x, y: ym, z: b.z }; }
+  const pts = []; for (let i = 0; i <= 28; i++) { const t = i / 28, u = 1 - t, k0 = u * u * u, k1 = 3 * u * u * t, k2 = 3 * u * t * t, k3 = t * t * t;
+    pts.push({ x: k0 * a.x + k1 * P1.x + k2 * P2.x + k3 * b.x, y: k0 * a.y + k1 * P1.y + k2 * P2.y + k3 * b.y, z: k0 * a.z + k1 * P1.z + k2 * P2.z + k3 * b.z }); }
+  return pts;
 }
 function frameTower(now) {
   T3.raf = 0;
