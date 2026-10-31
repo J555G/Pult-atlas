@@ -109,7 +109,7 @@
 
 ## Decided 21 Oct (09:58)
 - The divider can be pulled all the way to the edge (the pane closes, the drawing takes the whole width; on phones
-  down to the bottom). A ⅓ button on the divider brings the pane back to the right third (phones: the bottom third).
+  down to the bottom). (The ⅓ button was removed on 31 Oct.)
 
 ## Decided 21 Oct (10:10)
 - Space steered like a map app (owner's choice over a freed turntable or walking through): one finger slides the floors
@@ -246,6 +246,11 @@
   them in braces): editions from texts/catalog.json, dictionary and encyclopaedia packages from packages/packages.json,
   persons and statements from the Tempora – persons package. Still by hand: "Smith's articles (72 so far)", "Ammianus,
   book 14" and the source lists.
+
+## Decided 31 Oct (14:40)
+- Portrait (iPad held upright, phones): the pane at the bottom; landscape: on the right (was: by width, under 760 px).
+- The ⅓ button on the divider is gone. A pane pulled shut keeps its handle wholly on screen (a slim strip at the edge)
+  to drag it back out; double-tap the divider for the usual size.
 
 ## Open
 - Android: installing from Chrome failed (21 Oct); the owner installed the atlas via Brave instead. Chrome's own check
