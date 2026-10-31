@@ -498,7 +498,7 @@ function anchorOf(id) {
   if (S.view === 'space') { const L = TW3.lay; if (!L) return null; const g = L.groups.find(g => g.id === id); if (g) return { x: g.x0, y: g.y, z: g.z0 };
     const pl = L.plots.find(p => p.id === id); if (pl) return { x: pl.x0, y: pl.y, z: pl.z0 }; const c = L.pos.get(id); return c ? { x: c.x - CW / 2, y: c.y, z: c.z - 40 } : null; }
   if (S.view === 'focus') return null;
-  const L = T2.lay; if (!L) return null; const f = L.frames.find(f => f.id === id); if (f) return { x: f.x, y: f.y }; const b = L.pos.get(id); return b ? { x: b.x - b.w, y: b.y - b.h } : null;
+  const L = T2.lay; if (!L) return null; const f = L.frames.find(f => f.id === id); if (f) return { x: f.x + (L.kind === 'flow' && !f.sub ? 10 : 0), y: f.y }; const b = L.pos.get(id); return b ? { x: b.x - b.w, y: b.y - b.h } : null;
 }
 function keepAnchor(id, a0) { const a1 = anchorOf(id); if (!a0 || !a1) return;
   if (S.view === 'space') { T3.cam.ty += a1.y - a0.y; onAxis(); if (T3.camTo) { delete T3.camTo.tx; delete T3.camTo.ty; delete T3.camTo.tz; } }
@@ -639,6 +639,8 @@ const up3 = e => { T3.ptrs.delete(e.pointerId); if (T3.ptrs.size < 2) { T3.pinch
   if (d?.moved && S.view === 'space' && Math.hypot(d.vx || 0, d.vy || 0) > 2) T3.spin = { vx: (d.vx || 0) * 0.6, vy: (d.vy || 0) * 0.6, ref: d.ref };   // (a little glide after letting go)
   if (d && !d.moved && S.view === 'space' && T3.floorHits) { const f = T3.floorHits.find(b => Math.abs(e.offsetX - b.x) < b.w && Math.abs(e.offsetY - b.y) < b.h); if (f) { const fl = TW3.lay.floors.find(x => x.t === f.t); if (fl) { T3.camTo = { ty: fl.y + CH }; run3d(); } return; } }   // (a floor's name: glide there)
   if (!d || d.moved) { run3d(); return; }
+  if (S.view !== 'space') { const ex = e.offsetX, ey = e.offsetY; for (let i = T3.drawn.length - 1; i >= 0; i--) { const b = T3.drawn[i]; if (Math.abs(ex - b.x) > b.w || Math.abs(ey - b.y) > b.h) continue;
+    if (b.chev && ex >= b.chev.x0 - 6 && ex <= b.chev.x1 + 4) { T3.lastTap = null; toggle(b.id); return; } break; } }   // (▸ / ▾: unfold or fold)
   const now = Date.now(), id = d.id;
   if (id && T3.lastTap?.id === id && now - T3.lastTap.t < 350) { T3.lastTap = null; toggle(id); return; }
   T3.lastTap = { id, t: now }; if (!id) S.info = false; select(id && S.sel !== id ? id : null); };
@@ -760,25 +762,27 @@ function lay2d() {
 function layFlow(vis, edges) {
   const col = new Map(); vis.forEach(id => col.set(id, COLS.findIndex(c => c[0] === tierOf(id))));
   const nb = new Map(vis.map(id => [id, []])); edges.forEach(e => { if (nb.has(e.a) && nb.has(e.b)) { nb.get(e.a).push(e.b); nb.get(e.b).push(e.a); } });
-  const l1i = id => MODEL.l1.findIndex(l => l.id === N.get(id).l1);
-  const cols = COLS.map((_, c) => vis.filter(id => col.get(id) === c).sort((a, b) => l1i(a) - l1i(b) || a.localeCompare(b)));
-  const rank = new Map(); const setRank = () => cols.forEach(cs => cs.forEach((id, i) => rank.set(id, i / Math.max(1, cs.length - 1))));
-  setRank();
-  for (let it = 0; it < 6; it++) {   // barycentres: each part moves towards the average place of its neighbours; a main part's parts stay together
-    cols.forEach((cs, c) => {
-      const bc = id => { const ns = nb.get(id).filter(x => col.get(x) !== c); return ns.length ? ns.reduce((s, x) => s + rank.get(x), 0) / ns.length : rank.get(id); };
-      const groups = new Map(); cs.forEach(id => { const g = N.get(id).l1; (groups.get(g) || groups.set(g, []).get(g)).push(id); });
-      const gs = [...groups.values()].map(ids => { ids.sort((a, b) => bc(a) - bc(b));
-        const byPar = new Map(); ids.forEach(id => { const k = id.split('.').slice(0, 2).join('.'); (byPar.get(k) || byPar.set(k, []).get(k)).push(id); });   // (the parts of an opened part stay together)
-        ids = [...byPar.values()].flat(); return { ids, b: ids.reduce((s, x) => s + bc(x), 0) / ids.length }; }).sort((a, b) => a.b - b.b);
-      cols[c] = gs.flatMap(g => g.ids); });
-    setRank(); }
+  // the order is fixed by the main parts alone (computed once per version): opening a part never reshuffles the others –
+  // its parts unfold downward in its place, and only what is below it in its own column moves down
+  const FO = V.flowOrder || (V.flowOrder = (() => {
+    const ls = MODEL.l1.filter(l => V.ex.has(l.id)).map(l => l.id), lcol = new Map(ls.map(l => [l, COLS.findIndex(c => c[0] === tierOf(l))]));
+    const nbl = new Map(ls.map(l => [l, new Map()])); for (const [k, n] of V.edges) { const [a, b] = k.split('>').map(x => N.get(x)?.l1); if (!a || !b || a === b || !nbl.has(a) || !nbl.has(b)) continue; nbl.get(a).set(b, (nbl.get(a).get(b) || 0) + n); nbl.get(b).set(a, (nbl.get(b).get(a) || 0) + n); }
+    const cl = COLS.map((_, c) => ls.filter(l => lcol.get(l) === c)), rk = new Map(), set = () => cl.forEach(cs => cs.forEach((l, i) => rk.set(l, i / Math.max(1, cs.length - 1)))); set();
+    for (let it = 0; it < 8; it++) { cl.forEach((cs, c) => { const bc = l => { let s = 0, w = 0; nbl.get(l).forEach((n, o) => { if (lcol.get(o) !== c) { const ww = Math.log2(1 + n); s += rk.get(o) * ww; w += ww; } }); return w ? s / w : rk.get(l); };
+      const b = new Map(cs.map(l => [l, bc(l)])); cs.sort((x, y) => b.get(x) - b.get(y) || x.localeCompare(y)); }); set(); }
+    return { rank: rk, cols: cl }; })());
+  const cols = COLS.map((_, c) => {
+    const byL1 = new Map(); vis.filter(id => col.get(id) === c).forEach(id => { const l = N.get(id).l1; (byL1.get(l) || byL1.set(l, []).get(l)).push(id); });
+    const bc = id => { const ns = [...new Set(nb.get(id).map(x => N.get(x).l1))].map(l => FO.rank.get(l)).filter(v => v != null);   // (by which main parts it links to – not by how many of their parts are open)
+      return ns.length ? ns.reduce((a, b) => a + b, 0) / ns.length : 0.5; };
+    return FO.cols[c].filter(l => byL1.has(l)).flatMap(l => { const ids = byL1.get(l).sort((a, b) => bc(a) - bc(b) || N.get(a).name.localeCompare(N.get(b).name));
+      const byPar = new Map(); ids.forEach(id => { const k = id.split('.').slice(0, 2).join('.'); (byPar.get(k) || byPar.set(k, []).get(k)).push(id); }); return [...byPar.values()].flat(); }); });
   const pos = new Map(), frames = [], heads = [], GX = CW + 120;
   cols.forEach((cs, c) => {
     const x = c * GX; let y = 0; const runs = [];
     cs.forEach(id => { const g = N.get(id).l1; const r = runs[runs.length - 1]; if (r && r.g === g) r.ids.push(id); else runs.push({ g, ids: [id] }); });
     runs.forEach(r => { const framed = r.ids.length > 1 || r.ids[0] !== r.g;
-      if (framed) y += 34; const y0 = y; let lastPar = r.g;
+      if (framed) y += 32; const y0 = y; let lastPar = r.g;   // (an opened part's frame starts exactly where its card was)
       r.ids.forEach(id => { const d = framed ? id.split('.').length - 1 : 0, par = N.get(id).parent;
         if (framed && par && par !== r.g && par !== lastPar) {   // a part opened inside the group: its own sub-heading, one step in
           const pd = par.split('.').length - 1; frames.push({ id: par, sub: true, col: c, d: pd, x: x - CW / 2 + pd * IND, y: y + 2, w: CW - pd * IND, h: 22 }); y += 28; }
@@ -786,7 +790,7 @@ function layFlow(vis, edges) {
         const ind = d * IND; pos.set(id, { x: x + ind / 2, y: y + CH / 2, w: CW / 2 - ind / 2, h: CH / 2, c, g: framed ? r.g : null }); y += CH + 10; });   // (indented one step per level; right edges stay in line)
       if (framed) frames.push({ id: r.g, col: c, x: x - CW / 2 - 10, y: y0 - 32, w: CW + 20, h: y - y0 + 40, n: r.ids.length });
       y += 26; });
-    const off = -y / 2; cs.forEach(id => pos.get(id).y += off); frames.filter(f => f.col === c).forEach(f => f.y += off);
+    const off = -FO.cols[c].length * (CH + 36) / 2; cs.forEach(id => pos.get(id).y += off); frames.filter(f => f.col === c).forEach(f => f.y += off);   // (placed as if all were closed, so opening grows the column downward only)
     heads.push({ x, y: off - 46, t: COLS[c][1], n: cs.length }); });
   return { pos, edges: edges.filter(e => pos.has(e.a) && pos.has(e.b)), frames, heads, kind: 'flow' };
 }
@@ -864,27 +868,32 @@ function arrowHead(x, [ex, ey, an], w) { const h = 5 + w * 2; x.beginPath(); x.m
 function paintCard2(x, id, b, mk, al, nSame) {
   const cn = N.get(id), w = b.w * 2, h = b.h * 2, x0 = b.x - b.w, y0 = b.y - b.h, big = b.w > CW / 2;
   x.globalAlpha = al; x.beginPath(); rrect(x, x0, y0, w, h, 10); x.fillStyle = fill(id); x.fill();
+  const nk = cn.children.filter(c => V.ex.has(c)).length, cr = nk ? Math.min(h / 2 - 4, Math.max(12, 11 * KZ() / T2.k)) : 0, cw = nk ? 2 * cr + 10 : 0;
+  const chev = () => { if (!nk) return; const cx = x0 + w - cr - 6, open = S.exp.has(id); x.save(); x.globalAlpha = al; x.beginPath(); x.arc(cx, b.y, cr, 0, 7); x.fillStyle = css('--surface'); x.fill(); x.lineWidth = Math.max(1, 1 / T2.k); x.strokeStyle = css('--line'); x.stroke();
+    x.beginPath(); const u = cr * 0.38; if (open) { x.moveTo(cx - u, b.y - u * 0.5); x.lineTo(cx, b.y + u * 0.6); x.lineTo(cx + u, b.y - u * 0.5); } else { x.moveTo(cx - u * 0.5, b.y - u); x.lineTo(cx + u * 0.6, b.y); x.lineTo(cx - u * 0.5, b.y + u); }
+    x.lineWidth = Math.max(1.6, cr * 0.17); x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = css('--acc'); x.stroke(); x.restore(); };   // (▸ closed, ▾ open: tap it to unfold the parts downward)
   const fs = 13 * KZ() / T2.k;   // the size the name needs to read well at this zoom
   if (fs > 17) {   // zoomed out: only the name, as large as the card allows
     const chg = V.chg.has(id) && S.ver > 0; x.lineWidth = (mk ? 3 : chg ? 2 : 1) / Math.min(1, T2.k * 1.4); x.strokeStyle = mk || (chg ? css('--flow') : css('--line')); x.stroke();
     let f = Math.min(fs, 28); x.fillStyle = css('--ink'); x.textAlign = 'center'; x.textBaseline = 'middle';
     const words = cn.name.split(' '); let ln;
-    for (;;) { x.font = `700 ${f}px "Source Sans 3", sans-serif`; ln = ['']; for (const wd of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + wd : wd; if (x.measureText(t).width > w - 16 && ln[ln.length - 1]) ln.push(wd); else ln[ln.length - 1] = t; }
-      if ((ln.length <= 2 && ln.every(t => x.measureText(t).width <= w - 16)) || f <= 12) break; f -= 1; }
-    ln = ln.slice(0, 2); if (x.measureText(ln[1] || '').width > w - 16) { let t = ln[1]; while (t.length > 2 && x.measureText(t + '…').width > w - 16) t = t.slice(0, -1); ln[1] = t + '…'; }
-    ln.forEach((t, i) => x.fillText(t, b.x, b.y + (i - (ln.length - 1) / 2) * f * 1.05));
-    x.globalAlpha = 1; return; }
+    const tw = w - 16 - cw, tx = b.x - cw / 2;
+    for (;;) { x.font = `700 ${f}px "Source Sans 3", sans-serif`; ln = ['']; for (const wd of words) { const t = ln[ln.length - 1] ? ln[ln.length - 1] + ' ' + wd : wd; if (x.measureText(t).width > tw && ln[ln.length - 1]) ln.push(wd); else ln[ln.length - 1] = t; }
+      if ((ln.length <= 2 && ln.every(t => x.measureText(t).width <= tw)) || f <= 12) break; f -= 1; }
+    ln = ln.slice(0, 2); if (x.measureText(ln[1] || '').width > tw) { let t = ln[1]; while (t.length > 2 && x.measureText(t + '…').width > tw) t = t.slice(0, -1); ln[1] = t + '…'; }
+    ln.forEach((t, i) => x.fillText(t, tx, b.y + (i - (ln.length - 1) / 2) * f * 1.05));
+    x.globalAlpha = 1; chev(); return cw; }
   if (nSame) { x.font = '600 12px "Source Sans 3", sans-serif'; x.textAlign = 'right'; x.textBaseline = 'alphabetic'; x.fillStyle = css('--mut'); x.fillText(`↕ ${nSame}`, x0 + w - 8, y0 + h - 8); }   // (links to parts in the same column, drawn when selected)
   const chg = V.chg.has(id) && S.ver > 0; x.lineWidth = mk ? 3 : chg ? 2 : 1; x.strokeStyle = mk || (chg ? css('--flow') : css('--line')); x.setLineDash(chg && !mk ? [4, 3] : []); x.stroke(); x.setLineDash([]);
   x.fillStyle = css('--ink'); x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.font = `600 ${big ? 18 : 15}px "Source Sans 3", sans-serif`;
-  let nm = cn.name; while (nm.length > 4 && x.measureText(nm).width > w - 44) nm = nm.slice(0, -1); if (nm !== cn.name) nm = nm.trimEnd() + '…';
+  let nm = cn.name; while (nm.length > 4 && x.measureText(nm).width > w - 44 - cw) nm = nm.slice(0, -1); if (nm !== cn.name) nm = nm.trimEnd() + '…';
   x.fillText(nm, x0 + 12, y0 + (big ? 27 : 23));
   const bt = V.tot(id, V.code), ad = V.tot(id, V.asset), kids = cn.children.filter(c => V.ex.has(c)).length;
   x.font = '11.5px "IBM Plex Mono", monospace'; x.fillStyle = css('--mut'); x.fillText([bt ? fmtB(bt) + ' code' : '', ad ? fmtB(ad) + ' data' : '', kids ? kids + ' parts' : ''].filter(Boolean).slice(0, 2).join(' · '), x0 + 12, y0 + (big ? 47 : 41));
-  if (kids) { x.fillStyle = css('--ink'); x.font = '15px sans-serif'; x.fillText(S.exp.has(id) ? '▾' : '▸', x0 + w - 18, y0 + 23); }
-  const n = netOf(id), cx = x0 + w - 34, cy = y0 + 18; x.beginPath(); x.arc(cx, cy, 5, 0, 7); x.lineWidth = 1.2; x.strokeStyle = css('--ink'); x.stroke(); if (n === 'offline') { x.fillStyle = css('--ink'); x.fill(); } else if (n === 'both') { x.beginPath(); x.arc(cx, cy, 5, Math.PI / 2, -Math.PI / 2); x.fillStyle = css('--ink'); x.fill(); }
+  chev();
+  const n = netOf(id), cx = x0 + w - 18 - cw, cy = y0 + 18; x.beginPath(); x.arc(cx, cy, 5, 0, 7); x.lineWidth = 1.2; x.strokeStyle = css('--ink'); x.stroke(); if (n === 'offline') { x.fillStyle = css('--ink'); x.fill(); } else if (n === 'both') { x.beginPath(); x.arc(cx, cy, 5, Math.PI / 2, -Math.PI / 2); x.fillStyle = css('--ink'); x.fill(); }
   if (S.ind) Object.keys(METRICS).forEach((m, i) => { x.fillStyle = css('--h' + rating(id, m)); x.fillRect(x0 + 12 + i * 30, y0 + h - 9, 26, 4); });
-  x.globalAlpha = 1;
+  x.globalAlpha = 1; return cw;
 }
 function frame2d(now) {
   T3.raf = 0;
@@ -908,11 +917,11 @@ function frame2d(now) {
     x.fillStyle = css('--ink'); x.font = `700 ${Math.min(f.region ? 30 : 20, Math.max(f.region ? 17 : 14, 13 * KZ() / T2.k))}px "Source Sans 3", sans-serif`; x.textAlign = 'left'; x.textBaseline = 'alphabetic';
     x.fillText(f.region ? N.get(f.id).name : `▾ ${N.get(f.id).name}`, f.x + 12, f.y + (f.region ? 24 : 19));
     if (!f.region && f.n) { x.font = '12px "Source Sans 3", sans-serif'; x.fillStyle = css('--mut'); x.textAlign = 'right'; x.fillText(`${f.n} parts`, f.x + f.w - 12, f.y + 19); }
-    T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + 14) * T2.k + T2.y, w: f.w / 2 * T2.k, h: 14 * T2.k }); }
+    T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + 14) * T2.k + T2.y, w: f.w / 2 * T2.k, h: 14 * T2.k, chev: f.region ? null : { x0: f.x * T2.k + T2.x, x1: (f.x + 40) * T2.k + T2.x } }); }
   for (const f of lay.frames.filter(f => f.sub)) { const hue = HUE(f.id);   // a part opened inside a group: a sub-heading with a tick to its own bar
     x.fillStyle = `hsl(${hue} 26% ${dark2() ? 50 : 55}%)`; x.fillRect(f.x + 4, f.y + 6, 3, 12); x.fillRect(f.x + 4, f.y + 22, 3, 6);
     x.fillStyle = f.id === sel ? css('--acc') : css('--ink'); x.font = '700 13px "Source Sans 3", sans-serif'; x.textAlign = 'left'; x.fillText(`▾ ${N.get(f.id).name}`, f.x + 12, f.y + 17);
-    T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + 12) * T2.k + T2.y, w: f.w / 2 * T2.k, h: 12 * T2.k }); }
+    T3.drawn.push({ id: f.id, x: (f.x + f.w / 2) * T2.k + T2.x, y: (f.y + 12) * T2.k + T2.y, w: f.w / 2 * T2.k, h: 12 * T2.k, chev: { x0: f.x * T2.k + T2.x, x1: (f.x + 34) * T2.k + T2.x } }); }
   for (const h of lay.heads) { x.fillStyle = css('--mut'); x.font = `italic ${Math.max(17, Math.min(40, 15 * KZ() / T2.k))}px "Gentium Book Plus", Georgia, serif`; x.textAlign = 'center'; x.fillText(`${h.t} · ${h.n}`, h.x, h.y); }
   // ribbons between regions (Map, with no part selected)
   if (lay.ribbons && !sel && !S.lsel) for (const rb of lay.ribbons) { const A = lay.frames.find(f => f.id === rb.a), B = lay.frames.find(f => f.id === rb.b); if (!A || !B) continue;
@@ -943,8 +952,8 @@ function frame2d(now) {
     x.beginPath(); const end = edgePath(x, a, b, 'flow'); x.stroke(); x.setLineDash([]); x.lineCap = 'butt'; arrowHead(x, end, Math.min(4, w / 2)); }
   // the cards
   for (const [id, b] of lay.pos) { let al = 1; if (sel && id !== sel && !r.up.has(id) && !r.down.has(id)) al = 0.25; const hv = HV.get(id); if (!sel && HV.size && !hv) al = 0.2; if (S.offv && netOf(id) === 'online') al *= 0.35;
-    paintCard2(x, id, b, id === sel ? css('--acc') : hv ? hlCol(hv.t) : null, al, same.get(id));
-    const sb = { id, x: b.x * T2.k + T2.x, y: b.y * T2.k + T2.y, w: b.w * T2.k, h: b.h * T2.k }; T3.drawn.push(sb);
+    const cw = paintCard2(x, id, b, id === sel ? css('--acc') : hv ? hlCol(hv.t) : null, al, same.get(id)) || 0;
+    const sb = { id, x: b.x * T2.k + T2.x, y: b.y * T2.k + T2.y, w: b.w * T2.k, h: b.h * T2.k }; if (cw) sb.chev = { x0: (b.x + b.w - cw - 4) * T2.k + T2.x, x1: (b.x + b.w) * T2.k + T2.x }; T3.drawn.push(sb);
     if (hv?.n) { x.setTransform(dpr, 0, 0, dpr, 0, 0); badge(x, sb, hv, 1); x.setTransform(dpr * T2.k, 0, 0, dpr * T2.k, dpr * T2.x, dpr * T2.y); } }
   x.setTransform(dpr, 0, 0, dpr, 0, 0); x.globalAlpha = 1;
   drawMini();
